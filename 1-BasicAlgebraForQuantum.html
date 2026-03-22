@@ -1,0 +1,2388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum Computing Notes — from scratch</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@300;400;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #faf8f3;
+  --page: #fffef9;
+  --ink: #1a1a14;
+  --ink2: #3a3a2e;
+  --muted: #888877;
+  --line: #e8e4d8;
+  --accent: #2c5282;
+  --accent-soft: #ebf0f8;
+  --red: #c0392b;
+  --green: #1a6b3a;
+  --orange: #b7530a;
+  --yellow-hl: #fff3b0;
+  --yellow-hl2: #fde68a;
+  --blue-hl: #dbeafe;
+  --green-hl: #d1fae5;
+  --red-hl: #fee2e2;
+  --correct: #1a6b3a;
+  --wrong: #c0392b;
+  --border-r: 4px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-weight: 300;
+  line-height: 1.7;
+  font-size: 15px;
+}
+
+/* Notebook lines background */
+.page {
+  max-width: 780px;
+  margin: 0 auto;
+  background: var(--page);
+  min-height: 100vh;
+  padding: 0 0 6rem 0;
+  border-left: 1px solid #e0ddd5;
+  border-right: 1px solid #e0ddd5;
+  box-shadow: 0 0 40px rgba(0,0,0,0.06);
+  position: relative;
+}
+
+/* Red margin line */
+.page::before {
+  content:'';
+  position: absolute;
+  left: 72px; top: 0; bottom: 0;
+  width: 1px;
+  background: rgba(192,57,43,0.2);
+  pointer-events: none;
+}
+
+/* Cover */
+.cover {
+  padding: 4rem 3rem 3rem 5rem;
+  border-bottom: 2px solid var(--line);
+  background: linear-gradient(180deg, #f5f0e8 0%, var(--page) 100%);
+}
+.cover-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--red);
+  margin-bottom: 0.8rem;
+}
+.cover h1 {
+  font-family: 'Lora', serif;
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--ink);
+  margin-bottom: 0.5rem;
+}
+.cover p {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+.cover-meta {
+  margin-top: 1.2rem;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--muted);
+  display: flex; gap: 2rem; flex-wrap: wrap;
+}
+
+/* TOC */
+.toc {
+  padding: 1.5rem 3rem 1.5rem 5rem;
+  border-bottom: 1px solid var(--line);
+  background: #f8f6f0;
+}
+.toc-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.68rem; letter-spacing: 0.15em;
+  text-transform: uppercase; color: var(--muted);
+  margin-bottom: 0.8rem;
+}
+.toc-list { list-style: none; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.toc-list li a {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--accent);
+  text-decoration: none;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid rgba(44,82,130,0.25);
+  border-radius: 2px;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.toc-list li a:hover { background: var(--accent); color: white; }
+
+/* Sections */
+.section {
+  padding: 2rem 3rem 1.5rem 5rem;
+  border-bottom: 1px solid var(--line);
+}
+.section:last-child { border-bottom: none; }
+
+.section-num {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.65rem; letter-spacing: 0.15em;
+  text-transform: uppercase; color: var(--red);
+  margin-bottom: 0.3rem;
+}
+.section h2 {
+  font-family: 'Lora', serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 1.2rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1.5px solid var(--line);
+}
+.section h3 {
+  font-family: 'Lora', serif;
+  font-size: 1.05rem;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--ink2);
+  margin: 1.4rem 0 0.6rem 0;
+}
+
+p { margin-bottom: 0.8rem; }
+strong { font-weight: 600; color: var(--ink); }
+em { color: var(--ink2); }
+
+/* Definition box */
+.def {
+  background: var(--blue-hl);
+  border-left: 3px solid var(--accent);
+  padding: 0.8rem 1rem;
+  margin: 1rem 0;
+  border-radius: 0 var(--border-r) var(--border-r) 0;
+  font-size: 0.9rem;
+}
+.def .def-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--accent);
+  margin-bottom: 0.3rem;
+}
+
+/* Note box */
+.note-box {
+  background: var(--yellow-hl);
+  border-left: 3px solid #d97706;
+  padding: 0.7rem 1rem;
+  margin: 1rem 0;
+  border-radius: 0 var(--border-r) var(--border-r) 0;
+  font-size: 0.87rem;
+  color: var(--ink2);
+}
+.note-box::before {
+  content: '📝 ';
+  font-size: 0.8rem;
+}
+
+/* Warning / insight */
+.insight {
+  background: var(--green-hl);
+  border-left: 3px solid var(--green);
+  padding: 0.7rem 1rem;
+  margin: 1rem 0;
+  border-radius: 0 var(--border-r) var(--border-r) 0;
+  font-size: 0.87rem;
+}
+.insight::before { content: '💡 '; }
+
+/* ── Math block container ── */
+.math-block {
+  background: #f5f2ea;
+  border: 1px solid #dedad0;
+  border-radius: 6px;
+  padding: 1rem 1.4rem;
+  margin: 0.9rem 0;
+  overflow-x: auto;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.88rem;
+  color: var(--ink);
+  line-height: 1.6;
+}
+
+/* ── Equation row ── */
+.eq {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.55rem;
+  margin: 0.45rem 0;
+  font-size: 0.9rem;
+}
+.eq-note  { color: var(--muted); font-size: 0.78rem; font-style: italic; }
+.eq-arrow { color: var(--red);   font-weight: 700; }
+
+/* ── Matrix (uses <table>) ── */
+.mx {
+  display: inline-flex;
+  align-items: stretch;
+  vertical-align: middle;
+  margin: 0 0.3rem;
+  gap: 2px;
+}
+.mx::before, .mx::after {
+  content: '';
+  width: 5px;
+  border-top: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+  flex-shrink: 0;
+}
+.mx::before {
+  border-left: 2px solid var(--ink);
+  border-radius: 2px 0 0 2px;
+}
+.mx::after {
+  border-right: 2px solid var(--ink);
+  border-radius: 0 2px 2px 0;
+}
+.mx table {
+  border-collapse: separate;
+  border-spacing: 0;
+  display: inline-table;
+}
+.mx td {
+  text-align: center;
+  padding: 0.22rem 0.55rem;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.88rem;
+  white-space: nowrap;
+  line-height: 1.45;
+}
+.mx td.c-0  { color: var(--muted); }
+.mx td.c-n  { color: var(--red);   }
+.mx td.c-l  { color: var(--accent);}
+
+/* ── Column vector ── */
+.vec {
+  display: inline-flex;
+  align-items: stretch;
+  vertical-align: middle;
+  margin: 0 0.25rem;
+  gap: 2px;
+}
+.vec::before, .vec::after {
+  content: '';
+  width: 4px;
+  border-top: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+  flex-shrink: 0;
+}
+.vec::before {
+  border-left: 2px solid var(--ink);
+  border-radius: 2px 0 0 2px;
+}
+.vec::after {
+  border-right: 2px solid var(--ink);
+  border-radius: 0 2px 2px 0;
+}
+.vec table {
+  border-collapse: separate;
+  border-spacing: 0;
+  display: inline-table;
+}
+.vec td {
+  display: table-cell;
+  text-align: center;
+  padding: 0.18rem 0.55rem;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.88rem;
+  white-space: nowrap;
+  line-height: 1.45;
+}
+.vec td.c-0  { color: var(--muted); }
+.vec td.c-n  { color: var(--red);   }
+
+/* ── Step list inside math block ── */
+.mstep {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 0.1rem 0.6rem;
+  margin: 0.4rem 0;
+  font-size: 0.87rem;
+  align-items: baseline;
+}
+.mstep-label {
+  color: var(--red);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-align: right;
+  white-space: nowrap;
+  padding-top: 0.05rem;
+}
+.mstep-body { color: var(--ink2); line-height: 1.65; }
+
+/* ── scalar prefix (e.g. 1/√2 ·) ── */
+.scalar { color: var(--accent); font-weight: 600; margin-right: 0.2rem; }
+
+/* ── separator inside math block ── */
+.math-sep { border:none; border-top: 1px dashed #ccc8ba; margin: 0.65rem 0; }
+
+/* ── two-column layout inside math block ── */
+.mx-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem 2rem;
+  align-items: center;
+  margin: 0.4rem 0;
+}
+.mx-cols-auto {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.8rem 1.5rem;
+  align-items: center;
+  margin: 0.4rem 0;
+}
+.mx-label {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+.math-inline {
+  font-family: 'IBM Plex Mono', monospace;
+  background: #f3f0e8;
+  padding: 0.05rem 0.35rem;
+  border-radius: 2px;
+  font-size: 0.88em;
+  color: var(--ink);
+}
+
+/* Canvas */
+canvas {
+  display: block;
+  border: 1px solid var(--line);
+  border-radius: var(--border-r);
+  margin: 0.8rem 0 0.3rem 0;
+  background: #fafaf8;
+  cursor: crosshair;
+  max-width: 100%;
+}
+.canvas-caption {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-style: italic;
+  margin-bottom: 0.8rem;
+  text-align: center;
+}
+
+/* Interactive controls */
+.controls {
+  display: flex; align-items: center; gap: 0.8rem;
+  flex-wrap: wrap; margin: 0.5rem 0;
+  font-size: 0.82rem; color: var(--muted);
+}
+input[type=range] {
+  -webkit-appearance:none; appearance:none;
+  width: 160px; height: 3px;
+  background: var(--line); border-radius:2px; cursor:pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance:none; width:14px; height:14px;
+  border-radius:50%; background: var(--accent); cursor:pointer;
+  border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.ctrl-val {
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--accent); font-size: 0.82rem;
+  min-width: 50px;
+}
+
+/* Buttons */
+.btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.75rem; letter-spacing: 0.04em;
+  padding: 0.35rem 0.9rem;
+  border: 1px solid var(--accent);
+  background: transparent; color: var(--accent);
+  cursor: pointer; border-radius: 3px;
+  transition: all 0.15s;
+}
+.btn:hover { background: var(--accent); color: white; }
+.btn.sm { padding: 0.25rem 0.6rem; font-size: 0.7rem; }
+.btn.ghost { border-color: var(--line); color: var(--muted); }
+.btn.ghost:hover { background: var(--line); color: var(--ink); }
+
+/* Exercises */
+.ex-block {
+  background: #faf9f5;
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--accent);
+  border-radius: 0 0 var(--border-r) var(--border-r);
+  padding: 1rem 1.2rem;
+  margin: 1.2rem 0;
+}
+.ex-header {
+  display: flex; align-items: baseline; gap: 0.6rem;
+  margin-bottom: 0.7rem;
+}
+.ex-tag {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.62rem; letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: white; background: var(--accent);
+  padding: 0.15rem 0.5rem; border-radius: 2px;
+}
+.ex-title {
+  font-family: 'Lora', serif;
+  font-style: italic;
+  font-size: 0.95rem;
+  color: var(--ink2);
+}
+.ex-body { font-size: 0.88rem; color: var(--ink2); line-height: 1.75; }
+.ex-body p { margin-bottom: 0.5rem; }
+
+.answer-area { margin-top: 0.8rem; }
+.answer-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin: 0.4rem 0; }
+.ans-label { font-family: 'IBM Plex Mono', monospace; font-size: 0.82rem; color: var(--muted); white-space: nowrap; }
+.answer-input {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.85rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--line);
+  background: white;
+  color: var(--ink);
+  border-radius: 3px;
+  width: 110px;
+  transition: border-color 0.15s;
+}
+.answer-input:focus { outline: none; border-color: var(--accent); }
+.answer-input.ok { border-color: var(--correct); background: var(--green-hl); }
+.answer-input.no { border-color: var(--wrong); background: var(--red-hl); }
+.answer-input.wide { width: 160px; }
+
+.feedback {
+  display: none; margin-top: 0.6rem;
+  padding: 0.5rem 0.8rem; font-size: 0.82rem;
+  border-radius: 3px; line-height: 1.5;
+}
+.feedback.show { display: block; }
+.feedback.ok { background: var(--green-hl); border-left: 3px solid var(--correct); color: var(--correct); }
+.feedback.no { background: var(--red-hl); border-left: 3px solid var(--wrong); color: var(--wrong); }
+.feedback.hint { background: var(--yellow-hl); border-left: 3px solid #d97706; color: var(--orange); }
+
+.hint-toggle {
+  font-size: 0.72rem; color: var(--muted);
+  background: none; border: none; cursor: pointer;
+  text-decoration: underline; margin-top: 0.4rem;
+  display: block;
+}
+.hint-toggle:hover { color: var(--accent); }
+
+/* Step-by-step */
+.steps { margin: 0.6rem 0; counter-reset: step; }
+.step {
+  display: flex; gap: 0.7rem; margin-bottom: 0.5rem;
+  font-size: 0.88rem; color: var(--ink2);
+}
+.step-num {
+  flex-shrink: 0;
+  width: 20px; height: 20px;
+  background: var(--accent); color: white;
+  border-radius: 50%;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.68rem;
+  display: flex; align-items: center; justify-content: center;
+  margin-top: 0.1rem;
+}
+
+/* Matrix pretty */
+.mat {
+  display: inline-flex; align-items: center; gap: 2px;
+  vertical-align: middle; margin: 0 0.2rem;
+}
+.mat-bracket { font-size: 1.8em; line-height: 1; color: var(--muted); font-weight: 100; }
+.mat-inner { font-family: 'IBM Plex Mono', monospace; font-size: 0.82rem; }
+.mat-inner table { border-collapse: collapse; }
+.mat-inner td { padding: 0.05rem 0.35rem; text-align: center; }
+
+/* Info tags inline */
+.tag-pill {
+  display: inline-block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.65rem; letter-spacing: 0.05em;
+  padding: 0.1rem 0.4rem;
+  border-radius: 2px; margin: 0 0.15rem;
+  vertical-align: middle;
+}
+.tag-blue { background: var(--blue-hl); color: var(--accent); }
+.tag-green { background: var(--green-hl); color: var(--green); }
+.tag-yellow { background: var(--yellow-hl); color: #92400e; }
+
+.divider { border: none; border-top: 1px dashed var(--line); margin: 1.2rem 0; }
+
+/* Annotation style */
+.annotation {
+  font-family: 'Lora', serif;
+  font-style: italic;
+  font-size: 0.82rem;
+  color: var(--red);
+  margin: 0.2rem 0;
+  padding-left: 0.5rem;
+  border-left: 2px solid rgba(192,57,43,0.3);
+}
+
+/* Live value display */
+.live {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.82rem; color: var(--ink2);
+  background: #f3f0e8; padding: 0.4rem 0.7rem;
+  border-radius: 3px; margin-top: 0.4rem;
+  min-height: 1.8rem;
+}
+
+@media (max-width: 600px) {
+  .page::before { display: none; }
+  .section, .toc, .cover { padding-left: 1.2rem; padding-right: 1.2rem; }
+  }
+</style>
+<link rel="stylesheet" href="q-notes.css">
+
+<style id="sidebar-scorebar-fix">
+/* ── Sidebar-aware layout ── */
+body.with-sidebar {
+  display: flex;
+  min-height: 100vh;
+}
+body.with-sidebar .qn-main {
+  margin-left: var(--sidebar-w, 260px);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;   /* ← centres the .page horizontally */
+  background: var(--bg, #faf8f3);
+}
+/* Keep .page centred and at correct max-width */
+body.with-sidebar .page {
+  width: 100%;
+  max-width: 780px;
+  margin: 0;             /* auto-margin not needed; align-items:center does it */
+}
+body.with-sidebar body.with-sidebar body.with-sidebar @media (max-width: 768px) {
+  body.with-sidebar .qn-main { margin-left: 0; }
+}
+</style>
+</head>
+<body class="with-sidebar">
+
+<!-- ── SIDEBAR INJECTED ── -->
+<button class="qn-hamburger" id="hamburger" aria-label="Open menu">☰</button>
+<div class="qn-sidebar-overlay" id="overlay"></div>
+
+<nav class="qn-sidebar" id="sidebar">
+  <div class="qn-sidebar-logo">
+    <a href="index.html">
+      <div class="logo-tag">Interactive Notes</div>
+      <div class="logo-title">Quantum<br>Computing</div>
+      <div class="logo-sub">Quantum Computing · 2026</div>
+    </a>
+  </div>
+  <div class="qn-nav">
+    <div class="qn-nav-section-label">Navigation</div>
+    <a class="qn-nav-item" href="index.html">
+      <div class="qn-nav-item-header">
+        <span class="qn-nav-item-num">🏠</span>
+        <span class="qn-nav-item-label">Home</span>
+      </div>
+    </a>
+    <div class="qn-nav-item" id="nav-note1">
+      <div class="qn-nav-item-header" onclick="toggleNav('nav-note1')">
+        <span class="qn-nav-item-num">01</span>
+        <span class="qn-nav-item-label">Linear Algebra</span>
+        <span class="qn-nav-chevron">▶</span>
+      </div>
+      <div class="qn-subnav">
+        <a href="1-BasicAlgebraForQuantum.html#s1">Vectors</a>
+        <a href="1-BasicAlgebraForQuantum.html#s2">Space + Norm</a>
+        <a href="1-BasicAlgebraForQuantum.html#s3">Complex Numbers</a>
+        <a href="1-BasicAlgebraForQuantum.html#s4">Inner Product</a>
+        <a href="1-BasicAlgebraForQuantum.html#s5">Dirac Notation</a>
+        <a href="1-BasicAlgebraForQuantum.html#s6">Why |0⟩=(1,0)?</a>
+        <a href="1-BasicAlgebraForQuantum.html#s7">The Qubit</a>
+        <a href="1-BasicAlgebraForQuantum.html#s8">Measurement</a>
+        <a href="1-BasicAlgebraForQuantum.html#s9">Matrices &amp; Gates</a>
+        <a href="1-BasicAlgebraForQuantum.html#s10">Eigenvalues</a>
+      </div>
+    </div>
+    <div class="qn-nav-item" id="nav-note2">
+      <div class="qn-nav-item-header" onclick="toggleNav('nav-note2')">
+        <span class="qn-nav-item-num">02</span>
+        <span class="qn-nav-item-label">Quantum Basics</span>
+        <span class="qn-nav-chevron">▶</span>
+      </div>
+      <div class="qn-subnav">
+        <a href="2-QuantumBasics.html#s1">QM Postulates</a>
+        <a href="2-QuantumBasics.html#s1b">Pauli Matrices</a>
+        <a href="2-QuantumBasics.html#s1c">Measurement Bases</a>
+        <a href="2-QuantumBasics.html#s2">The Qubit</a>
+        <a href="2-QuantumBasics.html#s3">Measuring a Qubit</a>
+        <a href="2-QuantumBasics.html#s4">Transforming a Qubit</a>
+        <a href="2-QuantumBasics.html#s5">Quantum Gates</a>
+        <a href="2-QuantumBasics.html#s6">Basis Change</a>
+        <a href="2-QuantumBasics.html#s7">Arbitrary Basis</a>
+        <a href="2-QuantumBasics.html#s8">Tricks &amp; Summary</a>
+      </div>
+    </div>
+    <div class="qn-nav-item" id="nav-note3">
+      <div class="qn-nav-item-header" onclick="toggleNav('nav-note3')">
+        <span class="qn-nav-item-num">03</span>
+        <span class="qn-nav-item-label">Composite Systems</span>
+        <span class="qn-nav-chevron">▶</span>
+      </div>
+      <div class="qn-subnav">
+        <a href="3-CompositeQuantumSystems.html#s1">Tensor Products</a>
+        <a href="3-CompositeQuantumSystems.html#s2">Two-Qubit States</a>
+        <a href="3-CompositeQuantumSystems.html#s3">Entanglement</a>
+        <a href="3-CompositeQuantumSystems.html#s4">CHSH Game</a>
+        <a href="3-CompositeQuantumSystems.html#s5">Multi-Qubit Gates</a>
+        <a href="3-CompositeQuantumSystems.html#s6">Mixed States</a>
+      </div>
+    </div>
+    <div class="qn-nav-item" id="nav-note4">
+      <div class="qn-nav-item-header" onclick="toggleNav('nav-note4')">
+        <span class="qn-nav-item-num">04</span>
+        <span class="qn-nav-item-label">Quantum Circuits</span>
+        <span class="qn-nav-chevron">▶</span>
+      </div>
+      <div class="qn-subnav">
+        <a href="4-QuantumCircuits.html#s1">Universality</a>
+        <a href="4-QuantumCircuits.html#s2">Boolean Functions</a>
+        <a href="4-QuantumCircuits.html#s3">Quantum Parallelism</a>
+        <a href="4-QuantumCircuits.html#s4">State Transformation</a>
+        <a href="4-QuantumCircuits.html#s5">Generating α|0⟩+β|1⟩</a>
+        <a href="4-QuantumCircuits.html#s6">No-Cloning Theorem</a>
+        <a href="4-QuantumCircuits.html#s7">Bell Measurement</a>
+        <a href="4-QuantumCircuits.html#s8">Teleportation</a>
+        <a href="4-QuantumCircuits.html#s9">Tomography</a>
+      </div>
+    </div>
+    <div class="qn-nav-section-label" style="margin-top:0.5rem;">Labs</div>
+    <a class="qn-nav-item" href="sandbox.html">
+      <div class="qn-nav-item-header">
+        <span class="qn-nav-item-num">⚛</span>
+        <span class="qn-nav-item-label">Circuit Sandbox</span>
+      </div>
+    </a>
+  </div>
+  <div class="qn-sidebar-footer">
+    <a href="https://github.com/" target="_blank">GitHub Pages ↗</a>
+  </div>
+</nav>
+<!-- ── /SIDEBAR ── -->
+<div class="qn-main">
+
+<div class="page">
+
+  </div>
+</div>
+
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-label">Interactive Notes</div>
+  <h1>Linear Algebra<br>for Quantum Computing</h1>
+  <p>From the absolute basics to the qubit — with visualisations and exercises</p>
+  </div>
+
+<!-- TOC -->
+<div class="toc">
+  <div class="toc-title">Contents</div>
+  <ul class="toc-list">
+    <li><a onclick="goTo('s1')" href="javascript:void(0)">1 · Vectors</a></li>
+    <li><a onclick="goTo('s2')" href="javascript:void(0)">2 · Space + Norm</a></li>
+    <li><a onclick="goTo('s3')" href="javascript:void(0)">3 · Complex Numbers</a></li>
+    <li><a onclick="goTo('s4')" href="javascript:void(0)">4 · Inner Product</a></li>
+    <li><a onclick="goTo('s5')" href="javascript:void(0)">5 · Dirac Notation</a></li>
+    <li><a onclick="goTo('s6')" href="javascript:void(0)">6 · Why |0⟩=(1,0)?</a></li>
+    <li><a onclick="goTo('s7')" href="javascript:void(0)">7 · The Qubit</a></li>
+    <li><a onclick="goTo('s8')" href="javascript:void(0)">8 · Measurement</a></li>
+    <li><a onclick="goTo('s9')" href="javascript:void(0)">9 · Matrices & Gates</a></li>
+    <li><a onclick="goTo('s10')" href="javascript:void(0)">10 · Eigenvalues</a></li>
+  </ul>
+</div>
+
+<!-- ══════════════════════════════════════
+     SEZIONE 1 — VETTORI
+═══════════════════════════════════════ -->
+<div class="section" id="s1">
+  <div class="section-num">Section 01</div>
+  <h2>Vectors — what they really are</h2>
+
+  <p>A <strong>vector</strong> is an ordered list of numbers. Think of it as an arrow in space: it has a <em>direction</em> and a <em>length</em>. In mathematics it is written as a column:</p>
+
+  <div class="math-block"><div class="eq"><span>v =</span><span><span class="vec"><table><tbody><tr><td>v₁</td></tr><tr><td>v₂</td></tr><tr><td>v₃</td></tr></tbody></table></span></span><span class="eq-note">column vector with 3 components</span></div></div>
+
+  <p>A vector in 2D has 2 components, in 3D it has 3, and in general in <strong>N dimensions</strong> it has N. We work in 2D for now because it is easy to visualise — but everything generalises.</p>
+
+  <div class="note-box">
+    When you write <strong>v = (3, 2)</strong>, you are saying: "start at the origin, go 3 units right and 2 up". The vector is the arrow from (0,0) to (3,2).
+  </div>
+
+  <canvas id="c_vec" width="480" height="260"></canvas>
+  <div class="canvas-caption">Click on the plane to place a vector and read its components</div>
+
+  <h3>Column notation (transpose)</h3>
+  <p>We often write vectors compactly. The symbol <strong>ᵀ</strong> (transpose) means a row vector is read as a column:</p>
+
+  <div class="math-block"><div class="eq"><span>v = (3, 2)ᵀ &nbsp;=</span><span><span class="vec"><table><tbody><tr><td>3</td></tr><tr><td>2</td></tr></tbody></table></span></span><span class="eq-note">same thing, two ways of writing it</span></div></div>
+
+  <p>This will come in handy with quantum notation.</p>
+
+  <div class="ex-block">
+    <div class="ex-header"><span class="ex-tag">Ex 1.1</span><span class="ex-title">Reading a vector</span></div>
+    <div class="ex-body">
+      <p>The vector <span class="math-inline">v = (−2, 3)ᵀ</span> has vertical component equal to:</p>
+    </div>
+    <div class="answer-area">
+      <div class="answer-row">
+        <span class="ans-label">v₂ =</span>
+        <input class="answer-input" id="a11" placeholder="…" onkeydown="if(event.key==='Enter')chk('a11','3','fb11')">
+        <button class="btn sm" onclick="chk('a11','3','fb11')">Check</button>
+      </div>
+      <button class="hint-toggle" onclick="showHint('h11')">show hint</button>
+      <div class="feedback hint" id="h11">The first number is the x component (horizontal), the second is the y component (vertical).</div>
+      <div class="feedback" id="fb11"></div>
+    </div>
+  </div>
+
+  <div class="ex-block">
+    <div class="ex-header"><span class="ex-tag">Ex 1.2</span><span class="ex-title">Vector addition</span></div>
+    <div class="ex-body">
+      <p>Vector addition is performed component by component:</p>
+      <div class="math-block"><div class="eq"><span><span class="vec"><table><tbody><tr><td>1</td></tr><tr><td>2</td></tr></tbody></table></span></span><span>+</span><span><span class="vec"><table><tbody><tr><td>3</td></tr><tr><td class="c-n">−1</td></tr></tbody></table></span></span><span>=</span><span><span class="vec"><table><tbody><tr><td>1+3</td></tr><tr><td>2+(−1)</td></tr></tbody></table></span></span><span>=</span><span><span class="vec"><table><tbody><tr><td>4</td></tr><tr><td>1</td></tr></tbody></table></span></span></div></div>
+      <p>Calculate <span class="math-inline">(2, 5)ᵀ + (−1, 3)ᵀ</span>:</p>
+    </div>
+    <div class="answer-area">
+      <div class="answer-row">
+        <span class="ans-label">Result = (</span>
+        <input class="answer-input" id="a12a" placeholder="…" style="width:60px" onkeydown="if(event.key==='Enter')chk2('a12a','1','a12b','8','fb12')">
+        <span class="ans-label">,</span>
+        <input class="answer-input" id="a12b" placeholder="…" style="width:60px" onkeydown="if(event.key==='Enter')chk2('a12a','1','a12b','8','fb12')">
+        <span class="ans-label">)ᵀ</span>
+        <button class="btn sm" onclick="chk2('a12a','1','a12b','8','fb12')">Check</button>
+      </div>
+      <div class="feedback" id="fb12"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SEZIONE 2 — SPAZIO VETTORIALE + NORMA
+═══════════════════════════════════════ -->
+<div class="section" id="s2">
+  <div class="section-num">Section 02</div>
+  <h2>Vector Space, Norm and Hilbert Space</h2>
+
+  <h3>What is a vector space?</h3>
+  <p>A <strong>vector space</strong> is simply a set of vectors on which two operations are defined: <em>addition</em> and <em>scalar multiplication</em>. The set ℝ² (all pairs of real numbers) is a vector space, and so is ℂᴺ (vectors with N complex components).</p>
+
+  <div class="def">
+    <div class="def-title">Definition — Norm (length of a vector)</div>
+    The <strong>norm</strong> of a vector v = (v₁, v₂, ..., vₙ) is its "geometric length":
+    <div class="math-block"><div class="eq"><span>‖v‖ = √( v₁² + v₂² + ... + vₙ² )</span></div></div>
+    In 2D this is the Pythagorean theorem! If v = (3, 4)ᵀ, then ‖v‖ = √(9+16) = √25 = <strong>5</strong>.
+  </div>
+
+  <canvas id="c_norm" width="480" height="260"></canvas>
+  <div class="canvas-caption">Click to place a vector — see the norm computed in real time</div>
+
+  <div class="note-box">
+    A vector with norm = 1 is called a <strong>unit vector</strong> or <em>normalised vector</em>. In quantum computing, all states are unit vectors (‖ψ‖ = 1). This ensures the probabilities sum to 1.
+  </div>
+
+  <h3>What is Hilbert Space?</h3>
+  <p>A <strong>Hilbert Space</strong> is simply a vector space equipped with an additional structure called the <em>inner product</em> (covered in section 3). In practice, for quantum computing:</p>
+
+  <div class="insight">
+    Spazio di Hilbert = spazio dei vettori complessi ℂᴺ + prodotto interno.<br>
+    Per un <strong>qubit</strong> N=2, quindi lo spazio di Hilbert è ℂ² — i vettori hanno 2 componenti <em>complesse</em>.
+  </div>
+
+  <p>Don't be intimidated by the name. "Hilbert" is simply the mathematician who studied these structures. Physically, <em>every quantum state is a unit vector in this space</em>.</p>
+
+  <div class="ex-block">
+    <div class="ex-header"><span class="ex-tag">Ex 2.1</span><span class="ex-title">Computing the norm</span></div>
+    <div class="ex-body">
+      <p>Calculate the norm of the following vectors:</p>
+      <p><strong>a)</strong> <span class="math-inline">v = (3, 4)ᵀ</span> → ‖v‖ = √(3² + 4²) = ?</p>
+      <p><strong>b)</strong> <span class="math-inline">u = (1, 0)ᵀ</span> → ‖u‖ = ?</p>
+    </div>
+    <div class="answer-area">
+      <div class="answer-row">
+        <span class="ans-label">‖v‖ =</span>
+        <input class="answer-input" id="a21a" placeholder="…" onkeydown="if(event.key==='Enter')chk2n('a21a','5','a21b','1','fb21')">
+        <span class="ans-label">‖u‖ =</span>
+        <input class="answer-input" id="a21b" placeholder="…" onkeydown="if(event.key==='Enter')chk2n('a21a','5','a21b','1','fb21')">
+        <button class="btn sm" onclick="chk2n('a21a','5','a21b','1','fb21')">Check</button>
+      </div>
+      <div class="feedback" id="fb21"></div>
+    </div>
+  </div>
+
+  <div class="ex-block">
+    <div class="ex-header"><span class="ex-tag">Ex 2.2</span><span class="ex-title">Normalising a vector</span></div>
+    <div class="ex-body">
+      <p>To make a unit vector, divide by its norm: <span class="math-inline">û = v / ‖v‖</span></p>
+      <p>Normalise <span class="math-inline">v = (3, 4)ᵀ</span>. Write the first component as a fraction (e.g. 3/5):</p>
+    </div>
+    <div class="answer-area">
+      <div class="answer-row">
+        <span class="ans-label">û₁ =</span>
+        <input class="answer-input" id="a22a" placeholder="…" onkeydown="if(event.key==='Enter')chkFrac('a22a','3','5','a22b','4','5','fb22')">
+        <span class="ans-label">û₂ =</span>
+        <input class="answer-input" id="a22b" placeholder="…" onkeydown="if(event.key==='Enter')chkFrac('a22a','3','5','a22b','4','5','fb22')">
+        <button class="btn sm" onclick="chkFrac('a22a','3','5','a22b','4','5','fb22')">Check</button>
+      </div>
+      <button class="hint-toggle" onclick="showHint('h22')">show hint</button>
+      <div class="feedback hint" id="h22">‖v‖ = 5 (computed above). Divide each component by 5: û₁ = 3/5, û₂ = 4/5. Check: (3/5)² + (4/5)² = 9/25 + 16/25 = 1 ✓</div>
+      <div class="feedback" id="fb22"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SEZIONE 3 — NUMERI COMPLESSI
+═══════════════════════════════════════ -->
+<div class="section" id="s3">
+  <div class="section-num">Section 03</div>
+  <h2>Complex Numbers — conjugate and phase</h2>
+
+  <p>A <strong>complex number</strong> z has two parts: a <em>real</em> part and an <em>imaginary</em> part:</p>
+
+  <div class="math-block">
+  <div class="eq"><span class="eq-lhs">z = a + jb</span></div>
+  <hr class="math-sep">
+  <div class="mstep"><div class="mstep-label">a =</div><div class="mstep-body">real part &nbsp;&nbsp; Re(z)</div></div>
+  <div class="mstep"><div class="mstep-label">b =</div><div class="mstep-body">imaginary part &nbsp;&nbsp; Im(z)</div></div>
+  <div class="mstep"><div class="mstep-label">j =</div><div class="mstep-body">imaginary unit, with the property <strong>j² = −1</strong></div></div>
+</div>
+
+  <div class="note-box">
+    In physics and engineering <strong>j</strong> is used for the imaginary unit (mathematicians use <em>i</em>). You will see both in your notes — they mean the same thing.
+  </div>
+
+  <h3>Visualisation — the Argand Plane</h3>
+  <p>Every complex number is a <strong>point in the plane</strong> (or an arrow from the origin). The horizontal axis is the real part, the vertical axis is the imaginary part. Click to explore.</p>
+
+  <canvas id="c_complex" width="480" height="260"></canvas>
+  <div class="canvas-caption">Click to place a complex number — read modulus and phase in real time</div>
+
+  <h3>The Complex Conjugate z*</h3>
+  <p>The <strong>conjugate</strong> of z = a + jb is obtained simply by <em>flipping the sign of the imaginary part</em>:</p>
+
+  <div class="math-block"><div class="eq"><span>z &nbsp;=</span><span>a + jb</span></div><div class="eq"><span>z* =</span><span>a − jb</span><span class="eq-note">← only the sign of j changes!</span></div><hr class="math-sep"><div class="mstep"><div class="mstep-label">(3+4j)* =</div><div class="mstep-body">3 − 4j</div></div><div class="mstep"><div class="mstep-label">(2−5j)* =</div><div class="mstep-body">2 + 5j</div></div><div class="mstep"><div class="mstep-label">(7)* =</div><div class="mstep-body">7 &nbsp;&nbsp;<span class="eq-note">← pure reals: unchanged</span></div></div><div class="mstep"><div class="mstep-label">(jb)* =</div><div class="mstep-body">−jb &nbsp;&nbsp;<span class="eq-note">← pure imaginary: sign flips</span></div></div></div>
+
+  <p>Geometrically on the Argand plane, the conjugate is the <strong>reflection across the real axis</strong>.</p>
+
+  <canvas id="c_conj" width="480" height="260"></canvas>
+  <div class="canvas-caption">z (blue) and z* (red) — reflection across the horizontal axis. Click to move z.</div>
+
+  <h3>Modulus |z| — the "length" of a complex number</h3>
+  <p>The <strong>modulus</strong> of z is its distance from the origin — always a real number ≥ 0:</p>
+
+  <div class="math-block"><div class="eq"><span>|z| = √( a² + b² )</span><span class="eq-note">← Pythagorean theorem!</span></div><hr class="math-sep"><div class="eq"><span><span class="eq-note">Esempio:</span></span><span>z = 3+4j &nbsp;→&nbsp; |z| = √(9+16) = √25 = <strong>5</strong></span></div></div>
+
+  <h3>Squared modulus |z|² — fundamental in quantum</h3>
+  <p>In quantum computing <strong>|z|²</strong> appears constantly. There is an elegant trick using the conjugate:</p>
+
+  <div class="math-block"><div class="eq"><span>|z|² = z · z* = (a+jb)(a−jb) = <strong>a² + b²</strong></span></div><hr class="math-sep"><div class="mstep"><div class="mstep-label">Expanding:</div><div class="mstep-body">(a+jb)(a−jb) = a² − ajb + ajb − j²b²</div></div><div class="mstep"><div class="mstep-label"></div><div class="mstep-body">= a² − j²b²</div></div><div class="mstep"><div class="mstep-label"></div><div class="mstep-body">= a² − (<strong>−1</strong>)·b² &nbsp;<span class="eq-note">← j² = −1 !</span></div></div><div class="mstep"><div class="mstep-label"></div><div class="mstep-body">= a² + b² &nbsp;✓</div></div></div>
+
+  <div class="insight">
+    This is why |α|² always appears in quantum measurements: it is the measurement probability — a positive real number, perfect for a probability!
+  </div>
+
+  <h3>The phase φ</h3>
+  <p>Every complex number has an <strong>angle</strong> (phase) relative to the real axis. It can be written in polar form:</p>
+  <div class="math-block"><div class="eq"><span>z = |z| · e<sup>jφ</sup> = |z| · (cos φ + j·sin φ)</span><span class="eq-note">← Euler's formula</span></div><div class="eq"><span>φ = arctan( b / a )</span></div></div>
+  <div class="note-box">
+    In quantum, the phase φ of the amplitudes does not change probabilities (|e^(jφ)|² = 1 always), but it is crucial for interference — the engine of quantum algorithms.
+  </div>
+
+  <div class="ex-block">
+    <div class="ex-header"><span class="ex-tag">Ex 3.1</span><span class="ex-title">Complex conjugate</span></div>
+    <div class="ex-body">
+      <p>Write the conjugate of these numbers (remember: only change the sign of j):</p>
+      <p><strong>a)</strong> z = 5 + 2j &nbsp;&nbsp;&nbsp; <strong>b)</strong> z = −3 − j &nbsp;&nbsp;&nbsp; <strong>c)</strong> z = 4 (pure real)</p>
+    </div>
+    <div class="answer-area">
+      <div class="answer-row">
+        <span class="ans-label">a) z* =</span>
+        <input class="answer-input" id="ac31a" placeholder="…" style="width:90px">
+        <span class="ans-label">b) z* =</span>
+        <input class="answer-input" id="ac31b" placeholder="…" style="width:90px">
+        <span class="ans-label">c) z* =</span>
+        <input class="answer-input" id="ac31c" placeholder="…" style="width:70px">
+        <button class="btn sm" onclick="chkConj('fbc31')">Check</button>
+      </div>
+      <button class="hint-toggle" onclick="showHint('hc31')">show hint</button>
+      <div class="feedback hint" id="hc31">Single rule: change the sign in front of j. If there is no j (real number), the conjugate is identical to the original number.</div>
+      <div class="feedback" id="fbc31"></div>
+    </div>
+  </div>
+
+  <div class="ex-block">
+    <div class="ex-header"><span class="ex-tag">Ex 3.2</span><span class="ex-title">Squared modulus |z|²</span></div>
+    <div class="ex-body">
+      <p>Calculate |z|² = a² + b² for:</p>
+      <p><strong>a)</strong> z = 3 + 4j &nbsp;&nbsp; → &nbsp; 3² + 4² = ?</p>
+      <p><strong>b)</strong> z = 1/√2 + j/√2 &nbsp;&nbsp; → &nbsp; (1/√2)² + (1/√2)² = ? &nbsp; <span style="font-size:0.8rem;color:var(--muted)">(appears very often in quantum!)</span></p>
+    </div>
+    <div class="answer-area">
+      <div class="answer-row">
+        <span class="ans-label">a) |z|² =</span>
+        <input class="answer-input" id="ac32a" placeholder="…" style="width:65px">
+        <span class="ans-label">b) |z|² =</span>
+        <input class="answer-input" id="ac32b" placeholder="…" style="width:65px">
+        <button class="btn sm" onclick="chkMod('fbc32')">Check</button>
+      </div>
+      <div class="feedback" id="fbc32"></div>
+    </div>
+  </div>
+
+  <div class="ex-block">
+    <div class="ex-header"><span class="ex-tag">Ex 3.3</span><span class="ex-title">Multiplying z · z* — the trick</span></div>
+    <div class="ex-body">
+      <p>Given z = 2 + 3j, verify that z · z* = |z|² by multiplying explicitly:</p>
+      <div class="math-block"><div class="eq"><span>(2+3j)(2−3j) = 4 − 6j + 6j − 9j² = 4 − 9·(<strong>?</strong>)</span></div></div>
+      <p>Substitute j² = −1, then add:</p>
+    </div>
+    <div class="answer-area">
+      <div class="answer-row">
+        <span class="ans-label">j² =</span>
+        <input class="answer-input" id="ac33a" placeholder="…" style="width:60px">
+        <span class="ans-label">z·z* =</span>
+        <input class="answer-input" id="ac33b" placeholder="…" style="width:65px">
+        <button class="btn sm" onclick="chkZZstar('fbc33')">Check</button>
+      </div>
+      <button class="hint-toggle" onclick="showHint('hc33')">show hint</button>
+      <div class="feedback hint" id="hc33">j² = −1 per definizione. Quindi −9j² = −9·(−1) = +9. Poi 4 + 9 = 13. Verifica: |z|² = 2² + 3² = 4 + 9 = 13 ✓</div>
+      <div class="feedback" id="fbc33"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SEZIONE 4 — PRODOTTO INTERNO
+═══════════════════════════════════════ -->
+<div class="section" id="s4">
+  <div class="section-num">Section 04</div>
+  <h2>Inner Product — measuring "alignment"</h2>
+
+  <p>The <strong>inner product</strong> (or dot product) of two vectors measures how "aligned" they are. For real vectors in ℝᴺ:</p>
+
+  <div class="math-block"><div class="eq"><span>⟨u, v⟩ = u₁v₁ + u₂v₂ + ... + uₙvₙ</span></div></div>
+
+  <p>Geometrically: <span class="math-inline">u · v = ‖u‖ · ‖v‖ · cos(θ)</span> where θ is the angle between the two vectors.</p>
+
+  <canvas id="c_dot" width="480" height="260"></canvas>
+  <div class="canvas-caption">Drag the slider to change the angle between the vectors — observe how the inner product changes</div>
+  <div class="controls">
+    <span>θ =</span>
+    <input type="range" id="dotSlider" min="0" max="180" value="45" oninput="updateDot()">
+    <span class="ctrl-val" id="dotVal">45°</span>
+  </div>
+  <div class="live" id="dotLive"></div>
+
+  <h3>Orthogonality</h3>
+  <p>Two vectors are <strong>orthogonal</strong> (perpendicular) if their inner product is zero — the angle between them is 90°.</p>
+
+  <div class="math-block"><div class="eq"><span>u · v = 0 &nbsp;&nbsp;⟺&nbsp;&nbsp; u ⊥ v</span><span class="eq-note">(orthogonal)</span></div></div>
+
+  <h3>Inner product with complex numbers</h3>
+  <p>When the components are complex numbers (as in quantum), the inner product is modified: the first vector must be <em>conjugated</em>:</p>
+
+  <div class="math-block"><div class="eq"><span>⟨u, v⟩ = u₁*·v₁ + u₂*·v₂ + ...</span><span class="eq-note">← the * denotes complex conjugate</span></div></div>
+
+  <div class="note-box">
+    The conjugate of a complex number z = a + jb is z* = a − jb. Only the sign of the imaginary part changes. On the Argand plane this is the reflection across the real axis.
+  </div>
+
+  <div class="ex-block">
+    <div class="ex-header"><span class="ex-tag">Ex 3.1</span><span class="ex-title">Real inner product</span></div>
+    <div class="ex-body">
+      <p>Calculate <span class="math-inline">u · v</span> with <span class="math-inline">u = (2, 3)ᵀ</span> and <span class="math-inline">v = (4, −1)ᵀ</span></p>
+      <p>u · v = 2·4 + 3·(−1) = ?</p>
+    </div>
+    <div class="answer-area">
+      <div class="answer-row">
+        <span class="ans-label">u · v =</span>
+        <input class="answer-input" id="a31" placeholder="…" onkeydown="if(event.key==='Enter')chk('a31','5','fb31')">
+        <button class="btn sm" onclick="chk('a31','5','fb31')">Check</button>
+      </div>
+      <div class="feedback" id="fb31"></div>
+    </div>
+  </div>
+
+  <div class="ex-block">
+    <div class="ex-header"><span class="ex-tag">Ex 3.2</span><span class="ex-title">Checking orthogonality</span></div>
+    <div class="ex-body">
+      <p>Are <span class="math-inline">a = (1, 1)ᵀ</span> and <span class="math-inline">b = (1, −1)ᵀ</span> orthogonal? Calculate the inner product:</p>
+    </div>
+    <div class="answer-area">
+      <div class="answer-row">
+        <span class="ans-label">a · b =</span>
+        <input class="answer-input" id="a32a" placeholder="…" style="width:70px" onkeydown="if(event.key==='Enter')chkOrtho('a32a','0','a32b','fb32')">
+        <span class="ans-label">Orthogonal?</span>
+        <input class="answer-input" id="a32b" placeholder="…" style="width:80px" onkeydown="if(event.key==='Enter')chkOrtho('a32a','0','a32b','fb32')">
+        <button class="btn sm" onclick="chkOrtho('a32a','0','a32b','fb32')">Check</button>
+      </div>
+      <div class="feedback" id="fb32"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SEZIONE 5 — NOTAZIONE DIRAC
+═══════════════════════════════════════ -->
+<div class="section" id="s5">
+  <div class="section-num">Section 05</div>
+  <h2>Dirac Notation — the language of Quantum</h2>
+
+  <p>Quantum computing uses a special notation invented by <strong>Paul Dirac</strong>, which looks strange at first but is very convenient. Let's learn it step by step.</p>
+
+  <h3>Ket |v⟩ — the column vector</h3>
+  <p>The symbol <strong>|v⟩</strong> (read "ket v") is simply a column vector. Nothing mysterious:</p>
+
+  <div class="math-block"><div class="eq"><span>|ψ⟩ =</span><span><span class="vec"><table><tbody><tr><td>α</td></tr><tr><td>β</td></tr></tbody></table></span></span><span class="eq-note">← just a regular column vector!</span></div><div class="eq"><span><span class="eq-note">Same as writing ψ = (α, β)ᵀ</span></span></div></div>
+
+  <h3>Bra ⟨v| — the conjugate transpose</h3>
+  <p>The symbol <strong>⟨v|</strong> (read "bra v") is the <em>conjugate transpose</em> of the ket. That is: transpose the column to a row, and conjugate every complex component:</p>
+
+  <div class="math-block"><div class="eq"><span>If &nbsp;|ψ⟩ =</span><span><span class="vec"><table><tbody><tr><td>α</td></tr><tr><td>β</td></tr></tbody></table></span></span><span>&nbsp;&nbsp;then &nbsp; ⟨ψ| = ( α*  β* )</span></div><hr class="math-sep"><div class="eq"><span><span class="eq-note">For real vectors:</span></span><span>⟨ψ| = ( α  β )</span><span class="eq-note">← transposed row</span></div></div>
+
+  <div class="insight">
+    Bra + Ket = "Bracket". The product ⟨u|v⟩ = inner product of u and v. That is the whole idea!
+  </div>
+
+  <h3>Inner product in Dirac notation</h3>
+  <div class="math-block"><div class="eq"><span>⟨u|v⟩ = ( u₁*  u₂* ) ·</span><span><span class="vec"><table><tbody><tr><td>v₁</td></tr><tr><td>v₂</td></tr></tbody></table></span></span><span>= u₁*·v₁ + u₂*·v₂</span></div><div class="eq"><span><span class="eq-note">Identical to the inner product from the previous section.</span></span></div></div>
+
+  <div class="ex-block">
+    <div class="ex-header"><span class="ex-tag">Ex 4.1</span><span class="ex-title">Writing bra and ket</span></div>
+    <div class="ex-body">
+      <p>Given <span class="math-inline">|ψ⟩ = (2, −3)ᵀ</span> (real components),</p>
+      <p><strong>a)</strong> The corresponding bra ⟨ψ| is a ___ vector (row/column)?</p>
+      <p><strong>b)</strong> What is the second component of ⟨ψ|?</p>
+    </div>
+    <div class="answer-area">
+      <div class="answer-row">
+        <span class="ans-label">type:</span>
+        <input class="answer-input" id="a41a" placeholder="…" class="wide" onkeydown="if(event.key==='Enter')chkBra('fb41')">
+        <span class="ans-label">⟨ψ|₂ =</span>
+        <input class="answer-input" id="a41b" placeholder="…" onkeydown="if(event.key==='Enter')chkBra('fb41')">
+        <button class="btn sm" onclick="chkBra('fb41')">Check</button>
+      </div>
+      <div class="feedback" id="fb41"></div>
+    </div>
+  </div>
+
+  <div class="ex-block">
+    <div class="ex-header"><span class="ex-tag">Ex 4.2</span><span class="ex-title">Computing ⟨u|v⟩</span></div>
+    <div class="ex-body">
+      <p>Given <span class="math-inline">|u⟩ = (1, 2)ᵀ</span> and <span class="math-inline">|v⟩ = (3, 4)ᵀ</span> (all real),</p>
+      <p>calculate ⟨u|v⟩ = (1, 2)·(3, 4)ᵀ = 1·3 + 2·4 = ?</p>
+    </div>
+    <div class="answer-area">
+      <div class="answer-row">
+        <span class="ans-label">⟨u|v⟩ =</span>
+        <input class="answer-input" id="a42" placeholder="…" onkeydown="if(event.key==='Enter')chk('a42','11','fb42')">
+        <button class="btn sm" onclick="chk('a42','11','fb42')">Check</button>
+      </div>
+      <div class="feedback" id="fb42"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SEZIONE 5 — PERCHÉ |0⟩ = (1,0)?
+═══════════════════════════════════════ -->
+<div class="section" id="s6">
+  <div class="section-num">Section 06</div>
+  <h2>Why |0⟩ = (1, 0)ᵀ and |1⟩ = (0, 1)ᵀ?</h2>
+
+  <p>This is a fundamental question. The short answer: <strong>it is a conventional choice</strong>, like choosing a coordinate system in geometry. Here is the full explanation.</p>
+
+  <h3>The standard basis of ℝ²</h3>
+  <p>In 2D, the "standard basis" vectors are the simplest ones pointing along the axes:</p>
+
+  <div class="math-block"><div class="eq"><span>e₁ =</span><span><span class="vec"><table><tbody><tr><td>1</td></tr><tr><td class="c-0">0</td></tr></tbody></table></span></span><span>&nbsp;&nbsp;&nbsp; e₂ =</span><span><span class="vec"><table><tbody><tr><td class="c-0">0</td></tr><tr><td>1</td></tr></tbody></table></span></span></div><hr class="math-sep"><div class="eq"><span><span class="vec"><table><tbody><tr><td>3</td></tr><tr><td>2</td></tr></tbody></table></span></span><span>= 3·</span><span><span class="vec"><table><tbody><tr><td>1</td></tr><tr><td class="c-0">0</td></tr></tbody></table></span></span><span>+ 2·</span><span><span class="vec"><table><tbody><tr><td class="c-0">0</td></tr><tr><td>1</td></tr></tbody></table></span></span><span>= 3·e₁ + 2·e₂</span></div></div>
+
+  <h3>The connection to qubits</h3>
+  <p>A qubit can be in one of two <em>distinguishable and opposite</em> states: "zero" and "one" (think: spin-up / spin-down, horizontal / vertical, etc.).</p>
+
+  <p>We choose to represent them with the standard basis vectors:</p>
+
+  <div class="math-block"><div class="eq"><span>|0⟩ =</span><span><span class="vec"><table><tbody><tr><td>1</td></tr><tr><td class="c-0">0</td></tr></tbody></table></span></span><span class="eq-note">← "spin up"</span></div><div class="eq"><span>|1⟩ =</span><span><span class="vec"><table><tbody><tr><td class="c-0">0</td></tr><tr><td>1</td></tr></tbody></table></span></span><span class="eq-note">← "spin down"</span></div></div>
+
+  <div class="insight">
+    The reason for this choice: <strong>|0⟩ and |1⟩ are orthogonal</strong> (⟨0|1⟩ = 0) and <strong>normalised</strong> (⟨0|0⟩ = 1). They form an <em>orthonormal basis</em> — the most convenient basis type in all of quantum computing.
+  </div>
+
+  <canvas id="c_basis" width="480" height="260"></canvas>
+  <div class="canvas-caption">Basis vectors |0⟩ and |1⟩ in the plane — orthogonal and unit length</div>
+
+  <h3>Why these two vectors and not others?</h3>
+  <p>We could choose any other pair of orthogonal unit vectors. For example:</p>
+
+  <div class="math-block"><div class="eq"><span>|+⟩ =</span><span><span class="vec"><table><tbody><tr><td>1/√2</td></tr><tr><td>1/√2</td></tr></tbody></table></span></span><span>&nbsp;&nbsp;&nbsp; |−⟩ =</span><span><span class="vec"><table><tbody><tr><td>1/√2</td></tr><tr><td class="c-n">−1/√2</td></tr></tbody></table></span></span></div><div class="eq"><span><span class="eq-note">→ Hadamard basis — equally valid!</span></span></div></div>
+
+  <p>The choice of |0⟩=(1,0)ᵀ and |1⟩=(0,1)ᵀ is called the <strong>standard computational basis</strong> and is the most widely used by convention.</p>
+
+  <div class="ex-block">
+    <div class="ex-header"><span class="ex-tag">Ex 5.1</span><span class="ex-title">Verifying the basis</span></div>
+    <div class="ex-body">
+      <p>Verify that |0⟩ and |1⟩ form an orthonormal basis:</p>
+      <p><strong>a)</strong> ⟨0|0⟩ = (1, 0)·(1, 0)ᵀ = ?</p>
+      <p><strong>b)</strong> ⟨1|1⟩ = (0, 1)·(0, 1)ᵀ = ?</p>
+      <p><strong>c)</strong> ⟨0|1⟩ = (1, 0)·(0, 1)ᵀ = ? (orthogonal?)</p>
+    </div>
+    <div class="answer-area">
+      <div class="answer-row">
+        <span class="ans-label">⟨0|0⟩=</span>
+        <input class="answer-input" id="a51a" style="width:60px" placeholder="…">
+        <span class="ans-label">⟨1|1⟩=</span>
+        <input class="answer-input" id="a51b" style="width:60px" placeholder="…">
+        <span class="ans-label">⟨0|1⟩=</span>
+        <input class="answer-input" id="a51c" style="width:60px" placeholder="…">
+        <button class="btn sm" onclick="chk3('a51a','1','a51b','1','a51c','0','fb51')">Check</button>
+      </div>
+      <div class="feedback" id="fb51"></div>
+    </div>
+  </div>
+
+  <div class="ex-block">
+    <div class="ex-header"><span class="ex-tag">Ex 5.2</span><span class="ex-title">Decomposition in the basis</span></div>
+    <div class="ex-body">
+      <p>Every vector can be written as a combination of |0⟩ and |1⟩. Write <span class="math-inline">v = (3, −2)ᵀ</span> in ket notation:</p>
+      <div class="math-block"><div class="eq"><span>v = ___ · |0⟩ &nbsp;+&nbsp; ___ · |1⟩</span></div></div>
+    </div>
+    <div class="answer-area">
+      <div class="answer-row">
+        <span class="ans-label">v =</span>
+        <input class="answer-input" id="a52a" style="width:60px" placeholder="…">
+        <span class="ans-label">|0⟩ +</span>
+        <input class="answer-input" id="a52b" style="width:60px" placeholder="…">
+        <span class="ans-label">|1⟩</span>
+        <button class="btn sm" onclick="chk2('a52a','3','a52b','-2','fb52')">Check</button>
+      </div>
+      <button class="hint-toggle" onclick="showHint('h52')">show hint</button>
+      <div class="feedback hint" id="h52">α·|0⟩ + β·|1⟩ = α·(1,0)ᵀ + β·(0,1)ᵀ = (α, β)ᵀ. So α is the first component and β is the second.</div>
+      <div class="feedback" id="fb52"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SEZIONE 6 — IL QUBIT
+═══════════════════════════════════════ -->
+<div class="section" id="s7">
+  <div class="section-num">Section 07</div>
+  <h2>The Qubit — the basic quantum state</h2>
+
+  <p>A <strong>qubit</strong> is the basic unit of quantum computing. Unlike a classical bit (which is only 0 or 1), a qubit can be in a <em>superposition</em> of |0⟩ and |1⟩.</p>
+
+  <div class="def">
+    <div class="def-title">Definition — Qubit</div>
+    <div class="math-block"><div class="eq"><span>|ψ⟩ = α|0⟩ + β|1⟩ = α·</span><span><span class="vec"><table><tbody><tr><td>1</td></tr><tr><td class="c-0">0</td></tr></tbody></table></span></span><span>+ β·</span><span><span class="vec"><table><tbody><tr><td class="c-0">0</td></tr><tr><td>1</td></tr></tbody></table></span></span><span>=</span><span><span class="vec"><table><tbody><tr><td>α</td></tr><tr><td>β</td></tr></tbody></table></span></span></div><hr class="math-sep"><div class="eq"><span>α, β ∈ ℂ</span><span><span class="eq-note">(complex numbers)</span></span></div><div class="eq"><span>|α|² + |β|² = 1</span><span><span class="eq-note">(unit norm)</span></span></div></div>
+    α and β are called <strong>probability amplitudes</strong>.
+  </div>
+
+  <h3>Why |α|² + |β|² = 1?</h3>
+  <p>This is exactly the normalisation condition we studied. In Dirac terms:</p>
+  <div class="math-block"><div class="eq"><span>⟨ψ|ψ⟩ = ( α*  β* ) ·</span><span><span class="vec"><table><tbody><tr><td>α</td></tr><tr><td>β</td></tr></tbody></table></span></span><span>= |α|² + |β|² = 1</span></div></div>
+  <p>Physically: the total probability of finding the qubit in some state must be 1 (100%).</p>
+
+  <canvas id="c_qubit" width="480" height="280"></canvas>
+  <div class="canvas-caption">The unit circle — all real qubits lie on it. Click to place a state.</div>
+
+  <h3>Qubit examples</h3>
+  <div class="math-block"><div class="mstep"><div class="mstep-label">|ψ⟩ = |0⟩</div><div class="mstep-body">α=1, β=0 &nbsp;→&nbsp; 1²+0² = 1 ✓</div></div><div class="mstep"><div class="mstep-label">|ψ⟩ = |1⟩</div><div class="mstep-body">α=0, β=1 &nbsp;→&nbsp; 0²+1² = 1 ✓</div></div><div class="mstep"><div class="mstep-label">(|0⟩+|1⟩)/√2</div><div class="mstep-body">α=β=1/√2 &nbsp;→&nbsp; 1/2+1/2 = 1 ✓</div></div><div class="mstep"><div class="mstep-label">(|0⟩−|1⟩)/√2</div><div class="mstep-body">α=1/√2, β=−1/√2 &nbsp;→&nbsp; 1/2+1/2 = 1 ✓</div></div></div>
+
+  <div class="note-box">
+    The last example <span class="math-inline">(|0⟩+|1⟩)/√2</span> is the QRNG from your notes! Measuring this state gives 0 or 1 each with exactly 50% probability.
+  </div>
+
+  <div class="ex-block">
+    <div class="ex-header"><span class="ex-tag">Ex 6.1</span><span class="ex-title">Valid qubit or not?</span></div>
+    <div class="ex-body">
+      <p>For each one, check whether it is a valid qubit (norm = 1):</p>
+      <p><strong>a)</strong> <span class="math-inline">|ψ⟩ = (1/2)|0⟩ + (√3/2)|1⟩</span>  →  |1/2|² + |√3/2|² = ?</p>
+      <p><strong>b)</strong> <span class="math-inline">|ψ⟩ = (1/2)|0⟩ + (1/2)|1⟩</span> → valid?</p>
+    </div>
+    <div class="answer-area">
+      <div class="answer-row">
+        <span class="ans-label">a) sum =</span>
+        <input class="answer-input" id="a61a" style="width:60px" placeholder="…">
+        <span class="ans-label">valid?</span>
+        <input class="answer-input" id="a61b" style="width:70px" placeholder="…">
+      </div>
+      <div class="answer-row">
+        <span class="ans-label">b) sum =</span>
+        <input class="answer-input" id="a61c" style="width:60px" placeholder="…">
+        <span class="ans-label">valid?</span>
+        <input class="answer-input" id="a61d" style="width:70px" placeholder="…">
+        <button class="btn sm" onclick="chkQubit('fb61')">Check</button>
+      </div>
+      <button class="hint-toggle" onclick="showHint('h61')">show hint</button>
+      <div class="feedback hint" id="h61">a) (1/2)² + (√3/2)² = 1/4 + 3/4 = 4/4 = 1. b) (1/2)² + (1/2)² = 1/4 + 1/4 = 1/2 ≠ 1.</div>
+      <div class="feedback" id="fb61"></div>
+    </div>
+  </div>
+
+  <div class="ex-block">
+    <div class="ex-header"><span class="ex-tag">Ex 6.2</span><span class="ex-title">Finding the missing β</span></div>
+    <div class="ex-body">
+      <p>Given <span class="math-inline">|ψ⟩ = (1/√3)|0⟩ + β|1⟩</span> with β real and positive,</p>
+      <p>find β knowing it is a valid qubit.</p>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><span>Write the normalisation condition: (1/√3)² + β² = 1</span></div>
+        <div class="step"><div class="step-num">2</div><span>1/3 + β² = 1  →  β² = 2/3  →  β = ?</span></div>
+      </div>
+    </div>
+    <div class="answer-area">
+      <div class="answer-row">
+        <span class="ans-label">β =</span>
+        <input class="answer-input" id="a62" placeholder="…" class="wide" onkeydown="if(event.key==='Enter')chkBeta('fb62')">
+        <button class="btn sm" onclick="chkBeta('fb62')">Check</button>
+      </div>
+      <div class="feedback" id="fb62"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SEZIONE 7 — MISURA
+═══════════════════════════════════════ -->
+<div class="section" id="s8">
+  <div class="section-num">Section 08</div>
+  <h2>Measurement — where the quantum world meets the classical</h2>
+
+  <p>If we have <span class="math-inline">|ψ⟩ = α|0⟩ + β|1⟩</span>, what happens when we <strong>measure</strong> it?</p>
+
+  <div class="def">
+    <div class="def-title">Born Rule — Measurement Probability</div>
+    <div class="math-block"><div class="eq"><span>P( outcome |φ⟩ ) = |⟨φ|ψ⟩|²</span></div><hr class="math-sep"><div class="mstep"><div class="mstep-label">P( |0⟩ ) =</div><div class="mstep-body">|⟨0|ψ⟩|² = <strong>|α|²</strong></div></div><div class="mstep"><div class="mstep-label">P( |1⟩ ) =</div><div class="mstep-body">|⟨1|ψ⟩|² = <strong>|β|²</strong></div></div></div>
+    After measurement, the state <strong>collapses</strong> to the outcome obtained.
+  </div>
+
+  <div class="note-box">
+    The symbol |·|² denotes the <strong>squared modulus</strong>. For real numbers |x|² = x². For complex z = a+jb, |z|² = a² + b². Always a real number ≥ 0 — perfect for a probability!
+  </div>
+
+  <canvas id="c_meas" width="480" height="200"></canvas>
+  <div class="canvas-caption">Measurement simulator — move the slider and press Measure</div>
+  <div class="controls">
+    <span>θ =</span>
+    <input type="range" id="measSlider" min="0" max="90" value="45" oninput="updateMeas()">
+    <span class="ctrl-val" id="measVal">45°</span>
+    <span style="font-size:0.75rem;color:var(--muted)">α=cos θ, β=sin θ</span>
+  </div>
+  <div class="live" id="measLive"></div>
+  <div style="display:flex;gap:0.5rem;margin-top:0.6rem;flex-wrap:wrap;">
+    <button class="btn sm" onclick="doMeasure(1)">Misura 1×</button>
+    <button class="btn sm" onclick="doMeasure(200)">Measure 200×</button>
+    <button class="btn sm ghost" onclick="resetMeasure()">Reset</button>
+  </div>
+  <div id="measStats" style="font-size:0.78rem;color:var(--muted);margin-top:0.5rem;font-family:'IBM Plex Mono',monospace;"></div>
+
+  <h3>State collapse</h3>
+  <p>After measuring and obtaining, say, |0⟩, the system's state <em>becomes</em> |0⟩. The next measurement gives 0 with certainty (probability 1). The system has "forgotten" the original amplitudes.</p>
+
+  <div class="insight">
+    This is why quantum computing differs from classical computing: before measurement the system is in superposition (both 0 and 1 simultaneously), but measurement "forces" it to pick one.
+  </div>
+
+  <div class="ex-block">
+    <div class="ex-header"><span class="ex-tag">Ex 7.1</span><span class="ex-title">Computing probabilities</span></div>
+    <div class="ex-body">
+      <p>Dato <span class="math-inline">|ψ⟩ = (√3/2)|0⟩ + (1/2)|1⟩</span></p>
+      <p><strong>a)</strong> P(measure |0⟩) = |√3/2|² = ?</p>
+      <p><strong>b)</strong> P(measure |1⟩) = |1/2|² = ?</p>
+      <p><strong>c)</strong> Which outcome is more likely?</p>
+    </div>
+    <div class="answer-area">
+      <div class="answer-row">
+        <span class="ans-label">P(|0⟩)=</span>
+        <input class="answer-input" id="a71a" style="width:70px" placeholder="…">
+        <span class="ans-label">P(|1⟩)=</span>
+        <input class="answer-input" id="a71b" style="width:70px" placeholder="…">
+        <span class="ans-label">more likely:</span>
+        <input class="answer-input" id="a71c" style="width:60px" placeholder="…">
+        <button class="btn sm" onclick="chkMeas('fb71')">Check</button>
+      </div>
+      <div class="feedback" id="fb71"></div>
+    </div>
+  </div>
+
+  <div class="ex-block">
+    <div class="ex-header"><span class="ex-tag">Ex 7.2</span><span class="ex-title">QRNG — from the notes</span></div>
+    <div class="ex-body">
+      <p>As in your notes: <span class="math-inline">|ψ⟩ = (|0⟩ + |1⟩)/√2</span></p>
+      <p><strong>a)</strong> Write α and β explicitly</p>
+      <p><strong>b)</strong> Calculate P(|0⟩) and P(|1⟩)</p>
+      <p><strong>c)</strong> Why is this a perfect random number generator?</p>
+    </div>
+    <div class="answer-area">
+      <div class="answer-row">
+        <span class="ans-label">α =</span>
+        <input class="answer-input" id="a72a" style="width:80px" placeholder="…">
+        <span class="ans-label">β =</span>
+        <input class="answer-input" id="a72b" style="width:80px" placeholder="…">
+      </div>
+      <div class="answer-row">
+        <span class="ans-label">P(|0⟩)=</span>
+        <input class="answer-input" id="a72c" style="width:70px" placeholder="…">
+        <span class="ans-label">P(|1⟩)=</span>
+        <input class="answer-input" id="a72d" style="width:70px" placeholder="…">
+        <button class="btn sm" onclick="chkQRNG('fb72')">Check</button>
+      </div>
+      <button class="hint-toggle" onclick="showHint('h72')">show hint</button>
+      <div class="feedback hint" id="h72">α = 1/√2 ≈ 0.707. P(|0⟩) = (1/√2)² = 1/2 = 50%. Entrambe le probabilità sono uguali → casuale perfetto!</div>
+      <div class="feedback" id="fb72"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SEZIONE 8 — MATRICI & GATE
+═══════════════════════════════════════ -->
+<div class="section" id="s9">
+  <div class="section-num">Section 09</div>
+  <h2>Matrices and Quantum Gates — transforming qubits</h2>
+
+  <h3>How to read a matrix</h3>
+  <p>A matrix is a grid of numbers organised in <strong>rows</strong> and <strong>columns</strong>. A 2×2 matrix has 2 rows and 2 columns:</p>
+
+  <div class="math-block"><div class="mx-cols"><div><div class="mx-label">Standard notation</div><div class="eq"><span><span class="mx"><table><tbody><tr><td>a</td><td>b</td></tr><tr><td>c</td><td>d</td></tr></tbody></table></span></span></div></div><div><div class="mx-label">Compact notation</div><div class="eq"><span>((a,b), (c,d))</span></div><div class="eq"><span><span style="font-size:0.75rem;color:var(--muted)">or: [[a,b],[c,d]]</span></span></div></div></div><hr class="math-sep"><div class="eq"><span><span class="eq-note">Each inner pair = one row. First pair = row 1, second = row 2.</span></span></div></div>
+
+  <div class="note-box">
+    Example — gate X written compactly: <code>(0 1 ; 1 0)</code><br>
+    Read as: row 1 = (0, 1) &nbsp;·&nbsp; row 2 = (1, 0)<br>
+    That is exactly:
+    <div style="font-family:'IBM Plex Mono',monospace; margin-top:0.5rem; line-height:1.8;">
+    X = ( 0  1 )  ← row 1: "0 1"<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;( 1  0 )  ← row 2: "1 0"
+    </div>
+    So <code>(0 1 ; 1 0)</code> and <code>((0,1),(1,0))</code> and the two-row form are <strong>three ways of writing the same thing</strong>.
+  </div>
+
+  <h3>Scaling to larger matrices — 3×3 and beyond</h3>
+  <p>Same logic: each block separated by ";" is a row. A 3×3 matrix has 3 blocks:</p>
+
+  <div class="math-block"><div class="mx-cols"><div><div class="mx-label">Standard</div><div class="eq"><span><span class="mx"><table><tbody><tr><td>a</td><td>b</td><td>c</td></tr><tr><td>d</td><td>e</td><td>f</td></tr><tr><td>g</td><td>h</td><td>i</td></tr></tbody></table></span></span></div></div><div><div class="mx-label">Compact</div><div style="font-size:0.82rem;line-height:1.9;">((a,b,c),<br>(d,e,f),<br>(g,h,i))</div></div></div><hr class="math-sep"><div class="mx-label">Example — 3×3 identity matrix:</div><div class="mx-cols-auto"><div class="eq"><span><span class="mx"><table><tbody><tr><td>1</td><td class="c-0">0</td><td class="c-0">0</td></tr><tr><td class="c-0">0</td><td>1</td><td class="c-0">0</td></tr><tr><td class="c-0">0</td><td class="c-0">0</td><td>1</td></tr></tbody></table></span></span></div><span style="font-size:0.82rem;">((1,0,0), (0,1,0), (0,0,1))</span></div></div>
+
+  <h3>4×4 Matrix — two qubits</h3>
+  <p>CNOT gate, the most common 2-qubit gate — 4 rows separated by ";":</p>
+
+  <div class="math-block"><div style="font-size:0.8rem;font-weight:600;margin-bottom:0.5rem;">CNOT gate — the most-used 2-qubit gate:</div><div class="mx-cols-auto"><div class="eq"><span><span class="mx"><table><tbody><tr><td>1</td><td class="c-0">0</td><td class="c-0">0</td><td class="c-0">0</td></tr><tr><td class="c-0">0</td><td>1</td><td class="c-0">0</td><td class="c-0">0</td></tr><tr><td class="c-0">0</td><td class="c-0">0</td><td class="c-0">0</td><td>1</td></tr><tr><td class="c-0">0</td><td class="c-0">0</td><td>1</td><td class="c-0">0</td></tr></tbody></table></span></span></div><div style="font-size:0.82rem;line-height:1.9;color:var(--ink2);">((1,0,0,0),<br>(0,1,0,0),<br>(0,0,0,1),<br>(0,0,1,0))</div></div></div>
+
+  <div class="insight">
+    Trick for reading compact notation: count ";" and add 1 → rows. Count numbers in the first block → columns. <code>(1 2 3 ; 4 5 6)</code> = 1 ";" → 2 rows, 3 numbers → 3 columns = 2×3 matrix.
+  </div>
+
+  <h3>Matrix-vector product</h3>
+  <p>The rule: <em>each row of the matrix takes the inner product with the column vector</em>:</p>
+
+  <div class="math-block"><div class="eq"><span><span class="mx"><table><tbody><tr><td>a</td><td>b</td></tr><tr><td>c</td><td>d</td></tr></tbody></table></span></span><span>·</span><span><span class="vec"><table><tbody><tr><td>x</td></tr><tr><td>y</td></tr></tbody></table></span></span><span>=</span><span><span class="vec"><table><tbody><tr><td>a·x + b·y</td></tr><tr><td>c·x + d·y</td></tr></tbody></table></span></span><span class="eq-note">← row by components</span></div><hr class="math-sep"><div style="font-size:0.78rem;font-weight:600;margin-bottom:0.3rem;">Example — X|0⟩:</div><div class="eq"><span>X|0⟩ =</span><span><span class="mx"><table><tbody><tr><td class="c-0">0</td><td>1</td></tr><tr><td class="c-1">1</td><td class="c-0">0</td></tr></tbody></table></span></span><span>·</span><span><span class="vec"><table><tbody><tr><td>1</td></tr><tr><td class="c-0">0</td></tr></tbody></table></span></span><span>=</span><span><span class="vec"><table><tbody><tr><td>0·1+1·0</td></tr><tr><td>1·1+0·0</td></tr></tbody></table></span></span><span>=</span><span><span class="vec"><table><tbody><tr><td class="c-0">0</td></tr><tr><td>1</td></tr></tbody></table></span></span><span>= |1⟩</span></div></div>
+
+  <h3>Unitary matrices — the quantum condition</h3>
+  <p>In quantum computing, gates must be <strong>unitary matrices</strong>: UᴴU = I, where Uᴴ is the conjugate transpose of U.</p>
+
+  <div class="def">
+    <div class="def-title">Definition — Unitary Matrix</div>
+    U is unitary if <span class="math-inline">Uᴴ · U = I</span><br>
+    where Uᴴ = (Uᵀ)* = transpose then conjugate each element.<br><br>
+    <strong>Why?</strong> Because it preserves the vector norm: ‖U|ψ⟩‖ = ‖|ψ⟩‖ = 1. States remain valid states!
+  </div>
+
+  <h3>Gates from your notes — in both notations</h3>
+  <div class="math-block"><div class="mx-cols"><div><div class="mx-label">Gate X &nbsp;<span style="font-weight:300">(NOT)</span></div><div class="eq"><span><span class="mx"><table><tbody><tr><td class="c-0">0</td><td>1</td></tr><tr><td class="c-1">1</td><td class="c-0">0</td></tr></tbody></table></span></span><span><span class="eq-note">((0,1),(1,0))</span></span></div></div><div><div class="mx-label">Gate Z &nbsp;<span style="font-weight:300">(Phase flip)</span></div><div class="eq"><span><span class="mx"><table><tbody><tr><td>1</td><td class="c-0">0</td></tr><tr><td class="c-0">0</td><td class="c-n">−1</td></tr></tbody></table></span></span><span><span class="eq-note">((1,0),(0,−1))</span></span></div></div><div><div class="mx-label">Gate Y</div><div class="eq"><span><span class="mx"><table><tbody><tr><td class="c-0">0</td><td class="c-n">−j</td></tr><tr><td>j</td><td class="c-0">0</td></tr></tbody></table></span></span><span><span class="eq-note">((0,−j),(j,0))</span></span></div></div><div><div class="mx-label">Gate H &nbsp;<span style="font-weight:300">(Hadamard)</span></div><div class="eq"><span><span class="scalar">1/√2 ·</span></span><span><span class="mx"><table><tbody><tr><td>1</td><td>1</td></tr><tr><td>1</td><td class="c-n">−1</td></tr></tbody></table></span></span><span><span class="eq-note">1/√2·((1,1),(1,−1))</span></span></div></div></div></div>
+
+  <canvas id="c_gate" width="480" height="270"></canvas>
+  <div class="canvas-caption">Gate visualisation — observe how it transforms the basis vectors</div>
+  <div class="controls">
+    <button class="btn sm" onclick="setGateViz('X')">X</button>
+    <button class="btn sm" onclick="setGateViz('Z')">Z</button>
+    <button class="btn sm" onclick="setGateViz('H')">H</button>
+    <div id="gateDesc" style="font-size:0.78rem;color:var(--muted);flex:1;"></div>
+  </div>
+
+  <div class="ex-block">
+    <div class="ex-header"><span class="ex-tag">Ex 8.1</span><span class="ex-title">Applying gate X</span></div>
+    <div class="ex-body">
+      <p>Calculate X|1⟩ by multiplying the matrix by the vector:</p>
+      <div class="math-block"><div class="eq"><span>X|1⟩ =</span><span><span class="mx"><table><tbody><tr><td class="c-0">0</td><td>1</td></tr><tr><td class="c-1">1</td><td class="c-0">0</td></tr></tbody></table></span></span><span>·</span><span><span class="vec"><table><tbody><tr><td class="c-0">0</td></tr><tr><td>1</td></tr></tbody></table></span></span><span>= ?</span></div></div>
+    </div>
+    <div class="answer-area">
+      <div class="answer-row">
+        <span class="ans-label">X|1⟩ = (</span>
+        <input class="answer-input" id="a81a" style="width:55px" placeholder="…">
+        <span class="ans-label">,</span>
+        <input class="answer-input" id="a81b" style="width:55px" placeholder="…">
+        <span class="ans-label">)ᵀ =</span>
+        <input class="answer-input" id="a81c" style="width:70px" placeholder="…">
+        <button class="btn sm" onclick="chkGateX('fb81')">Check</button>
+      </div>
+      <div class="feedback" id="fb81"></div>
+    </div>
+  </div>
+
+  <div class="ex-block">
+    <div class="ex-header"><span class="ex-tag">Ex 8.2</span><span class="ex-title">Hadamard gate — superposition</span></div>
+    <div class="ex-body">
+      <p>Calculate H|0⟩ where <span class="math-inline">H = (1/√2)·[[1,1],[1,−1]]</span></p>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><span>First row × |0⟩ = (1/√2)·(1·1 + 1·0) = ?</span></div>
+        <div class="step"><div class="step-num">2</div><span>Second row × |0⟩ = (1/√2)·(1·1 + (−1)·0) = ?</span></div>
+        <div class="step"><div class="step-num">3</div><span>Result = (1/√2)|0⟩ + (1/√2)|1⟩ = ?</span></div>
+      </div>
+    </div>
+    <div class="answer-area">
+      <div class="answer-row">
+        <span class="ans-label">coeff. on |0⟩:</span>
+        <input class="answer-input" id="a82a" placeholder="…" style="width:80px">
+        <span class="ans-label">coeff. on |1⟩:</span>
+        <input class="answer-input" id="a82b" placeholder="…" style="width:80px">
+        <button class="btn sm" onclick="chkHadamard('fb82')">Check</button>
+      </div>
+      <div class="feedback" id="fb82"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SEZIONE 10 — AUTOVALORI
+═══════════════════════════════════════ -->
+<div class="section" id="s10">
+  <div class="section-num">Section 10</div>
+  <h2>Eigenvalues and Eigenvectors — in matrix form</h2>
+
+  <!-- DEFINIZIONE -->
+  <div class="def">
+    <div class="def-title">Definition — Eigenvector and Eigenvalue</div>
+    A vector <strong>|u⟩ ≠ 0</strong> is an <em>eigenvector</em> of matrix L with <em>eigenvalue</em> λ if:
+    <div class="math-block"><div class="eq"><span>L |u⟩ = λ |u⟩</span></div></div>
+    In explicit matrix form:
+    <div class="math-block"><div class="eq"><span><strong>det(L − λI) = 0</strong></span><span class="eq-note">← characteristic equation</span></div><hr class="math-sep"><div style="font-size:0.72rem;color:var(--muted);margin-bottom:0.3rem;">For a 2×2 matrix:</div><div class="eq"><span>det</span><span><span class="mx"><table><tbody><tr><td class="c-l">a−λ</td><td>b</td></tr><tr><td>c</td><td class="c-l">d−λ</td></tr></tbody></table></span></span><span>= (a−λ)(d−λ) − b·c = 0</span></div><hr class="math-sep"><div class="mstep"><div class="mstep-label">Expanding:</div><div class="mstep-body">ad − aλ − dλ + λ² − bc = 0</div></div><div class="mstep"><div class="mstep-label"></div><div class="mstep-body"><strong>λ² − (a+d)λ + (ad−bc) = 0</strong> <span class="eq-note">← degree-2 polynomial</span></div></div></div>
+    The matrix scales the vector by λ <strong>without changing its direction</strong>.
+  </div>
+
+  <canvas id="c_eigen" width="480" height="270"></canvas>
+  <div class="canvas-caption">Generic vectors change direction; eigenvectors (coloured) stay on the same line — select the matrix</div>
+  <div class="controls">
+    <button class="btn sm" onclick="setEigenViz('Z')">Pauli Z</button>
+    <button class="btn sm" onclick="setEigenViz('X')">Pauli X</button>
+    <button class="btn sm" onclick="setEigenViz('H')">Hadamard H</button>
+  </div>
+  <div class="live" id="eigenLive" style="margin-top:0.4rem;"></div>
+
+  <!-- STEP 1: equazione caratteristica -->
+  <h3>Step 1 — Rewrite as a homogeneous system</h3>
+  <p>Start from L|u⟩ = λ|u⟩ and move everything to the left. Recall that λ|u⟩ = λI|u⟩ where I is the identity matrix:</p>
+
+  <div class="math-block"><div class="mstep"><div class="mstep-label">Start from:</div><div class="mstep-body">L|u⟩ = λ|u⟩</div></div><div class="mstep"><div class="mstep-label">Rearrange:</div><div class="mstep-body">L|u⟩ − λI|u⟩ = 0 &nbsp;→&nbsp; <strong>(L − λI)|u⟩ = 0</strong></div></div><hr class="math-sep"><div style="font-size:0.72rem;color:var(--muted);margin-bottom:0.4rem;">In matrix form:</div><div class="eq"><span><span class="mx"><table><tbody><tr><td class="c-l">l₁₁−λ</td><td>l₁₂</td></tr><tr><td>l₂₁</td><td class="c-l">l₂₂−λ</td></tr></tbody></table></span></span><span>·</span><span><span class="vec"><table><tbody><tr><td>u₁</td></tr><tr><td>u₂</td></tr></tbody></table></span></span><span>=</span><span><span class="vec"><table><tbody><tr><td class="c-0">0</td></tr><tr><td class="c-0">0</td></tr></tbody></table></span></span></div></div>
+
+  <div class="note-box">
+    Subtracting λI means subtracting λ only from the <strong>main diagonal</strong>, because I has 1 on the diagonal and 0 elsewhere:
+    <div style="font-family:'IBM Plex Mono',monospace; font-size:0.85rem; margin-top:0.4rem;">
+    ( a  b )  −  λ( 1  0 )  =  ( a−λ   b  )<br>
+    ( c  d )      ( 0  1 )     (  c    d−λ )
+    </div>
+  </div>
+
+  <!-- STEP 2: determinante -->
+  <h3>Step 2 — Existence condition: det = 0</h3>
+  <p>The system (L − λI)|u⟩ = 0 has a <strong>non-zero</strong> solution only if (L − λI) is <em>singular</em> (non-invertible). This occurs when the determinant is zero:</p>
+
+  <div class="math-block">
+  <div class="eq"><strong>det(L − λI) = 0</strong><span class="eq-note">&nbsp;&nbsp;← equazione caratteristica</span></div>
+  <hr class="math-sep">
+  <div style="font-size:0.72rem;color:var(--muted);margin-bottom:0.4rem;">For a 2×2 matrix:</div>
+  <div class="eq">
+    <span>det</span>
+    <div class="mx"><div class="mx-body" style="grid-template-columns:1fr 1fr;">
+      <div class="mx-cell lam">a−λ</div><div class="mx-cell">b</div>
+      <div class="mx-cell">c</div><div class="mx-cell lam">d−λ</div>
+    </div></div>
+    <span>= (a−λ)(d−λ) − b·c = 0</span>
+  </div>
+  <hr class="math-sep">
+  <div class="mstep"><div class="mstep-label">Expanding:</div><div class="mstep-body">ad − aλ − dλ + λ² − bc = 0</div></div>
+  <div class="mstep"><div class="mstep-label">&nbsp;</div><div class="mstep-body"><strong>λ² − (a+d)λ + (ad−bc) = 0</strong><span class="eq-note">&nbsp;← polinomio di grado 2</span></div></div>
+</div>
+
+  <div class="note-box">
+    Per una matrice N×N l'equazione caratteristica è un polinomio di grado N in λ → ci sono sempre N autovalori (contando le molteplicità), eventualmente complessi.
+  </div>
+
+  <!-- ESEMPIO COMPLETO: Pauli Z -->
+  <h3>Full example — Pauli Z, all steps</h3>
+
+  <p><strong>Step 1</strong> — Write the matrix:</p>
+  <div class="math-block"><div class="eq"><span>Z =</span><span><span class="mx"><table><tbody><tr><td>1</td><td class="c-0">0</td></tr><tr><td class="c-0">0</td><td class="c-n">−1</td></tr></tbody></table></span></span></div></div>
+
+  <p><strong>Step 2</strong> — Calculate Z − λI by subtracting λ from the diagonal:</p>
+  <div class="math-block"><div class="eq"><span>Z − λI =</span><span><span class="mx"><table><tbody><tr><td>1</td><td class="c-0">0</td></tr><tr><td class="c-0">0</td><td class="c-n">−1</td></tr></tbody></table></span></span><span>− λ ·</span><span><span class="mx"><table><tbody><tr><td>1</td><td class="c-0">0</td></tr><tr><td class="c-0">0</td><td>1</td></tr></tbody></table></span></span><span>=</span><span><span class="mx"><table><tbody><tr><td class="c-l">1−λ</td><td class="c-0">0</td></tr><tr><td class="c-0">0</td><td class="c-l">−1−λ</td></tr></tbody></table></span></span></div></div>
+
+  <p><strong>Step 3</strong> — Calculate the determinant (diagonal matrix: product of diagonal elements):</p>
+  <div class="math-block"><div class="eq"><span>det(Z − λI) = (1−λ)·(−1−λ)</span></div><hr class="math-sep"><div class="mstep"><div class="mstep-label">Expanding:</div><div class="mstep-body">(1−λ)(−1−λ) = −1 − λ + λ + λ²</div></div><div class="mstep"><div class="mstep-label"></div><div class="mstep-body">= <strong>λ² − 1</strong></div></div></div>
+
+  <p><strong>Step 4</strong> — Solve the characteristic equation:</p>
+  <div class="math-block"><div class="mstep"><div class="mstep-label"></div><div class="mstep-body">λ² − 1 = 0 &nbsp;→&nbsp; λ² = 1 &nbsp;→&nbsp; λ = ±1</div></div><hr class="math-sep"><div class="eq"><span><span class="eq-arrow">→</span></span><span>λ₁ = <strong>+1</strong> &nbsp;&nbsp;&nbsp; λ₂ = <strong>−1</strong></span></div></div>
+
+  <!-- TROVARE GLI AUTOVETTORI -->
+  <h3>Step 3 — Finding the eigenvectors</h3>
+  <p>For each eigenvalue λₖ, substitute into (L − λₖI) and solve (L − λₖI)|u⟩ = 0:</p>
+
+  <p><strong>Case λ₁ = +1</strong> — substitute λ=+1:</p>
+  <div class="math-block"><div class="eq"><span><span class="mx"><table><tbody><tr><td class="c-l">1−1</td><td class="c-0">0</td></tr><tr><td class="c-0">0</td><td class="c-l">−1−1</td></tr></tbody></table></span></span><span>=</span><span><span class="mx"><table><tbody><tr><td class="c-0">0</td><td class="c-0">0</td></tr><tr><td class="c-0">0</td><td class="c-n">−2</td></tr></tbody></table></span></span><span>·</span><span><span class="vec"><table><tbody><tr><td>u₁</td></tr><tr><td>u₂</td></tr></tbody></table></span></span><span>=</span><span><span class="vec"><table><tbody><tr><td class="c-0">0</td></tr><tr><td class="c-0">0</td></tr></tbody></table></span></span></div><hr class="math-sep"><div class="mstep"><div class="mstep-label">row 1:</div><div class="mstep-body">0·u₁ + 0·u₂ = 0 &nbsp;→&nbsp; u₁ free</div></div><div class="mstep"><div class="mstep-label">row 2:</div><div class="mstep-body">−2·u₂ = 0 &nbsp;→&nbsp; <strong>u₂ = 0</strong></div></div><hr class="math-sep"><div class="eq"><span>Choose u₁=1 &nbsp;→&nbsp; |u₁⟩ =</span><span><span class="vec"><table><tbody><tr><td>1</td></tr><tr><td class="c-0">0</td></tr></tbody></table></span></span><span>= |0⟩ ✓</span></div></div>
+
+  <p><strong>Case λ₂ = −1</strong> — substitute λ=−1:</p>
+  <div class="math-block"><div class="eq"><span><span class="mx"><table><tbody><tr><td class="c-l">1+1</td><td class="c-0">0</td></tr><tr><td class="c-0">0</td><td class="c-l">−1+1</td></tr></tbody></table></span></span><span>=</span><span><span class="mx"><table><tbody><tr><td>2</td><td class="c-0">0</td></tr><tr><td class="c-0">0</td><td class="c-0">0</td></tr></tbody></table></span></span><span>·</span><span><span class="vec"><table><tbody><tr><td>u₁</td></tr><tr><td>u₂</td></tr></tbody></table></span></span><span>=</span><span><span class="vec"><table><tbody><tr><td class="c-0">0</td></tr><tr><td class="c-0">0</td></tr></tbody></table></span></span></div><hr class="math-sep"><div class="mstep"><div class="mstep-label">row 1:</div><div class="mstep-body">2·u₁ = 0 &nbsp;→&nbsp; <strong>u₁ = 0</strong></div></div><div class="mstep"><div class="mstep-label">row 2:</div><div class="mstep-body">0 = 0 &nbsp;→&nbsp; u₂ free</div></div><hr class="math-sep"><div class="eq"><span>Choose u₂=1 &nbsp;→&nbsp; |u₂⟩ =</span><span><span class="vec"><table><tbody><tr><td class="c-0">0</td></tr><tr><td>1</td></tr></tbody></table></span></span><span>= |1⟩ ✓</span></div></div>
+
+  <!-- ESEMPIO COMPLETO: Pauli X -->
+  <h3>Second example — Pauli X, non-trivial eigenvectors</h3>
+  <p>Gate X has the same eigenvalues as Z (±1) but different and more interesting eigenvectors:</p>
+
+  <p><strong>Steps 1–4</strong> — Eigenvalues (computed above): λ₁ = +1, λ₂ = −1</p>
+
+  <p><strong>Eigenvector for λ₁ = +1</strong>:</p>
+  <div class="math-block"><div class="eq"><span><span class="mx"><table><tbody><tr><td class="c-l">0−1</td><td>1</td></tr><tr><td>1</td><td class="c-l">0−1</td></tr></tbody></table></span></span><span>=</span><span><span class="mx"><table><tbody><tr><td class="c-n">−1</td><td>1</td></tr><tr><td>1</td><td class="c-n">−1</td></tr></tbody></table></span></span><span>·</span><span><span class="vec"><table><tbody><tr><td>u₁</td></tr><tr><td>u₂</td></tr></tbody></table></span></span><span>=</span><span><span class="vec"><table><tbody><tr><td class="c-0">0</td></tr><tr><td class="c-0">0</td></tr></tbody></table></span></span></div><hr class="math-sep"><div class="mstep"><div class="mstep-label">row 1:</div><div class="mstep-body">−u₁ + u₂ = 0 &nbsp;→&nbsp; <strong>u₂ = u₁</strong></div></div><hr class="math-sep"><div class="eq"><span>u₁=1, u₂=1. Normalise:</span></div><div class="eq"><span>|u₁⟩ =</span><span><span class="scalar">1/√2</span> ·</span><span><span class="vec"><table><tbody><tr><td>1</td></tr><tr><td>1</td></tr></tbody></table></span></span><span>=</span><span><span class="vec"><table><tbody><tr><td>1/√2</td></tr><tr><td>1/√2</td></tr></tbody></table></span></span><span>= |+⟩</span></div></div>
+
+  <p><strong>Eigenvector for λ₂ = −1</strong>:</p>
+  <div class="math-block">
+  <div class="eq">
+    <div class="mx"><div class="mx-body" style="grid-template-columns:1fr 1fr;">
+      <div class="mx-cell lam">0+1</div><div class="mx-cell">1</div>
+      <div class="mx-cell">1</div><div class="mx-cell lam">0+1</div>
+    </div></div>
+    <span>=</span>
+    <div class="mx"><div class="mx-body" style="grid-template-columns:1fr 1fr;">
+      <div class="mx-cell">1</div><div class="mx-cell">1</div>
+      <div class="mx-cell">1</div><div class="mx-cell">1</div>
+    </div></div>
+    <span>·</span>
+    <div class="vec"><div class="vec-cell">u₁</div><div class="vec-cell">u₂</div></div>
+    <span>=</span>
+    <div class="vec"><div class="vec-cell zero">0</div><div class="vec-cell zero">0</div></div>
+  </div>
+  <hr class="math-sep">
+  <div class="mstep"><div class="mstep-label">row 1:</div><div class="mstep-body">u₁ + u₂ = 0 &nbsp;→&nbsp; <strong>u₂ = −u₁</strong></div></div>
+  <hr class="math-sep">
+  <div class="eq">
+    <span>Choose u₁=1, u₂=−1. Normalise:</span>
+  </div>
+  <div class="eq">
+    <span>|u₂⟩ = <span class="scalar">1/√2</span> ·</span>
+    <div class="vec"><div class="vec-cell">1</div><div class="vec-cell neg">−1</div></div>
+    <span>=</span>
+    <div class="vec"><div class="vec-cell">1/√2</div><div class="vec-cell neg">−1/√2</div></div>
+    <span>= |−⟩</span>
+  </div>
+</div>
+
+  <div class="insight">
+    The eigenvectors of X are |+⟩ and |−⟩ — the same states the Hadamard gate produces from |0⟩ and |1⟩! Measuring X means measuring in the "Hadamard basis" instead of the computational one.
+  </div>
+
+  <!-- NORMALIZZAZIONE -->
+  <h3>Normalising an eigenvector</h3>
+  <p>An eigenvector found by solving the system has arbitrary components. To use it as a quantum state it must be normalised: divide by its norm.</p>
+  <div class="math-block"><div class="eq"><span>|u⟩ =</span><span><span class="vec"><table><tbody><tr><td>a</td></tr><tr><td>b</td></tr></tbody></table></span></span><span>&nbsp;&nbsp; ‖|u⟩‖ = √(a²+b²)</span></div><hr class="math-sep"><div class="eq"><span>|û⟩ = <span class="scalar">1/√(a²+b²)</span> ·</span><span><span class="vec"><table><tbody><tr><td>a</td></tr><tr><td>b</td></tr></tbody></table></span></span><span>=</span><span><span class="vec"><table><tbody><tr><td>a/√(a²+b²)</td></tr><tr><td>b/√(a²+b²)</td></tr></tbody></table></span></span></div><div class="eq"><span><span class="eq-note">Check: ⟨û|û⟩ = a²/(a²+b²) + b²/(a²+b²) = 1 ✓</span></span></div></div>
+
+  <!-- COLLEGAMENTO QUANTUM -->
+  <h3>The connection to quantum measurement</h3>
+  <div class="insight">
+    <strong>Every quantum observable is a Hermitian matrix L.</strong><br>
+    The <strong>possible measurement outcomes</strong> = eigenvalues of L (always real for Hermitian matrices).<br>
+    After measurement the state <strong>collapses to the eigenvector</strong> corresponding to the outcome obtained.<br><br>
+    Pauli Z → measures "is it |0⟩ or |1⟩?" → eigenvalues ±1, eigenvectors |0⟩, |1⟩<br>
+    Pauli X → measures "is it |+⟩ or |−⟩?" → eigenvalues ±1, eigenvectors |+⟩, |−⟩
+  </div>
+
+  <!-- ESERCIZI -->
+  <div class="ex-block">
+    <div class="ex-header"><span class="ex-tag">Ex 10.1</span><span class="ex-title">Subtracting λI from the diagonal</span></div>
+    <div class="ex-body">
+      <p>Given the matrix <span class="math-inline">A = ((3, 1),(1, 3))</span>, write A − λI in matrix form.</p>
+      <p>Remember: λ is subtracted <em>only</em> from the diagonal elements.</p>
+    </div>
+    <div class="answer-area">
+      <div class="answer-row">
+        <span class="ans-label">A − λI =</span>
+        <span class="ans-label">((</span>
+        <input class="answer-input" id="ae11a" placeholder="…" style="width:75px">
+        <span class="ans-label">, 1), (1,</span>
+        <input class="answer-input" id="ae11b" placeholder="…" style="width:75px">
+        <span class="ans-label">))</span>
+        <button class="btn sm" onclick="chkMinusLambda('fbe11')">Check</button>
+      </div>
+      <button class="hint-toggle" onclick="showHint('he11')">show hint</button>
+      <div class="feedback hint" id="he11">Subtract λ only from the diagonal: element (1,1) = 3−λ, element (2,2) = 3−λ. Off-diagonal elements (1 and 1) remain unchanged.</div>
+      <div class="feedback" id="fbe11"></div>
+    </div>
+  </div>
+
+  <div class="ex-block">
+    <div class="ex-header"><span class="ex-tag">Ex 10.2</span><span class="ex-title">Determinant and eigenvalues of A = ((3,1),(1,3))</span></div>
+    <div class="ex-body">
+      <p>With A − λI = ((3−λ, 1),(1, 3−λ)), calculate the determinant:</p>
+      <div class="math-block"><div class="mstep"><div class="mstep-label"></div><div class="mstep-body">det(A − λI) = (3−λ)(3−λ) − 1·1</div></div><div class="mstep"><div class="mstep-label"></div><div class="mstep-body">= (3−λ)² − 1 = 9 − 6λ + λ² − 1</div></div><div class="mstep"><div class="mstep-label"></div><div class="mstep-body">= <strong>λ² − 6λ + 8 = 0</strong></div></div></div>
+      <p>Solve with the quadratic formula: λ = (6 ± √(36−32)) / 2 = (6 ± ?) / 2</p>
+    </div>
+    <div class="answer-area">
+      <div class="answer-row">
+        <span class="ans-label">√(36−32) =</span>
+        <input class="answer-input" id="ae12a" placeholder="…" style="width:65px">
+        <span class="ans-label">λ₁ =</span>
+        <input class="answer-input" id="ae12b" placeholder="…" style="width:60px">
+        <span class="ans-label">λ₂ =</span>
+        <input class="answer-input" id="ae12c" placeholder="…" style="width:60px">
+        <button class="btn sm" onclick="chkEigA('fbe12')">Check</button>
+      </div>
+      <button class="hint-toggle" onclick="showHint('he12')">show hint</button>
+      <div class="feedback hint" id="he12">√(36−32) = √4 = 2. Then λ = (6±2)/2 → λ₁ = 8/2 = 4, λ₂ = 4/2 = 2. Or factorise: λ²−6λ+8 = (λ−4)(λ−2) = 0.</div>
+      <div class="feedback" id="fbe12"></div>
+    </div>
+  </div>
+
+  <div class="ex-block">
+    <div class="ex-header"><span class="ex-tag">Ex 10.3</span><span class="ex-title">Finding the eigenvector for λ₁ = 4</span></div>
+    <div class="ex-body">
+      <p>Substitute λ=4 in (A − λI)|u⟩ = 0:</p>
+      <div class="math-block"><div class="eq"><span><span class="mx"><table><tbody><tr><td class="c-l">3−4</td><td>1</td></tr><tr><td>1</td><td class="c-l">3−4</td></tr></tbody></table></span></span><span>=</span><span><span class="mx"><table><tbody><tr><td class="c-n">−1</td><td>1</td></tr><tr><td>1</td><td class="c-n">−1</td></tr></tbody></table></span></span><span>·</span><span><span class="vec"><table><tbody><tr><td>u₁</td></tr><tr><td>u₂</td></tr></tbody></table></span></span><span>=</span><span><span class="vec"><table><tbody><tr><td class="c-0">0</td></tr><tr><td class="c-0">0</td></tr></tbody></table></span></span></div></div>
+      <p>From row 1: −u₁ + u₂ = 0 → u₂ = u₁. Choose u₁=1, then <strong>normalise</strong>.</p>
+      <p>The normalised eigenvector |u₁⟩ = ?</p>
+    </div>
+    <div class="answer-area">
+      <div class="answer-row">
+        <span class="ans-label">|u₁⟩ = (</span>
+        <input class="answer-input" id="ae13a" placeholder="…" style="width:80px">
+        <span class="ans-label">,</span>
+        <input class="answer-input" id="ae13b" placeholder="…" style="width:80px">
+        <span class="ans-label">)ᵀ</span>
+        <button class="btn sm" onclick="chkEigVec('fbe13')">Check</button>
+      </div>
+      <button class="hint-toggle" onclick="showHint('he13')">show hint</button>
+      <div class="feedback hint" id="he13">u₁=1, u₂=1. Norm = √(1²+1²) = √2. Divide: (1/√2, 1/√2)ᵀ ≈ (0.707, 0.707)ᵀ. Note: this is the same |+⟩ as gate X!</div>
+      <div class="feedback" id="fbe13"></div>
+    </div>
+  </div>
+
+  <div class="ex-block">
+    <div class="ex-header"><span class="ex-tag">Ex 10.4</span><span class="ex-title">Direct verification — L|u⟩ = λ|u⟩</span></div>
+    <div class="ex-body">
+      <p>Verify that |u₁⟩ = (1/√2, 1/√2)ᵀ is truly an eigenvector of A with λ=4, by computing A|u₁⟩:</p>
+      <div class="math-block"><div class="eq"><span>A|u₁⟩ =</span><span><span class="mx"><table><tbody><tr><td>3</td><td>1</td></tr><tr><td>1</td><td>3</td></tr></tbody></table></span></span><span>·</span><span><span class="vec"><table><tbody><tr><td>1/√2</td></tr><tr><td>1/√2</td></tr></tbody></table></span></span><span>=</span><span><span class="vec"><table><tbody><tr><td>3/√2 + 1/√2</td></tr><tr><td>1/√2 + 3/√2</td></tr></tbody></table></span></span><span>=</span><span><span class="vec"><table><tbody><tr><td>4/√2</td></tr><tr><td>4/√2</td></tr></tbody></table></span></span></div></div>
+      <p>What is 4/√2 simplified? And is this equal to 4·(1/√2) = λ·|u₁⟩? (yes/no)</p>
+    </div>
+    <div class="answer-area">
+      <div class="answer-row">
+        <span class="ans-label">4/√2 =</span>
+        <input class="answer-input" id="ae14a" placeholder="…" style="width:80px">
+        <span class="ans-label">A|u₁⟩ = λ|u₁⟩?</span>
+        <input class="answer-input" id="ae14b" placeholder="…" style="width:65px">
+        <button class="btn sm" onclick="chkEigVerify('fbe14')">Check</button>
+      </div>
+      <div class="feedback" id="fbe14"></div>
+    </div>
+  </div>
+
+  <!-- TRUCCHI -->
+  <h3>Practical tricks to speed up calculations</h3>
+
+  <div class="insight">
+    <strong>Trick 1 — aI + bL has the same eigenvectors as L</strong><br>
+    If M = aI + bL, then M|u⟩ = aI|u⟩ + bL|u⟩ = a|u⟩ + bλ|u⟩ = (a + bλ)|u⟩.<br>
+    Eigenvectors are unchanged; eigenvalues become a + bλ.<br><br>
+    <span style="color:var(--ink2)">Example: A = ((3,1),(1,3)) = 3I + X &nbsp;→&nbsp; same eigenvectors as X (i.e. |+⟩ and |−⟩), eigenvalues 3±1 = 4 and 2.</span>
+  </div>
+
+  <div class="insight">
+    <strong>Trick 2 — Diagonal matrices: eigenvalues = diagonal elements</strong><br>
+    If D = ((d₁, 0), (0, d₂)) then the eigenvalues are simply d₁ and d₂, and the eigenvectors are e₁=(1,0)ᵀ and e₂=(0,1)ᵀ. No calculation needed.<br><br>
+    <span style="color:var(--ink2)">Example: Pauli Z = ((1,0),(0,−1)) &nbsp;→&nbsp; eigenvalues +1 and −1 at a glance, eigenvectors |0⟩ and |1⟩.</span>
+  </div>
+
+  <div class="insight">
+    <strong>Trick 3 — Trace and determinant</strong><br>
+    For a 2×2 matrix the characteristic equation is always λ² − tr(L)·λ + det(L) = 0, where:<br>
+    tr(L) = sum of diagonal elements &nbsp;&nbsp; det(L) = ad − bc<br>
+    So λ₁ + λ₂ = tr(L) and λ₁ · λ₂ = det(L). You can verify eigenvalues without redoing all the multiplications.<br><br>
+    <span style="color:var(--ink2)">Example: Pauli X = ((0,1),(1,0)) &nbsp;→&nbsp; tr=0, det=−1 &nbsp;→&nbsp; λ₁+λ₂=0 and λ₁·λ₂=−1 &nbsp;→&nbsp; must be +1 and −1 ✓</span>
+  </div>
+
+  <div class="insight">
+    <strong>Trick 4 — Unitary matrices: eigenvalues have modulus 1</strong><br>
+    If U is unitary (UᴴU = I), all its eigenvalues satisfy |λ| = 1. In quantum this means eigenvalues always lie on the unit circle in the complex plane. For Pauli matrices (which are also Hermitian) they are real → so they are exactly ±1.<br><br>
+    <span style="color:var(--ink2)">If you find an eigenvalue with |λ| ≠ 1 for a unitary matrix, you have made a calculation error.</span>
+  </div>
+
+  <div class="insight">
+    <strong>Trick 5 — Eigenvectors of Hermitian matrices are orthogonal</strong><br>
+    If L = Lᴴ (Hermitian) and λ₁ ≠ λ₂, then the corresponding eigenvectors satisfy ⟨u₁|u₂⟩ = 0. No need to verify this: it is guaranteed by construction.<br><br>
+    <span style="color:var(--ink2)">Example: ⟨+|−⟩ = (1/√2)(1/√2) + (1/√2)(−1/√2) = 1/2 − 1/2 = 0 ✓ &nbsp; (X is Hermitian, λ₁≠λ₂ → orthogonal)</span>
+  </div>
+
+  <div class="insight">
+    <strong>Trick 6 — Once you find one eigenvector, the other is orthogonal to it</strong><br>
+    For a 2×2 Hermitian matrix, once the first eigenvector (a, b)ᵀ is found, the second is automatically (−b*, a*)ᵀ (normalised). So you only need to solve one of the two equations and get the other for free.<br><br>
+    <span style="color:var(--ink2)">Example: found |+⟩ = (1/√2, 1/√2)ᵀ for X &nbsp;→&nbsp; the other is (−1/√2, 1/√2)ᵀ... which is |−⟩ up to a global phase (irrelevant in quantum).</span>
+  </div>
+
+</div>
+
+</div><!-- end .page -->
+
+<script>
+function setFb(id, ok, msg) {
+  const el = document.getElementById(id);
+  el.className = 'feedback show ' + (ok ? 'ok' : 'no');
+  el.textContent = msg;
+}
+function showHint(id) { document.getElementById(id).classList.toggle('show'); }
+
+// ═══ CHECKS ═══
+function normalize(s) { return s.trim().toLowerCase().replace(/\s/g,''); }
+function isApprox(a, target, eps=0.05) {
+  const n = parseFloat(a.replace(',','.'));
+  return !isNaN(n) && Math.abs(n - target) < eps;
+}
+
+function chk(inputId, expected, fbId) {
+  const v = normalize(document.getElementById(inputId).value);
+  const ok = v === normalize(expected) || isApprox(v, parseFloat(expected));
+  document.getElementById(inputId).className = 'answer-input ' + (ok ? 'ok' : 'no');
+  setFb(fbId, ok, ok ? '✓ Correct!' : `✗ Not quite. Try again — the answer is ${expected}.`);
+  }
+
+function chk2(i1, e1, i2, e2, fb) {
+  const v1 = normalize(document.getElementById(i1).value);
+  const v2 = normalize(document.getElementById(i2).value);
+  const ok1 = v1 === normalize(e1) || isApprox(v1, parseFloat(e1));
+  const ok2 = v2 === normalize(e2) || isApprox(v2, parseFloat(e2));
+  document.getElementById(i1).className = 'answer-input ' + (ok1 ? 'ok' : 'no');
+  document.getElementById(i2).className = 'answer-input ' + (ok2 ? 'ok' : 'no');
+  const ok = ok1 && ok2;
+  setFb(fb, ok, ok ? '✓ Perfect!' : `✗ Check again. Expected: ${e1} and ${e2}.`);
+  }
+
+function chk2n(i1,e1,i2,e2,fb) { chk2(i1,e1,i2,e2,fb); }
+
+function chkFrac(i1,n1,d1, i2,n2,d2, fb) {
+  const v1 = normalize(document.getElementById(i1).value);
+  const v2 = normalize(document.getElementById(i2).value);
+  const ok1 = v1===`${n1}/${d1}` || isApprox(v1, n1/d1);
+  const ok2 = v2===`${n2}/${d2}` || isApprox(v2, n2/d2);
+  document.getElementById(i1).className = 'answer-input '+(ok1?'ok':'no');
+  document.getElementById(i2).className = 'answer-input '+(ok2?'ok':'no');
+  const ok = ok1 && ok2;
+  setFb(fb, ok, ok ? `✓ Correct! û = (${n1}/${d1}, ${n2}/${d2})ᵀ. Check: (${n1}/${d1})² + (${n2}/${d2})² = ${n1*n1}/${d1*d1} + ${n2*n2}/${d2*d2} = 1 ✓` : `✗ Try again. Divide each component by the norm (${d1}).`);
+  }
+
+function chkOrtho(i1,e1,i2,fb) {
+  const v1 = normalize(document.getElementById(i1).value);
+  const v2 = normalize(document.getElementById(i2).value);
+  const ok1 = v1 === e1 || isApprox(v1, 0);
+  const ok2 = v2.includes('yes') || v2.includes('si') || v2==='yes';
+  document.getElementById(i1).className = 'answer-input '+(ok1?'ok':'no');
+  document.getElementById(i2).className = 'answer-input '+(ok2?'ok':'no');
+  const ok = ok1 && ok2;
+  setFb(fb, ok, ok ? '✓ Yes! a·b = 1·1 + 1·(−1) = 1−1 = 0 → orthogonal. These are exactly the Hadamard |+⟩ and |−⟩ vectors!' : '✗ Try again: (1)(1) + (1)(−1) = ?');
+  }
+
+function chkBra(fb) {
+  const v1 = normalize(document.getElementById('a41a').value);
+  const v2 = document.getElementById('a41b').value.trim();
+  const ok1 = v1.includes('row');
+  const ok2 = v2 === '-3' || isApprox(v2, -3);
+  document.getElementById('a41a').className = 'answer-input '+(ok1?'ok':'no');
+  document.getElementById('a41b').className = 'answer-input '+(ok2?'ok':'no');
+  const ok = ok1 && ok2;
+  setFb(fb, ok, ok ? '✓ Perfect! The bra ⟨ψ| is the row vector (2, −3). For real components, the conjugate changes nothing.' : '✗ The bra is a row vector (transposed). Real components remain unchanged.');
+  }
+
+function chk3(i1,e1,i2,e2,i3,e3,fb) {
+  const v1 = normalize(document.getElementById(i1).value);
+  const v2 = normalize(document.getElementById(i2).value);
+  const v3 = normalize(document.getElementById(i3).value);
+  const ok1 = isApprox(v1,parseFloat(e1))||v1===e1;
+  const ok2 = isApprox(v2,parseFloat(e2))||v2===e2;
+  const ok3 = isApprox(v3,parseFloat(e3))||v3===e3;
+  [i1,i2,i3].forEach((id,k)=>{
+    const ok=[ok1,ok2,ok3][k];
+    document.getElementById(id).className='answer-input '+(ok?'ok':'no');
+  });
+  const ok = ok1&&ok2&&ok3;
+  setFb(fb, ok, ok ? '✓ Orthonormal basis verified! ⟨0|0⟩=⟨1|1⟩=1 (normalised), ⟨0|1⟩=0 (orthogonal).' : '✗ Try again. Remember: row × column product.');
+  }
+
+function chkQubit(fb) {
+  const a = normalize(document.getElementById('a61a').value);
+  const b = normalize(document.getElementById('a61b').value);
+  const c = normalize(document.getElementById('a61c').value);
+  const d = normalize(document.getElementById('a61d').value);
+  const okA = isApprox(a,1)||a==='1';
+  const okB = b.includes('yes')||b.includes('si')||b==='yes';
+  const okC = isApprox(c,0.5)||a==='1/2';
+  const okD = d.includes('no');
+  ['a61a','a61b','a61c','a61d'].forEach((id,k)=>{
+    document.getElementById(id).className='answer-input '+([okA,okB,okC,okD][k]?'ok':'no');
+  });
+  const ok = okA&&okB&&okD;
+  setFb(fb, ok, ok ? '✓ Correct! a) 1/4+3/4=1 → valid. b) 1/4+1/4=1/2≠1 → NOT valid. To make it valid you would need (1/√2, 1/√2).' : '✗ a) (1/2)²+(√3/2)²=1/4+3/4=1 → yes. b) (1/2)²+(1/2)²=1/4+1/4=1/2 → no!');
+  }
+
+function chkBeta(fb) {
+  const v = normalize(document.getElementById('a62').value);
+  const target = Math.sqrt(2/3);
+  const ok = isApprox(v, target, 0.01) || v.includes('√(2/3)') || v.includes('sqrt(2/3)') || v==='√2/√3';
+  document.getElementById('a62').className='answer-input '+(ok?'ok':'no');
+  setFb(fb, ok, ok ? `✓ Correct! β = √(2/3) ≈ ${target.toFixed(4)}. Check: 1/3 + 2/3 = 1 ✓` : `✗ Try again. β² = 1 − 1/3 = 2/3 → β = √(2/3) ≈ ${target.toFixed(3)}`);
+  }
+
+function chkMeas(fb) {
+  const a = normalize(document.getElementById('a71a').value);
+  const b = normalize(document.getElementById('a71b').value);
+  const c = normalize(document.getElementById('a71c').value);
+  const okA = isApprox(a,0.75)||a==='3/4';
+  const okB = isApprox(b,0.25)||b==='1/4';
+  const okC = c.includes('0')||c.includes('|0');
+  ['a71a','a71b','a71c'].forEach((id,k)=>{ document.getElementById(id).className='answer-input '+([okA,okB,okC][k]?'ok':'no'); });
+  const ok=okA&&okB&&okC;
+  setFb(fb, ok, ok ? '✓ Great! P(|0⟩)=(√3/2)²=3/4, P(|1⟩)=(1/2)²=1/4. |0⟩ is 3 times more likely.' : '✗ (√3/2)²=3/4, (1/2)²=1/4.');
+  }
+
+function chkQRNG(fb) {
+  const a = normalize(document.getElementById('a72a').value);
+  const b = normalize(document.getElementById('a72b').value);
+  const c = normalize(document.getElementById('a72c').value);
+  const d = normalize(document.getElementById('a72d').value);
+  const ok1 = isApprox(a, 1/Math.SQRT2, 0.02) || a.includes('1/√2') || a.includes('1/sqrt');
+  const ok2 = isApprox(b, 1/Math.SQRT2, 0.02) || b.includes('1/√2') || b.includes('1/sqrt');
+  const ok3 = isApprox(c, 0.5, 0.02) || c==='1/2';
+  const ok4 = isApprox(d, 0.5, 0.02) || d==='1/2';
+  ['a72a','a72b','a72c','a72d'].forEach((id,k)=>{ document.getElementById(id).className='answer-input '+([ok1,ok2,ok3,ok4][k]?'ok':'no'); });
+  const ok=ok1&&ok2&&ok3&&ok4;
+  setFb(fb, ok, ok ? '✓ Perfect! α=β=1/√2, P(|0⟩)=P(|1⟩)=1/2. Every measurement is a perfect coin flip guaranteed by quantum physics!' : '✗ (|0⟩+|1⟩)/√2 means α=1/√2, β=1/√2.');
+  }
+
+function chkGateX(fb) {
+  const a=document.getElementById('a81a').value.trim(), b=document.getElementById('a81b').value.trim(), c=normalize(document.getElementById('a81c').value);
+  const okA=isApprox(a,1)||a==='1', okB=isApprox(b,0)||b==='0', okC=c.includes('0')||c==='|0>';
+  ['a81a','a81b','a81c'].forEach((id,k)=>{ document.getElementById(id).className='answer-input '+([okA,okB,okC][k]?'ok':'no'); });
+  const ok=okA&&okB&&okC;
+  setFb(fb, ok, ok ? '✓ Correct! X|1⟩ = (0·0+1·1, 1·0+0·1)ᵀ = (1,0)ᵀ = |0⟩. The quantum NOT works!' : '✗ First row: 0·0+1·1=1. Second row: 1·0+0·1=0.');
+  }
+
+function chkHadamard(fb) {
+  const a=normalize(document.getElementById('a82a').value), b=normalize(document.getElementById('a82b').value);
+  const okA=isApprox(a,1/Math.SQRT2,0.01)||a.includes('1/√2')||a.includes('1/sqrt');
+  const okB=isApprox(b,1/Math.SQRT2,0.01)||b.includes('1/√2')||b.includes('1/sqrt');
+  ['a82a','a82b'].forEach((id,k)=>{ document.getElementById(id).className='answer-input '+([okA,okB][k]?'ok':'no'); });
+  const ok=okA&&okB;
+  setFb(fb, ok, ok ? `✓ Excellent! H|0⟩ = (1/√2)|0⟩ + (1/√2)|1⟩ = |+⟩. This is the uniform superposition state — the foundation of many quantum algorithms!` : '✗ 1/√2 ≈ 0.707. Both components must be 1/√2.');
+  }
+
+// ═══ CANVAS UTILITIES ═══
+function clearC(id) {
+  const c=document.getElementById(id); if(!c)return null;
+  const ctx=c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height); return {ctx,W:c.width,H:c.height};
+}
+function drawAxes(ctx,W,H,cx,cy,scale,lx,ly) {
+  // grid
+  ctx.strokeStyle='rgba(232,228,216,0.8)'; ctx.lineWidth=1;
+  for(let x=cx%scale;x<W;x+=scale){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for(let y=cy%scale;y<H;y+=scale){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  // axes
+  ctx.strokeStyle='rgba(136,136,119,0.6)'; ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(0,cy);ctx.lineTo(W,cy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx,0);ctx.lineTo(cx,H);ctx.stroke();
+  // labels
+  ctx.fillStyle='#888877'; ctx.font='11px IBM Plex Mono, monospace';
+  if(lx) ctx.fillText(lx, cx+scale+3, cy-5);
+  if(ly) ctx.fillText(ly, cx+5, cy-scale-4);
+}
+function arrow(ctx,x1,y1,x2,y2,col,lbl,lw=2) {
+  ctx.strokeStyle=col; ctx.fillStyle=col; ctx.lineWidth=lw;
+  ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+  const a=Math.atan2(y2-y1,x2-x1),s=8;
+  ctx.beginPath();ctx.moveTo(x2,y2);
+  ctx.lineTo(x2-s*Math.cos(a-0.4),y2-s*Math.sin(a-0.4));
+  ctx.lineTo(x2-s*Math.cos(a+0.4),y2-s*Math.sin(a+0.4));
+  ctx.closePath();ctx.fill();
+  if(lbl){ctx.font='bold 12px IBM Plex Mono,monospace';ctx.fillStyle=col;ctx.fillText(lbl,x2+7,y2-5);}
+}
+
+// ═══ VEC CANVAS ═══
+(function(){
+  const c=document.getElementById('c_vec'); if(!c)return;
+  function draw(vx,vy){
+    const {ctx,W,H}=clearC('c_vec')||{};if(!ctx)return;
+    const cx=W/2,cy=H/2,sc=70;
+    drawAxes(ctx,W,H,cx,cy,sc,'x','y');
+    ctx.fillStyle='#888877';ctx.font='11px IBM Plex Mono,monospace';
+    ctx.fillText('O',cx+3,cy+12);
+    // projections
+    ctx.strokeStyle='rgba(192,57,43,0.25)';ctx.lineWidth=1;ctx.setLineDash([4,4]);
+    ctx.beginPath();ctx.moveTo(cx+vx*sc,cy-vy*sc);ctx.lineTo(cx+vx*sc,cy);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx+vx*sc,cy-vy*sc);ctx.lineTo(cx,cy-vy*sc);ctx.stroke();
+    ctx.setLineDash([]);
+    // component labels
+    ctx.fillStyle='rgba(192,57,43,0.7)';ctx.font='11px IBM Plex Mono,monospace';
+    ctx.fillText(`v₁=${vx.toFixed(2)}`,cx+vx*sc/2-12,cy+14);
+    ctx.fillText(`v₂=${vy.toFixed(2)}`,cx-40,cy-vy*sc/2+4);
+    const norm=Math.sqrt(vx*vx+vy*vy), isU=Math.abs(norm-1)<0.08;
+    arrow(ctx,cx,cy,cx+vx*sc,cy-vy*sc, isU?'#1a6b3a':'#2c5282','v');
+    // norm label
+    ctx.fillStyle=isU?'#1a6b3a':'#2c5282';ctx.font='11px IBM Plex Mono,monospace';
+    ctx.fillText(`‖v‖ = ${norm.toFixed(3)}${isU?' ✓ (unitario)':''}`,10,H-10);
+  }
+  draw(0.7,0.5);
+  c.addEventListener('click',e=>{
+    const r=c.getBoundingClientRect(),cx=c.width/2,cy=c.height/2,sc=70;
+    draw((e.clientX-r.left-cx)/sc,-(e.clientY-r.top-cy)/sc);
+  });
+})();
+
+// ═══ NORM CANVAS ═══
+(function(){
+  const c=document.getElementById('c_norm'); if(!c)return;
+  function draw(vx,vy){
+    const {ctx,W,H}=clearC('c_norm')||{};if(!ctx)return;
+    const cx=W/2,cy=H/2,sc=65;
+    drawAxes(ctx,W,H,cx,cy,sc);
+    const norm=Math.sqrt(vx*vx+vy*vy);
+    // right angle
+    ctx.strokeStyle='rgba(136,136,119,0.5)';ctx.lineWidth=1;ctx.setLineDash([4,3]);
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+vx*sc,cy);ctx.lineTo(cx+vx*sc,cy-vy*sc);ctx.stroke();
+    ctx.setLineDash([]);
+    // legs labels
+    ctx.fillStyle='#888877';ctx.font='10px IBM Plex Mono,monospace';
+    ctx.fillText(`v₁=${vx.toFixed(1)}`,cx+vx*sc/2-10,cy+12);
+    ctx.fillText(`v₂=${vy.toFixed(1)}`,cx+vx*sc+3,cy-vy*sc/2);
+    // hypotenuse = norm
+    ctx.strokeStyle='rgba(44,82,130,0.4)';ctx.lineWidth=1;ctx.setLineDash([3,3]);
+    const mx=(cx+cx+vx*sc)/2,my=(cy+cy-vy*sc)/2;
+    ctx.setLineDash([]);
+    arrow(ctx,cx,cy,cx+vx*sc,cy-vy*sc,'#2c5282','v',2.5);
+    // norm annotation
+    ctx.fillStyle='#2c5282';ctx.font='bold 11px IBM Plex Mono,monospace';
+    ctx.fillText(`‖v‖ = √(${(vx*vx).toFixed(1)}+${(vy*vy).toFixed(1)}) = ${norm.toFixed(3)}`,10,H-10);
+    // unit circle
+    ctx.strokeStyle='rgba(26,107,58,0.2)';ctx.lineWidth=1;
+    ctx.beginPath();ctx.arc(cx,cy,sc,0,Math.PI*2);ctx.stroke();
+    ctx.fillStyle='rgba(26,107,58,0.4)';ctx.font='10px IBM Plex Mono,monospace';
+    ctx.fillText('unit circle',cx+sc+3,cy-4);
+  }
+  draw(0.8,0.6);
+  c.addEventListener('click',e=>{
+    const r=c.getBoundingClientRect(),cx=c.width/2,cy=c.height/2,sc=65;
+    draw((e.clientX-r.left-cx)/sc,-(e.clientY-r.top-cy)/sc);
+  });
+})();
+
+// ═══ DOT PRODUCT CANVAS ═══
+function updateDot(){
+  const th=parseFloat(document.getElementById('dotSlider').value);
+  document.getElementById('dotVal').textContent=th+'°';
+  const {ctx,W,H}=clearC('c_dot')||{}; if(!ctx)return;
+  const cx=W/2,cy=H/2,sc=90;
+  drawAxes(ctx,W,H,cx,cy,sc);
+  const r=th*Math.PI/180;
+  const u=[1,0], v=[Math.cos(r),Math.sin(r)];
+  const dot=u[0]*v[0]+u[1]*v[1];
+  // angle arc
+  ctx.strokeStyle='rgba(183,83,10,0.35)';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.arc(cx,cy,30,0,-r,r>0);ctx.stroke();
+  ctx.fillStyle='rgba(183,83,10,0.7)';ctx.font='10px IBM Plex Mono,monospace';
+  ctx.fillText(`θ=${th}°`,cx+34,cy-8);
+  // projection of v onto u
+  const projLen=dot*sc;
+  ctx.strokeStyle='rgba(136,136,119,0.3)';ctx.lineWidth=1;ctx.setLineDash([3,3]);
+  ctx.beginPath();ctx.moveTo(cx+v[0]*sc,cy-v[1]*sc);ctx.lineTo(cx+projLen,cy);ctx.stroke();
+  ctx.setLineDash([]);
+  // dot product bar
+  const barY=H-18;
+  ctx.fillStyle='rgba(44,82,130,0.15)';
+  ctx.fillRect(cx,barY-6,projLen,12);
+  ctx.strokeStyle='#2c5282';ctx.lineWidth=1.5;
+  ctx.strokeRect(cx,barY-6,projLen,12);
+  arrow(ctx,cx,cy,cx+u[0]*sc,cy-u[1]*sc,'#c0392b','u');
+  arrow(ctx,cx,cy,cx+v[0]*sc,cy-v[1]*sc,'#2c5282','v');
+  document.getElementById('dotLive').textContent=`u·v = cos(${th}°) = ${dot.toFixed(4)}  |  ${th===90?'⊥ Ortogonali!':th===0?'Paralleli (max)':th===180?'Antiparalleli (min)':''}`;
+}
+updateDot();
+
+// ═══ BASIS CANVAS ═══
+(function(){
+  const {ctx,W,H}=clearC('c_basis')||{}; if(!ctx)return;
+  const cx=W/2,cy=H/2,sc=100;
+  drawAxes(ctx,W,H,cx,cy,sc);
+  // unit circle
+  ctx.strokeStyle='rgba(44,82,130,0.15)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.arc(cx,cy,sc,0,Math.PI*2);ctx.stroke();
+  arrow(ctx,cx,cy,cx+sc,cy,'#c0392b','|0⟩',3);
+  arrow(ctx,cx,cy,cx,cy-sc,'#2c5282','|1⟩',3);
+  // right angle symbol
+  const s=12;
+  ctx.strokeStyle='rgba(136,136,119,0.5)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(cx+s,cy);ctx.lineTo(cx+s,cy-s);ctx.lineTo(cx,cy-s);ctx.stroke();
+  ctx.fillStyle='#888877';ctx.font='11px IBM Plex Mono,monospace';
+  ctx.fillText('⟨0|1⟩=0',cx+14,cy-14);
+  ctx.fillText('(1,0)ᵀ',cx+sc+4,cy+14);
+  ctx.fillText('(0,1)ᵀ',cx+6,cy-sc-5);
+})();
+
+// ═══ QUBIT CANVAS ═══
+(function(){
+  const c=document.getElementById('c_qubit'); if(!c)return;
+  function draw(vx,vy){
+    const {ctx,W,H}=clearC('c_qubit')||{};if(!ctx)return;
+    const cx=W/2,cy=H/2,sc=100;
+    drawAxes(ctx,W,H,cx,cy,sc,'|0⟩','|1⟩');
+    ctx.strokeStyle='rgba(44,82,130,0.2)';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.arc(cx,cy,sc,0,Math.PI*2);ctx.stroke();
+    ctx.fillStyle='rgba(44,82,130,0.5)';ctx.font='10px IBM Plex Mono,monospace';
+    ctx.fillText('‖ψ‖=1',cx-sc-42,cy+4);
+    const norm=Math.sqrt(vx*vx+vy*vy),isU=Math.abs(norm-1)<0.07;
+    ctx.strokeStyle=isU?'rgba(26,107,58,0.2)':'rgba(192,57,43,0.2)';ctx.lineWidth=1;ctx.setLineDash([3,3]);
+    ctx.beginPath();ctx.moveTo(cx+vx*sc,cy-vy*sc);ctx.lineTo(cx+vx*sc,cy);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx+vx*sc,cy-vy*sc);ctx.lineTo(cx,cy-vy*sc);ctx.stroke();
+    ctx.setLineDash([]);
+    arrow(ctx,cx,cy,cx+vx*sc,cy-vy*sc,isU?'#1a6b3a':'#c0392b','|ψ⟩',2.5);
+    const p0=(vx*vx).toFixed(3),p1=(vy*vy).toFixed(3);
+    ctx.fillStyle='#444';ctx.font='11px IBM Plex Mono,monospace';
+    ctx.fillText(`α=${vx.toFixed(3)}, β=${vy.toFixed(3)}  |α|²+|β|²=${(vx*vx+vy*vy).toFixed(3)}${isU?' ✓':'  ✗'}`,10,H-10);
+    ctx.fillText(`P(|0⟩)=${p0}  P(|1⟩)=${p1}`,10,H-24);
+  }
+  draw(1/Math.SQRT2,1/Math.SQRT2);
+  c.addEventListener('click',e=>{
+    const r=c.getBoundingClientRect(),cx=c.width/2,cy=c.height/2,sc=100;
+    let vx=(e.clientX-r.left-cx)/sc,vy=-(e.clientY-r.top-cy)/sc;
+    const n=Math.sqrt(vx*vx+vy*vy); if(n>0.01){vx/=n;vy/=n;}
+    draw(vx,vy);
+  });
+})();
+
+// ═══ MEASUREMENT CANVAS ═══
+let measCnts=[0,0];
+function updateMeas(){
+  const th=parseFloat(document.getElementById('measSlider').value);
+  document.getElementById('measVal').textContent=th+'°';
+  const a=Math.cos(th*Math.PI/180),b=Math.sin(th*Math.PI/180);
+  document.getElementById('measLive').textContent=`|ψ⟩ = ${a.toFixed(3)}|0⟩ + ${b.toFixed(3)}|1⟩  →  P(|0⟩)=${(a*a).toFixed(3)}, P(|1⟩)=${(b*b).toFixed(3)}`;
+  drawMeas();
+}
+function doMeasure(n){
+  const th=parseFloat(document.getElementById('measSlider').value);
+  const p0=Math.cos(th*Math.PI/180)**2;
+  for(let i=0;i<n;i++){ if(Math.random()<p0)measCnts[0]++;else measCnts[1]++; }
+  drawMeas();
+  const tot=measCnts[0]+measCnts[1];
+  document.getElementById('measStats').textContent=`Total: ${tot}  |  |0⟩: ${measCnts[0]} (${(measCnts[0]/tot*100).toFixed(1)}%)  |  |1⟩: ${measCnts[1]} (${(measCnts[1]/tot*100).toFixed(1)}%)`;
+}
+function resetMeasure(){ measCnts=[0,0]; drawMeas(); document.getElementById('measStats').textContent=''; }
+function drawMeas(){
+  const {ctx,W,H}=clearC('c_meas')||{}; if(!ctx)return;
+  ctx.fillStyle='#fafaf8';ctx.fillRect(0,0,W,H);
+  const th=parseFloat(document.getElementById('measSlider').value);
+  const p0=Math.cos(th*Math.PI/180)**2,p1=1-p0;
+  const tot=measCnts[0]+measCnts[1];
+  const bW=80,pad=80;
+  [[p0,tot?measCnts[0]/tot:0,'|0⟩','#2c5282','#1a6b3a'],
+   [p1,tot?measCnts[1]/tot:0,'|1⟩','#c0392b','#b7530a']].forEach(([pt,pe,lbl,ct,ce],i)=>{
+    const x=pad+i*(bW*2+60);
+    const bh=pt*(H-50);
+    ctx.fillStyle=ct+'22';ctx.fillRect(x,H-35-bh,bW,bh);
+    ctx.strokeStyle=ct;ctx.lineWidth=1.5;ctx.strokeRect(x,H-35-bh,bW,bh);
+    ctx.fillStyle=ct;ctx.font='10px IBM Plex Mono,monospace';
+    ctx.fillText('theoretical',x+10,H-18);ctx.fillText((pt*100).toFixed(0)+'%',x+25,H-37-bh);
+    const bh2=pe*(H-50);
+    const x2=x+bW+5;
+    ctx.fillStyle=ce+'22';ctx.fillRect(x2,H-35-bh2,bW,bh2);
+    ctx.strokeStyle=ce;ctx.lineWidth=1.5;ctx.strokeRect(x2,H-35-bh2,bW,bh2);
+    ctx.fillStyle=ce;ctx.font='10px IBM Plex Mono,monospace';
+    ctx.fillText('empirical',x2+8,H-18);
+    if(tot>0)ctx.fillText((pe*100).toFixed(0)+'%',x2+25,H-37-bh2-2);
+    ctx.fillStyle='#1a1a14';ctx.font='bold 14px IBM Plex Mono,monospace';
+    ctx.fillText(lbl,x+bW/2-10,25);
+  });
+}
+updateMeas();
+
+// ═══ GATE VIZ CANVAS ═══
+const gateData={
+  X:{m:[[0,1],[1,0]],desc:'X (NOT): swaps |0⟩↔|1⟩'},
+  Z:{m:[[1,0],[0,-1]],desc:'Z: leaves |0⟩ unchanged, |1⟩→−|1⟩'},
+  H:{m:[[1/Math.SQRT2,1/Math.SQRT2],[1/Math.SQRT2,-1/Math.SQRT2]],desc:'H (Hadamard): creates superposition from basis states'}
+};
+function setGateViz(g){
+  const {ctx,W,H}=clearC('c_gate')||{}; if(!ctx)return;
+  const cx=W/2,cy=H/2,sc=95;
+  drawAxes(ctx,W,H,cx,cy,sc,'|0⟩','|1⟩');
+  const [[a,b],[c,d]]=gateData[g].m;
+  // original light
+  arrow(ctx,cx,cy,cx+sc,cy,'rgba(192,57,43,0.2)','',1);
+  arrow(ctx,cx,cy,cx,cy-sc,'rgba(44,82,130,0.2)','',1);
+  // transformed
+  arrow(ctx,cx,cy,cx+a*sc,cy-c*sc,'#c0392b',`U|0⟩`,2.5);
+  arrow(ctx,cx,cy,cx+b*sc,cy-d*sc,'#2c5282',`U|1⟩`,2.5);
+  document.getElementById('gateDesc').textContent=gateData[g].desc+`   U|0⟩=(${a.toFixed(3)},${c.toFixed(3)})  U|1⟩=(${b.toFixed(3)},${d.toFixed(3)})`;
+}
+setGateViz('X');
+
+// ═══ EIGEN VIZ CANVAS ═══
+const eigenData={
+  Z:{m:[[1,0],[0,-1]],ev:[[1,0],[0,1]],lam:['+1','−1'],name:'Pauli Z: eigenvectors = |0⟩ and |1⟩ (computational basis)'},
+  X:{m:[[0,1],[1,0]],ev:[[1/Math.SQRT2,1/Math.SQRT2],[1/Math.SQRT2,-1/Math.SQRT2]],lam:['+1','−1'],name:'Pauli X: eigenvectors = |+⟩ and |−⟩ (Hadamard basis)'},
+  H:{m:[[1/Math.SQRT2,1/Math.SQRT2],[1/Math.SQRT2,-1/Math.SQRT2]],ev:[[Math.cos(Math.PI/8),Math.sin(Math.PI/8)],[Math.cos(5*Math.PI/8),Math.sin(5*Math.PI/8)]],lam:['+1','−1'],name:'Hadamard: eigenvectors at 22.5° and 112.5°'}
+};
+function setEigenViz(g){
+  const {ctx,W,H}=clearC('c_eigen')||{}; if(!ctx)return;
+  const cx=W/2,cy=H/2,sc=90;
+  drawAxes(ctx,W,H,cx,cy,sc);
+  const ed=eigenData[g],[[a,b],[c,d]]=ed.m;
+  // show some random vectors and their transforms
+  [[0.8,0.2],[0.3,0.9],[-0.6,0.5],[0.5,-0.7]].forEach(([x,y])=>{
+    const tx=a*x+b*y,ty=c*x+d*y;
+    arrow(ctx,cx,cy,cx+x*sc,cy-y*sc,'rgba(136,136,119,0.25)','',1);
+    ctx.strokeStyle='rgba(136,136,119,0.15)';ctx.lineWidth=1;ctx.setLineDash([2,3]);
+    ctx.beginPath();ctx.moveTo(cx+x*sc,cy-y*sc);ctx.lineTo(cx+tx*sc,cy-ty*sc);ctx.stroke();
+    ctx.setLineDash([]);
+    arrow(ctx,cx,cy,cx+tx*sc,cy-ty*sc,'rgba(183,83,10,0.2)','',1);
+  });
+  // eigenvectors
+  ed.ev.forEach(([ex,ey],i)=>{
+    const cols=['#1a6b3a','#c0392b'];
+    arrow(ctx,cx,cy,cx+ex*sc,cy-ey*sc,cols[i],`|u${i+1}⟩ λ=${ed.lam[i]}`,2.5);
+  });
+  document.getElementById('eigenLive').textContent=ed.name;
+}
+setEigenViz('Z');
+
+// ═══ EIGENVALUE EXERCISE CHECKS ═══
+function chkMinusLambda(fb) {
+  const a = document.getElementById('ae11a').value.trim().replace(/\s/g,'');
+  const b = document.getElementById('ae11b').value.trim().replace(/\s/g,'');
+  const okA = a==='3-λ' || a==='3−λ' || a==='-λ+3' || a==='3-lambda';
+  const okB = b==='3-λ' || b==='3−λ' || b==='-λ+3' || b==='3-lambda';
+  document.getElementById('ae11a').className='answer-input '+(okA?'ok':'no');
+  document.getElementById('ae11b').className='answer-input '+(okB?'ok':'no');
+  const ok=okA&&okB;
+  setFb(fb, ok,
+    ok ? '✓ Correct! A − λI = ((3−λ, 1),(1, 3−λ)). Off-diagonal elements are unchanged; λ is subtracted only from (1,1) and (2,2).'
+       : '✗ Subtract λ only from the diagonal: element (1,1) → 3−λ, element (2,2) → 3−λ. Elements 1 and 1 remain unchanged.');
+  }
+
+function chkEigA(fb) {
+  const a = document.getElementById('ae12a').value.trim();
+  const b = document.getElementById('ae12b').value.trim();
+  const c = document.getElementById('ae12c').value.trim();
+  const okA = isApprox(a,2)||a==='2';
+  const okB = isApprox(b,4)||b==='4';
+  const okC = isApprox(c,2)||c==='2';
+  document.getElementById('ae12a').className='answer-input '+(okA?'ok':'no');
+  document.getElementById('ae12b').className='answer-input '+(okB?'ok':'no');
+  document.getElementById('ae12c').className='answer-input '+(okC?'ok':'no');
+  const ok=okA&&okB&&okC;
+  setFb(fb, ok,
+    ok ? '✓ Great! √4=2, λ₁=(6+2)/2=4, λ₂=(6−2)/2=2. Or: λ²−6λ+8=(λ−4)(λ−2)=0.'
+       : '✗ √(36−32)=√4=2. Then (6+2)/2=4 and (6−2)/2=2.');
+  }
+
+function chkEigVec(fb) {
+  const a = document.getElementById('ae13a').value.trim().replace(/\s/g,'');
+  const b = document.getElementById('ae13b').value.trim().replace(/\s/g,'');
+  const v = 1/Math.SQRT2;
+  const okA = isApprox(a, v, 0.01) || a==='1/√2' || a==='1/sqrt(2)' || a==='√2/2';
+  const okB = isApprox(b, v, 0.01) || b==='1/√2' || b==='1/sqrt(2)' || b==='√2/2';
+  document.getElementById('ae13a').className='answer-input '+(okA?'ok':'no');
+  document.getElementById('ae13b').className='answer-input '+(okB?'ok':'no');
+  const ok=okA&&okB;
+  setFb(fb, ok,
+    ok ? '✓ Perfect! |u₁⟩ = (1/√2, 1/√2)ᵀ ≈ (0.707, 0.707)ᵀ. Fun fact: it is identical to |+⟩ = H|0⟩!'
+       : '✗ u₁=1, u₂=1 → norm=√2 → divide: (1/√2, 1/√2)ᵀ ≈ (0.707, 0.707)ᵀ');
+  }
+
+function chkEigVerify(fb) {
+  const a = document.getElementById('ae14a').value.trim().replace(/\s/g,'');
+  const b = document.getElementById('ae14b').value.trim().toLowerCase();
+  const v = 4/Math.SQRT2;
+  const okA = isApprox(a, v, 0.01) || a==='4/√2' || a==='2√2' || a==='2*√2' || isApprox(a,2*Math.SQRT2,0.01);
+  const okB = b.includes('yes')||b.includes('si')||b==='yes'||b==='s';
+  document.getElementById('ae14a').className='answer-input '+(okA?'ok':'no');
+  document.getElementById('ae14b').className='answer-input '+(okB?'ok':'no');
+  const ok=okA&&okB;
+  setFb(fb, ok,
+    ok ? `✓ Correct! 4/√2 = 2√2 ≈ ${v.toFixed(3)}. And A|u₁⟩ = (2√2, 2√2)ᵀ = 4·(1/√2, 1/√2)ᵀ = 4·|u₁⟩ = λ|u₁⟩ ✓ The definition is verified!`
+       : '✗ 4/√2 = 4·(1/√2) = 4·0.707 ≈ 2.828 = 2√2. And yes, A|u₁⟩ = 4·|u₁⟩ confirms it is an eigenvector with λ=4.');
+  }
+
+(function(){
+  const c = document.getElementById('c_complex'); if(!c) return;
+  function draw(re, im) {
+    const {ctx,W,H} = clearC('c_complex')||{}; if(!ctx) return;
+    const cx=W/2, cy=H/2, sc=70;
+    drawAxes(ctx,W,H,cx,cy,sc,'Re','Im');
+    ctx.fillStyle='#888877'; ctx.font='10px IBM Plex Mono,monospace';
+    ctx.fillText('Re',W-22,cy-5); ctx.fillText('Im',cx+5,12);
+    const mod = Math.sqrt(re*re+im*im);
+    const phase = Math.atan2(im,re)*180/Math.PI;
+    // phase arc
+    if(mod>0.05){
+      ctx.strokeStyle='rgba(183,83,10,0.35)'; ctx.lineWidth=1.2;
+      ctx.beginPath(); ctx.arc(cx,cy,28,0,-Math.atan2(im,re), im>0); ctx.stroke();
+      ctx.fillStyle='rgba(183,83,10,0.7)'; ctx.font='10px IBM Plex Mono,monospace';
+      ctx.fillText(`φ=${phase.toFixed(0)}°`, cx+32, cy-5);
+    }
+    // dashed projections
+    ctx.strokeStyle='rgba(136,136,119,0.3)'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(cx+re*sc, cy-im*sc); ctx.lineTo(cx+re*sc, cy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx+re*sc, cy-im*sc); ctx.lineTo(cx, cy-im*sc); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='rgba(44,82,130,0.5)'; ctx.font='10px IBM Plex Mono,monospace';
+    if(Math.abs(re)>0.1) ctx.fillText(`a=${re.toFixed(2)}`, cx+re*sc/2-12, cy+13);
+    if(Math.abs(im)>0.1) ctx.fillText(`b=${im.toFixed(2)}`, cx+4, cy-im*sc/2+4);
+    arrow(ctx,cx,cy,cx+re*sc,cy-im*sc,'#2c5282','z',2.5);
+    // dot on tip
+    ctx.beginPath(); ctx.arc(cx+re*sc,cy-im*sc,4,0,Math.PI*2);
+    ctx.fillStyle='#2c5282'; ctx.fill();
+    // info
+    ctx.fillStyle='#1a1a14'; ctx.font='11px IBM Plex Mono,monospace';
+    ctx.fillText(`z = ${re.toFixed(2)} + ${im.toFixed(2)}j  |  |z| = ${mod.toFixed(3)}  |  φ = ${phase.toFixed(1)}°`,10,H-10);
+  }
+  draw(1.5, 1.0);
+  c.addEventListener('click', e=>{
+    const r=c.getBoundingClientRect(), cx=c.width/2, cy=c.height/2, sc=70;
+    draw((e.clientX-r.left-cx)/sc, -(e.clientY-r.top-cy)/sc);
+  });
+})();
+
+// ═══ CONJUGATE CANVAS ═══
+(function(){
+  const c = document.getElementById('c_conj'); if(!c) return;
+  function draw(re, im) {
+    const {ctx,W,H} = clearC('c_conj')||{}; if(!ctx) return;
+    const cx=W/2, cy=H/2, sc=75;
+    drawAxes(ctx,W,H,cx,cy,sc,'Re','Im');
+    // mirror line label
+    ctx.fillStyle='rgba(136,136,119,0.5)'; ctx.font='10px IBM Plex Mono,monospace';
+    ctx.fillText('real axis (mirror)',cx-55,cy-6);
+    // z
+    arrow(ctx,cx,cy,cx+re*sc,cy-im*sc,'#2c5282','z',2.5);
+    ctx.beginPath(); ctx.arc(cx+re*sc,cy-im*sc,4,0,Math.PI*2);
+    ctx.fillStyle='#2c5282'; ctx.fill();
+    // z* (reflected)
+    arrow(ctx,cx,cy,cx+re*sc,cy+im*sc,'#c0392b','z*',2.5);
+    ctx.beginPath(); ctx.arc(cx+re*sc,cy+im*sc,4,0,Math.PI*2);
+    ctx.fillStyle='#c0392b'; ctx.fill();
+    // dashed vertical connecting z to z*
+    ctx.strokeStyle='rgba(136,136,119,0.3)'; ctx.lineWidth=1; ctx.setLineDash([4,3]);
+    ctx.beginPath(); ctx.moveTo(cx+re*sc,cy-im*sc); ctx.lineTo(cx+re*sc,cy+im*sc); ctx.stroke();
+    ctx.setLineDash([]);
+    const mod=Math.sqrt(re*re+im*im);
+    ctx.fillStyle='#1a1a14'; ctx.font='11px IBM Plex Mono,monospace';
+    ctx.fillText(`z = ${re.toFixed(2)} + ${im.toFixed(2)}j  →  z* = ${re.toFixed(2)} − ${im.toFixed(2)}j  |  |z|=|z*|=${mod.toFixed(3)}`,8,H-10);
+  }
+  draw(1.2, 1.0);
+  c.addEventListener('click', e=>{
+    const r=c.getBoundingClientRect(), cx=c.width/2, cy=c.height/2, sc=75;
+    draw((e.clientX-r.left-cx)/sc, -(e.clientY-r.top-cy)/sc);
+  });
+})();
+
+// ═══ NEW CHECKS ═══
+function chkConj(fb) {
+  const a = document.getElementById('ac31a').value.trim().replace(/\s/g,'').toLowerCase();
+  const b = document.getElementById('ac31b').value.trim().replace(/\s/g,'').toLowerCase();
+  const c = document.getElementById('ac31c').value.trim().replace(/\s/g,'').toLowerCase();
+  const okA = a==='5-2j' || a==='5-2i';
+  const okB = b==='-3+j' || b==='-3+1j' || b==='-3+i';
+  const okC = c==='4';
+  document.getElementById('ac31a').className='answer-input '+(okA?'ok':'no');
+  document.getElementById('ac31b').className='answer-input '+(okB?'ok':'no');
+  document.getElementById('ac31c').className='answer-input '+(okC?'ok':'no');
+  const ok=okA&&okB&&okC;
+  setFb(fb, ok, ok
+    ? '✓ Perfect! a) 5−2j  b) −3+j  c) 4. Pure real numbers are their own conjugate!'
+    : '✗ Remember: change ONLY the sign of j. a) 5+2j→5−2j  b) −3−j→−3+j  c) 4→4');
+  }
+
+function chkMod(fb) {
+  const a = document.getElementById('ac32a').value.trim();
+  const b = document.getElementById('ac32b').value.trim();
+  const okA = isApprox(a, 25) || a==='25';
+  const okB = isApprox(b, 1) || b==='1';
+  document.getElementById('ac32a').className='answer-input '+(okA?'ok':'no');
+  document.getElementById('ac32b').className='answer-input '+(okB?'ok':'no');
+  const ok=okA&&okB;
+  setFb(fb, ok, ok
+    ? '✓ Great! a) 9+16=25  b) 1/2+1/2=1. Case b) is crucial: 1/√2 + j/√2 has squared modulus 1 → it is a valid quantum amplitude!'
+    : '✗ a) 3²+4²=9+16=?  b) (1/√2)²+(1/√2)²=1/2+1/2=?');
+  }
+
+function chkZZstar(fb) {
+  const a = document.getElementById('ac33a').value.trim();
+  const b = document.getElementById('ac33b').value.trim();
+  const okA = a==='-1' || isApprox(a,-1);
+  const okB = isApprox(b,13) || b==='13';
+  document.getElementById('ac33a').className='answer-input '+(okA?'ok':'no');
+  document.getElementById('ac33b').className='answer-input '+(okB?'ok':'no');
+  const ok=okA&&okB;
+  setFb(fb, ok, ok
+    ? '✓ Correct! j²=−1 (by definition!) → −9j²=+9 → 4+9=13. Check: 2²+3²=4+9=13 ✓ The z·z* trick always works!'
+    : '✗ j² = −1 by definition. So −9·j² = −9·(−1) = +9. Then 4+9=?');
+  }
+
+function goTo(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+</script>
+
+<script id="sidebar-js">
+/* ── Sidebar JS (injected) ── */
+(function(){
+  var sidebar   = document.getElementById('sidebar');
+  var overlay   = document.getElementById('overlay');
+  var hamburger = document.getElementById('hamburger');
+  if(hamburger) hamburger.addEventListener('click', function(){
+    sidebar.classList.add('open'); overlay.classList.add('show');
+  });
+  if(overlay) overlay.addEventListener('click', function(){
+    sidebar.classList.remove('open'); overlay.classList.remove('show');
+  });
+  /* Mark active note */
+  var path = window.location.pathname.split('/').pop() || 'index.html';
+  var noteMap = {
+    '1-BasicAlgebraForQuantum.html':  'nav-note1',
+    '2-QuantumBasics.html':           'nav-note2',
+    '3-CompositeQuantumSystems.html': 'nav-note3',
+    '4-QuantumCircuits.html':         'nav-note4',
+  };
+  var navId = noteMap[path];
+  if(navId){
+    var el = document.getElementById(navId);
+    if(el){ el.classList.add('active','open'); }
+  }
+})();
+/* Sub-nav accordion — must be global for onclick */
+function toggleNav(id){ document.getElementById(id).classList.toggle('open'); }
+</script>
+
+</body>
+</div><!-- end qn-main -->
+</html>

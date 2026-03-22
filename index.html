@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum Computing — Interactive Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@300;400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="q-notes.css">
+<style>
+body { display: flex; min-height: 100vh; background: var(--bg); }
+
+.home-main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; }
+
+/* ── Notebook page ── */
+.home-page {
+  max-width: 860px;
+  width: 100%;
+  margin: 0 auto;
+  background: var(--page);
+  min-height: 100vh;
+  border-left: 1px solid #e0ddd5;
+  border-right: 1px solid #e0ddd5;
+  box-shadow: 0 0 40px rgba(0,0,0,.06);
+  position: relative;
+  padding-bottom: 5rem;
+}
+.home-page::before {
+  content: '';
+  position: absolute;
+  left: 3.6rem; top: 0; bottom: 0;
+  width: 1px;
+  background: rgba(192,57,43,.2);
+  pointer-events: none;
+}
+
+/* ── Cover ── */
+.cover {
+  padding: 4rem 3.5rem 3rem 5rem;
+  border-bottom: 2px solid var(--line);
+  background: linear-gradient(180deg, #f5f0e8 0%, var(--page) 100%);
+  position: relative;
+  overflow: hidden;
+}
+.cover-eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--red);
+  margin-bottom: 0.9rem;
+}
+.cover h1 {
+  font-family: 'Lora', serif;
+  font-size: clamp(2rem, 5vw, 2.8rem);
+  font-weight: 600;
+  line-height: 1.15;
+  color: var(--ink);
+  margin-bottom: 0.6rem;
+}
+.cover h1 em { font-style: italic; color: var(--accent); }
+.cover-sub {
+  font-size: 0.9rem;
+  color: var(--muted);
+  font-style: italic;
+  max-width: 500px;
+  line-height: 1.65;
+  margin-bottom: 1.5rem;
+}
+.cover-meta {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--muted);
+  display: flex; gap: 2rem; flex-wrap: wrap;
+}
+.cover-meta span::before { content: '— '; color: var(--red); opacity: .5; }
+.cover-atom {
+  position: absolute;
+  right: 3rem; top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.07;
+  pointer-events: none;
+}
+
+/* ── Section wrapper ── */
+.home-section {
+  padding: 2.2rem 3.5rem 1.5rem 5rem;
+  border-bottom: 1px solid var(--line);
+}
+.home-section:last-of-type { border-bottom: none; }
+.home-section-num {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.3rem;
+}
+.home-section h2 {
+  font-family: 'Lora', serif;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 0 0 1.2rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1.5px solid var(--line);
+}
+
+/* ── Note cards ── */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+.note-card {
+  background: #fdfcf8;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 1.2rem 1.2rem 1rem;
+  text-decoration: none;
+  color: var(--ink);
+  display: block;
+  transition: box-shadow 0.18s, transform 0.18s, border-color 0.18s;
+  position: relative;
+  overflow: hidden;
+}
+.note-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--card-color, var(--accent));
+  border-radius: 3px 0 0 3px;
+}
+.note-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,.09);
+  transform: translateY(-2px);
+  border-color: var(--card-color, var(--accent));
+}
+.note-card-num {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--card-color, var(--accent));
+  margin-bottom: 0.4rem;
+}
+.note-card h3 {
+  font-family: 'Lora', serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+  text-transform: none;
+  letter-spacing: 0;
+  margin: 0 0 0.45rem;
+  line-height: 1.25;
+}
+.note-card p {
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.55;
+  margin: 0 0 0.8rem;
+}
+.note-card-chips { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+.chip {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.04em;
+  padding: 0.12rem 0.4rem;
+  border-radius: 3px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.chip.ex  { background: #fff3b0; color: #92400e; }
+.chip.vis { background: var(--green-hl); color: var(--green); }
+.chip.qjs { background: #ede9fe; color: #6b21a8; }
+
+/* Sandbox card */
+.sandbox-card {
+  background: #fdfcf8;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 1.5rem 1.5rem 1.3rem;
+  text-decoration: none;
+  color: var(--ink);
+  display: block;
+  transition: box-shadow 0.18s, transform 0.18s, border-color 0.18s;
+  position: relative;
+  overflow: hidden;
+  grid-column: 1 / -1;
+  border-left: 3px solid #6b21a8;
+}
+.sandbox-card::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 220px; height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(107,33,168,.05) 0%, transparent 70%);
+  pointer-events: none;
+}
+.sandbox-card:hover { box-shadow: 0 4px 18px rgba(0,0,0,.09); transform: translateY(-2px); border-color: #6b21a8; }
+.sandbox-card .note-card-num { color: #6b21a8; }
+.sandbox-card h3 {
+  font-family: 'Lora', serif;
+  font-size: 1.05rem; font-weight: 600;
+  color: var(--ink); text-transform: none; letter-spacing: 0;
+  margin: 0 0 0.35rem;
+}
+.sandbox-card p { font-size: 0.8rem; color: var(--muted); margin: 0 0 0.9rem; }
+.sandbox-arrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase;
+  color: #6b21a8;
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  border: 1px solid rgba(107,33,168,.3);
+  padding: 0.25rem 0.7rem; border-radius: var(--border-r);
+  background: white;
+  transition: all 0.15s;
+}
+.sandbox-card:hover .sandbox-arrow { background: #6b21a8; color: white; border-color: #6b21a8; }
+
+/* ── Concepts index ── */
+.concepts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 0.45rem;
+  margin-bottom: 0.5rem;
+}
+.concept-item {
+  background: #fdfcf8;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 0.55rem 0.8rem;
+  text-decoration: none;
+  color: var(--ink);
+  display: block;
+  transition: border-color 0.15s, background 0.15s;
+}
+.concept-item:hover { border-color: var(--accent); background: var(--accent-soft); }
+.concept-item strong {
+  display: block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.75rem; font-weight: 600;
+  color: var(--accent); margin-bottom: 0.1rem;
+}
+.concept-item span {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.65rem; color: var(--muted);
+}
+
+/* ── How to use ── */
+.how-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+}
+.how-step { display: flex; gap: 0.8rem; align-items: flex-start; }
+.how-num {
+  width: 26px; height: 26px;
+  background: var(--accent); color: white;
+  border-radius: 50%;
+  font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 0.1rem;
+}
+.how-step p { font-size: 0.84rem; color: var(--ink2); line-height: 1.55; margin: 0; }
+
+/* ── Footer ── */
+/* home-footer replaced */
+.home-footer a { color: var(--muted); text-decoration: none; }
+.home-footer a:hover { color: var(--accent); }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .home-main { margin-left: 0; }
+  .home-page::before { display: none; }
+  .cover, .home-section { padding-left: 1.5rem; padding-right: 1.5rem; }
+  /* home-footer replaced */
+  .cover-atom { display: none; }
+}
+@media (max-width: 480px) {
+  .cards-grid { grid-template-columns: 1fr; }
+  .concepts-grid { grid-template-columns: 1fr 1fr; }
+}
+
+  .home-footer {
+    background: #f0ece0;
+    border-top: 1px solid var(--line);
+    padding: 2rem 3rem;
+  }
+  .footer-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+  .footer-label {
+    display: block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 0.5rem;
+  }
+  .footer-attribution,
+  .footer-qjs {
+    font-size: 0.85rem;
+    color: var(--ink2);
+    line-height: 1.7;
+  }
+  .footer-attribution strong,
+  .footer-qjs strong { color: var(--ink); font-weight: 600; }
+  .footer-qjs a { color: var(--accent); text-decoration: none; }
+  .footer-qjs a:hover { text-decoration: underline; }
+  @media (max-width: 700px) {
+    .footer-inner { grid-template-columns: 1fr; }
+    .home-footer { padding: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<button class="qn-hamburger" id="hamburger" aria-label="Open menu">☰</button>
+<div class="qn-sidebar-overlay" id="overlay"></div>
+
+<nav class="qn-sidebar" id="sidebar">
+  <div class="qn-sidebar-logo">
+    <a href="index.html">
+      <div class="logo-tag">Interactive Notes</div>
+      <div class="logo-title">Quantum<br>Computing</div>
+      <div class="logo-sub">Quantum Computing · 2026</div>
+    </a>
+  </div>
+  <div class="qn-nav">
+    <div class="qn-nav-section-label">Navigation</div>
+    <a class="qn-nav-item active" href="index.html">
+      <div class="qn-nav-item-header">
+        <span class="qn-nav-item-num">🏠</span>
+        <span class="qn-nav-item-label">Home</span>
+      </div>
+    </a>
+    <div class="qn-nav-item" id="nav-note1">
+      <div class="qn-nav-item-header" onclick="toggleNav('nav-note1')">
+        <span class="qn-nav-item-num">01</span>
+        <span class="qn-nav-item-label">Linear Algebra</span>
+        <span class="qn-nav-chevron">▶</span>
+      </div>
+      <div class="qn-subnav">
+        <a href="1-BasicAlgebraForQuantum.html#s1">Vectors</a>
+        <a href="1-BasicAlgebraForQuantum.html#s2">Space + Norm</a>
+        <a href="1-BasicAlgebraForQuantum.html#s3">Complex Numbers</a>
+        <a href="1-BasicAlgebraForQuantum.html#s4">Inner Product</a>
+        <a href="1-BasicAlgebraForQuantum.html#s5">Dirac Notation</a>
+        <a href="1-BasicAlgebraForQuantum.html#s6">Why |0⟩=(1,0)?</a>
+        <a href="1-BasicAlgebraForQuantum.html#s7">The Qubit</a>
+        <a href="1-BasicAlgebraForQuantum.html#s8">Measurement</a>
+        <a href="1-BasicAlgebraForQuantum.html#s9">Matrices &amp; Gates</a>
+        <a href="1-BasicAlgebraForQuantum.html#s10">Eigenvalues</a>
+      </div>
+    </div>
+    <div class="qn-nav-item" id="nav-note2">
+      <div class="qn-nav-item-header" onclick="toggleNav('nav-note2')">
+        <span class="qn-nav-item-num">02</span>
+        <span class="qn-nav-item-label">Quantum Basics</span>
+        <span class="qn-nav-chevron">▶</span>
+      </div>
+      <div class="qn-subnav">
+        <a href="2-QuantumBasics.html#s1">QM Postulates</a>
+        <a href="2-QuantumBasics.html#s1b">Pauli Matrices</a>
+        <a href="2-QuantumBasics.html#s1c">Measurement Bases</a>
+        <a href="2-QuantumBasics.html#s2">The Qubit</a>
+        <a href="2-QuantumBasics.html#s3">Measuring a Qubit</a>
+        <a href="2-QuantumBasics.html#s4">Transforming a Qubit</a>
+        <a href="2-QuantumBasics.html#s5">Quantum Gates</a>
+        <a href="2-QuantumBasics.html#s6">Basis Change</a>
+        <a href="2-QuantumBasics.html#s7">Arbitrary Basis</a>
+        <a href="2-QuantumBasics.html#s8">Tricks &amp; Summary</a>
+      </div>
+    </div>
+    <div class="qn-nav-item" id="nav-note3">
+      <div class="qn-nav-item-header" onclick="toggleNav('nav-note3')">
+        <span class="qn-nav-item-num">03</span>
+        <span class="qn-nav-item-label">Composite Systems</span>
+        <span class="qn-nav-chevron">▶</span>
+      </div>
+      <div class="qn-subnav">
+        <a href="3-CompositeQuantumSystems.html#s1">Tensor Products</a>
+        <a href="3-CompositeQuantumSystems.html#s2">Two-Qubit States</a>
+        <a href="3-CompositeQuantumSystems.html#s3">Entanglement</a>
+        <a href="3-CompositeQuantumSystems.html#s4">CHSH Game</a>
+        <a href="3-CompositeQuantumSystems.html#s5">Multi-Qubit Gates</a>
+        <a href="3-CompositeQuantumSystems.html#s6">Mixed States</a>
+      </div>
+    </div>
+    <div class="qn-nav-item" id="nav-note4">
+      <div class="qn-nav-item-header" onclick="toggleNav('nav-note4')">
+        <span class="qn-nav-item-num">04</span>
+        <span class="qn-nav-item-label">Quantum Circuits</span>
+        <span class="qn-nav-chevron">▶</span>
+      </div>
+      <div class="qn-subnav">
+        <a href="4-QuantumCircuits.html#s1">Universality</a>
+        <a href="4-QuantumCircuits.html#s2">Boolean Functions</a>
+        <a href="4-QuantumCircuits.html#s3">Quantum Parallelism</a>
+        <a href="4-QuantumCircuits.html#s4">State Transformation</a>
+        <a href="4-QuantumCircuits.html#s5">Generating α|0⟩+β|1⟩</a>
+        <a href="4-QuantumCircuits.html#s6">No-Cloning Theorem</a>
+        <a href="4-QuantumCircuits.html#s7">Bell Measurement</a>
+        <a href="4-QuantumCircuits.html#s8">Teleportation</a>
+        <a href="4-QuantumCircuits.html#s9">Tomography</a>
+      </div>
+    </div>
+    <div class="qn-nav-section-label" style="margin-top:0.5rem;">Labs</div>
+    <a class="qn-nav-item" href="sandbox.html">
+      <div class="qn-nav-item-header">
+        <span class="qn-nav-item-num">⚛</span>
+        <span class="qn-nav-item-label">Circuit Sandbox</span>
+      </div>
+    </a>
+  </div>
+  <div class="qn-sidebar-footer">
+    <a href="https://github.com/" target="_blank">GitHub Pages ↗</a>
+  </div>
+</nav>
+
+<main class="home-main">
+<div class="home-page">
+
+  <!-- COVER -->
+  <div class="cover">
+    <div class="cover-eyebrow">Interactive Notes · Quantum Computing · 2026</div>
+    <h1>From Zero to<br><em>Quantum Computing</em></h1>
+    <p class="cover-sub">Self-contained interactive notes covering linear algebra, quantum mechanics, entanglement and quantum circuits — with live visualisations, exercises and a circuit simulator.</p>
+    <div class="cover-meta">
+      <span>4 notes · 35+ sections</span>
+      <span>50+ exercises</span>
+      <span>Circuit sandbox</span>
+    </div>
+    <svg class="cover-atom" width="300" height="300" viewBox="0 0 300 300" fill="none">
+      <ellipse cx="150" cy="150" rx="135" ry="46" stroke="#2c5282" stroke-width="1.5"/>
+      <ellipse cx="150" cy="150" rx="135" ry="46" stroke="#2c5282" stroke-width="1.5" transform="rotate(60 150 150)"/>
+      <ellipse cx="150" cy="150" rx="135" ry="46" stroke="#2c5282" stroke-width="1.5" transform="rotate(120 150 150)"/>
+      <circle cx="150" cy="150" r="13" fill="#2c5282"/>
+      <circle cx="285" cy="150" r="6" fill="#c0392b"/>
+      <circle cx="82"  cy="34"  r="6" fill="#c0392b"/>
+      <circle cx="82"  cy="266" r="6" fill="#c0392b"/>
+    </svg>
+  </div>
+
+  <!-- THE NOTES -->
+  <div class="home-section">
+    <div class="home-section-num">Section 01</div>
+    <h2>The Notes</h2>
+    <div class="cards-grid">
+
+      <a class="note-card" href="1-BasicAlgebraForQuantum.html" style="--card-color:#2c5282;">
+        <div class="note-card-num">Note 01 · Linear Algebra</div>
+        <h3>Linear Algebra<br>for Quantum</h3>
+        <p>Vectors, complex numbers, inner products, Dirac notation, matrices and eigenvalues — everything needed to understand qubits from scratch.</p>
+        <div class="note-card-chips">
+          <span class="chip">10 sections</span>
+          <span class="chip ex">15+ exercises</span>
+          <span class="chip vis">Visualisations</span>
+        </div>
+      </a>
+
+      <a class="note-card" href="2-QuantumBasics.html" style="--card-color:#b7530a;">
+        <div class="note-card-num">Note 02 · Quantum Basics</div>
+        <h3>Quantum<br>Basics</h3>
+        <p>The three postulates of QM, the Bloch sphere, Pauli matrices, full gate catalogue (H, X, Y, Z, S, T, Rx, Ry, Rz) and measurement in arbitrary bases.</p>
+        <div class="note-card-chips">
+          <span class="chip">8 sections</span>
+          <span class="chip ex">12+ exercises</span>
+          <span class="chip vis">Bloch sphere</span>
+        </div>
+      </a>
+
+      <a class="note-card" href="3-CompositeQuantumSystems.html" style="--card-color:#1a6b3a;">
+        <div class="note-card-num">Note 03 · Composite Systems</div>
+        <h3>Composite<br>Quantum Systems</h3>
+        <p>Tensor products, two-qubit states, entanglement, Bell states, the CHSH game, CNOT/CZ/SWAP gates, and density matrices.</p>
+        <div class="note-card-chips">
+          <span class="chip">6 sections</span>
+          <span class="chip ex">13+ exercises</span>
+          <span class="chip qjs">⚛ Circuit Labs</span>
+        </div>
+      </a>
+
+      <a class="note-card" href="4-QuantumCircuits.html" style="--card-color:#6b21a8;">
+        <div class="note-card-num">Note 04 · Quantum Circuits</div>
+        <h3>Quantum<br>Circuits</h3>
+        <p>Universality, Boolean oracles, quantum parallelism, the no-cloning theorem, Bell measurement, quantum teleportation and state tomography.</p>
+        <div class="note-card-chips">
+          <span class="chip">9 sections</span>
+          <span class="chip ex">12+ exercises</span>
+          <span class="chip vis">Simulators</span>
+        </div>
+      </a>
+
+      <a class="sandbox-card" href="sandbox.html">
+        <div class="note-card-num">Interactive Lab</div>
+        <h3>⚛ Circuit Sandbox</h3>
+        <p>Drag-and-drop quantum circuit editor — up to 4 qubits, 8 moments. Live probability outcomes, preset circuits, Bloch sphere display.</p>
+        <span class="sandbox-arrow">Launch Sandbox ↗</span>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- CONCEPTS INDEX -->
+  <div class="home-section">
+    <div class="home-section-num">Section 02</div>
+    <h2>Key Concepts Index</h2>
+    <div class="concepts-grid">
+      <a class="concept-item" href="1-BasicAlgebraForQuantum.html#s1"><strong>Vector / Ket</strong><span>Note 01 · §1</span></a>
+      <a class="concept-item" href="1-BasicAlgebraForQuantum.html#s2"><strong>Norm &amp; Hilbert Space</strong><span>Note 01 · §2</span></a>
+      <a class="concept-item" href="1-BasicAlgebraForQuantum.html#s3"><strong>Complex Numbers</strong><span>Note 01 · §3</span></a>
+      <a class="concept-item" href="1-BasicAlgebraForQuantum.html#s4"><strong>Inner Product</strong><span>Note 01 · §4</span></a>
+      <a class="concept-item" href="1-BasicAlgebraForQuantum.html#s5"><strong>Dirac Bra-Ket</strong><span>Note 01 · §5</span></a>
+      <a class="concept-item" href="1-BasicAlgebraForQuantum.html#s6"><strong>Why |0⟩=(1,0)?</strong><span>Note 01 · §6</span></a>
+      <a class="concept-item" href="1-BasicAlgebraForQuantum.html#s7"><strong>Qubit State</strong><span>Note 01 · §7</span></a>
+      <a class="concept-item" href="1-BasicAlgebraForQuantum.html#s8"><strong>Born Rule</strong><span>Note 01 · §8</span></a>
+      <a class="concept-item" href="1-BasicAlgebraForQuantum.html#s9"><strong>Unitary Matrices</strong><span>Note 01 · §9</span></a>
+      <a class="concept-item" href="1-BasicAlgebraForQuantum.html#s10"><strong>Eigenvalues</strong><span>Note 01 · §10</span></a>
+      <a class="concept-item" href="2-QuantumBasics.html#s1"><strong>QM Postulates</strong><span>Note 02 · §1</span></a>
+      <a class="concept-item" href="2-QuantumBasics.html#s1b"><strong>Pauli X, Y, Z</strong><span>Note 02 · §1b</span></a>
+      <a class="concept-item" href="2-QuantumBasics.html#s1c"><strong>Measurement Bases</strong><span>Note 02 · §1c</span></a>
+      <a class="concept-item" href="2-QuantumBasics.html#s2"><strong>Bloch Sphere</strong><span>Note 02 · §2</span></a>
+      <a class="concept-item" href="2-QuantumBasics.html#s3"><strong>State Collapse</strong><span>Note 02 · §3</span></a>
+      <a class="concept-item" href="2-QuantumBasics.html#s5"><strong>H, S, T Gates</strong><span>Note 02 · §5</span></a>
+      <a class="concept-item" href="2-QuantumBasics.html#s5"><strong>Rotation Gates Rx,Ry,Rz</strong><span>Note 02 · §5</span></a>
+      <a class="concept-item" href="2-QuantumBasics.html#s6"><strong>Basis Change</strong><span>Note 02 · §6</span></a>
+      <a class="concept-item" href="3-CompositeQuantumSystems.html#s1"><strong>Tensor Product ⊗</strong><span>Note 03 · §1</span></a>
+      <a class="concept-item" href="3-CompositeQuantumSystems.html#s2"><strong>Two-Qubit States</strong><span>Note 03 · §2</span></a>
+      <a class="concept-item" href="3-CompositeQuantumSystems.html#s3"><strong>Entanglement</strong><span>Note 03 · §3</span></a>
+      <a class="concept-item" href="3-CompositeQuantumSystems.html#s3"><strong>Bell States</strong><span>Note 03 · §3</span></a>
+      <a class="concept-item" href="3-CompositeQuantumSystems.html#s4"><strong>CHSH Game</strong><span>Note 03 · §4</span></a>
+      <a class="concept-item" href="3-CompositeQuantumSystems.html#s5"><strong>CNOT / CZ / SWAP</strong><span>Note 03 · §5</span></a>
+      <a class="concept-item" href="3-CompositeQuantumSystems.html#s6"><strong>Density Matrix ρ</strong><span>Note 03 · §6</span></a>
+      <a class="concept-item" href="4-QuantumCircuits.html#s1"><strong>Universality</strong><span>Note 04 · §1</span></a>
+      <a class="concept-item" href="4-QuantumCircuits.html#s2"><strong>Quantum Oracle</strong><span>Note 04 · §2</span></a>
+      <a class="concept-item" href="4-QuantumCircuits.html#s3"><strong>Quantum Parallelism</strong><span>Note 04 · §3</span></a>
+      <a class="concept-item" href="4-QuantumCircuits.html#s6"><strong>No-Cloning Theorem</strong><span>Note 04 · §6</span></a>
+      <a class="concept-item" href="4-QuantumCircuits.html#s7"><strong>Bell Measurement</strong><span>Note 04 · §7</span></a>
+      <a class="concept-item" href="4-QuantumCircuits.html#s8"><strong>Teleportation</strong><span>Note 04 · §8</span></a>
+      <a class="concept-item" href="4-QuantumCircuits.html#s9"><strong>State Tomography</strong><span>Note 04 · §9</span></a>
+    </div>
+  </div>
+
+  <!-- HOW TO USE -->
+  <div class="home-section">
+    <div class="home-section-num">Section 03</div>
+    <h2>How to Use These Notes</h2>
+    <div class="how-grid">
+      <div class="how-step">
+        <div class="how-num">1</div>
+        <p>Start with <strong>Note 01</strong> if you are new to linear algebra. Otherwise jump directly to any section from the sidebar.</p>
+      </div>
+      <div class="how-step">
+        <div class="how-num">2</div>
+        <p>Read the theory boxes, then work through the <strong>exercises</strong>. Hints are hidden — always try first!</p>
+      </div>
+      <div class="how-step">
+        <div class="how-num">3</div>
+        <p>Use the <strong>interactive canvases</strong> to build intuition — click, drag and adjust sliders.</p>
+      </div>
+      <div class="how-step">
+        <div class="how-num">4</div>
+        <p>Open the <strong>Circuit Sandbox</strong> to experiment freely with quantum gates and see live probability outcomes.</p>
+      </div>
+    </div>
+    <div class="note-box">
+      <strong>No prerequisites.</strong> Each note starts from absolute basics. All maths is introduced step-by-step with worked examples and interactive visualisations.
+    </div>
+  </div>
+
+  <footer class="home-footer">
+    <div class="footer-inner">
+      <div class="footer-attribution">
+        <span class="footer-label">Inspired by</span>
+        These notes were inspired by the course <em>Quantum Computing</em> taught by
+        <strong>Prof. Marco Chiani</strong> at the Università di Bologna.
+        Original study notes by <strong>Lorenzo Valentini</strong>, 2026.
+      </div>
+      <div class="footer-qjs">
+        <span class="footer-label">Circuit simulator</span>
+        The interactive circuit sandbox is powered by
+        <a href="https://quantumjavascript.app" target="_blank"><strong>Q.js</strong></a>
+        — a quantum circuit simulator, drag-and-drop editor and JavaScript library
+        by <a href="https://stewartsmith.io" target="_blank">Stewart Smith</a>.
+        Free, open-source, runs entirely in your browser.
+        <a href="https://github.com/stewdio/q.js" target="_blank">GitHub ↗</a>
+      </div>
+    </div>
+  </footer>
+
+</div>
+</main>
+
+<script>
+const sidebar   = document.getElementById('sidebar');
+const overlay   = document.getElementById('overlay');
+const hamburger = document.getElementById('hamburger');
+hamburger.addEventListener('click', () => { sidebar.classList.add('open');  overlay.classList.add('show'); });
+overlay.addEventListener('click',   () => { sidebar.classList.remove('open'); overlay.classList.remove('show'); });
+function toggleNav(id) { document.getElementById(id).classList.toggle('open'); }
+</script>
+</body>
+</html>

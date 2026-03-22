@@ -1,0 +1,193 @@
+<!--
+  ═══════════════════════════════════════════════════════════════
+  SIDEBAR INTEGRATION GUIDE
+  ═══════════════════════════════════════════════════════════════
+  
+  To add the sidebar navigation to an existing note page, make
+  these changes to the HTML file:
+
+  1. Add to <head>:
+       <link rel="stylesheet" href="q-notes.css">
+     (replace the inline <style> block or append it)
+
+  2. Add class to <body>:
+       <body class="with-sidebar">
+
+  3. Paste this entire block BEFORE the <main> / .page div:
+  ═══════════════════════════════════════════════════════════════
+-->
+
+<!-- Hamburger (mobile) -->
+<button class="qn-hamburger" id="hamburger" aria-label="Open menu">☰</button>
+<div class="qn-sidebar-overlay" id="overlay"></div>
+
+<!-- Sidebar -->
+<nav class="qn-sidebar" id="sidebar">
+  <div class="qn-sidebar-logo">
+    <a href="index.html">
+      <div class="logo-tag">Interactive Notes</div>
+      <div class="logo-title">Quantum<br>Computing</div>
+      <div class="logo-sub">Prof. M. Chiani · Bologna 2026</div>
+    </a>
+  </div>
+
+  <div class="qn-nav">
+    <div class="qn-nav-section-label">Navigation</div>
+
+    <a class="qn-nav-item" href="index.html">
+      <div class="qn-nav-item-header">
+        <span class="qn-nav-item-num">🏠</span>
+        <span class="qn-nav-item-label">Home</span>
+      </div>
+    </a>
+
+    <div class="qn-nav-item" id="nav-note1">
+      <div class="qn-nav-item-header" onclick="toggleNav('nav-note1')">
+        <span class="qn-nav-item-num">01</span>
+        <span class="qn-nav-item-label">Linear Algebra</span>
+        <span class="qn-nav-chevron">▶</span>
+      </div>
+      <div class="qn-subnav">
+        <a href="1-BasicAlgebraForQuantum.html#s1">Vectors</a>
+        <a href="1-BasicAlgebraForQuantum.html#s2">Space + Norm</a>
+        <a href="1-BasicAlgebraForQuantum.html#s3">Complex Numbers</a>
+        <a href="1-BasicAlgebraForQuantum.html#s4">Inner Product</a>
+        <a href="1-BasicAlgebraForQuantum.html#s5">Dirac Notation</a>
+        <a href="1-BasicAlgebraForQuantum.html#s6">Why |0⟩=(1,0)?</a>
+        <a href="1-BasicAlgebraForQuantum.html#s7">The Qubit</a>
+        <a href="1-BasicAlgebraForQuantum.html#s8">Measurement</a>
+        <a href="1-BasicAlgebraForQuantum.html#s9">Matrices &amp; Gates</a>
+        <a href="1-BasicAlgebraForQuantum.html#s10">Eigenvalues</a>
+      </div>
+    </div>
+
+    <div class="qn-nav-item" id="nav-note2">
+      <div class="qn-nav-item-header" onclick="toggleNav('nav-note2')">
+        <span class="qn-nav-item-num">02</span>
+        <span class="qn-nav-item-label">Quantum Basics</span>
+        <span class="qn-nav-chevron">▶</span>
+      </div>
+      <div class="qn-subnav">
+        <a href="2-QuantumBasics.html#s1">QM Postulates</a>
+        <a href="2-QuantumBasics.html#s1b">Pauli Matrices</a>
+        <a href="2-QuantumBasics.html#s1c">Measurement Bases</a>
+        <a href="2-QuantumBasics.html#s2">The Qubit</a>
+        <a href="2-QuantumBasics.html#s3">Measuring a Qubit</a>
+        <a href="2-QuantumBasics.html#s4">Transforming a Qubit</a>
+        <a href="2-QuantumBasics.html#s5">Quantum Gates</a>
+        <a href="2-QuantumBasics.html#s6">Basis Change</a>
+        <a href="2-QuantumBasics.html#s7">Arbitrary Basis</a>
+        <a href="2-QuantumBasics.html#s8">Tricks &amp; Summary</a>
+      </div>
+    </div>
+
+    <div class="qn-nav-item" id="nav-note3">
+      <div class="qn-nav-item-header" onclick="toggleNav('nav-note3')">
+        <span class="qn-nav-item-num">03</span>
+        <span class="qn-nav-item-label">Composite Systems</span>
+        <span class="qn-nav-chevron">▶</span>
+      </div>
+      <div class="qn-subnav">
+        <a href="3-CompositeQuantumSystems.html#s1">Tensor Products</a>
+        <a href="3-CompositeQuantumSystems.html#s2">Two-Qubit States</a>
+        <a href="3-CompositeQuantumSystems.html#s3">Entanglement</a>
+        <a href="3-CompositeQuantumSystems.html#s4">CHSH Game</a>
+        <a href="3-CompositeQuantumSystems.html#s5">Multi-Qubit Gates</a>
+        <a href="3-CompositeQuantumSystems.html#s6">Mixed States</a>
+      </div>
+    </div>
+
+    <div class="qn-nav-item" id="nav-note4">
+      <div class="qn-nav-item-header" onclick="toggleNav('nav-note4')">
+        <span class="qn-nav-item-num">04</span>
+        <span class="qn-nav-item-label">Quantum Circuits</span>
+        <span class="qn-nav-chevron">▶</span>
+      </div>
+      <div class="qn-subnav">
+        <a href="4-QuantumCircuits.html#s1">Universality</a>
+        <a href="4-QuantumCircuits.html#s2">Boolean Functions</a>
+        <a href="4-QuantumCircuits.html#s3">Quantum Parallelism</a>
+        <a href="4-QuantumCircuits.html#s4">State Transformation</a>
+        <a href="4-QuantumCircuits.html#s5">Generating α|0⟩+β|1⟩</a>
+        <a href="4-QuantumCircuits.html#s6">No-Cloning Theorem</a>
+        <a href="4-QuantumCircuits.html#s7">Bell Measurement</a>
+        <a href="4-QuantumCircuits.html#s8">Teleportation</a>
+        <a href="4-QuantumCircuits.html#s9">Tomography</a>
+      </div>
+    </div>
+
+    <div class="qn-nav-section-label" style="margin-top:0.5rem;">Labs</div>
+
+    <a class="qn-nav-item" href="sandbox.html">
+      <div class="qn-nav-item-header">
+        <span class="qn-nav-item-num">⚛</span>
+        <span class="qn-nav-item-label">Circuit Sandbox</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="qn-sidebar-footer">
+    Lorenzo Valentini · 2026<br>
+    <a href="https://github.com/" target="_blank">GitHub Pages ↗</a>
+  </div>
+</nav>
+
+<!--
+  4. Wrap your existing .page div in a <div class="qn-main">:
+
+    <div class="qn-main">
+      <div class="score-bar">...</div>     ← existing score bar
+      <div class="page">                   ← existing page
+        ...content...
+      </div>
+    </div>
+
+  5. Add this JS before </body>:
+-->
+
+<script>
+/* Sidebar toggle (mobile) */
+const _sidebar   = document.getElementById('sidebar');
+const _overlay   = document.getElementById('overlay');
+const _hamburger = document.getElementById('hamburger');
+if (_hamburger) {
+  _hamburger.addEventListener('click', () => {
+    _sidebar.classList.add('open');
+    _overlay.classList.add('show');
+  });
+}
+if (_overlay) {
+  _overlay.addEventListener('click', () => {
+    _sidebar.classList.remove('open');
+    _overlay.classList.remove('show');
+  });
+}
+
+/* Sub-nav accordion */
+function toggleNav(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+
+/* Mark current page as active in sidebar */
+(function() {
+  const path = window.location.pathname.split('/').pop() || 'index.html';
+  const noteMap = {
+    '1-BasicAlgebraForQuantum.html': 'nav-note1',
+    '2-QuantumBasics.html':          'nav-note2',
+    '3-CompositeQuantumSystems.html':'nav-note3',
+    '4-QuantumCircuits.html':        'nav-note4',
+  };
+  const navId = noteMap[path];
+  if (navId) {
+    const el = document.getElementById(navId);
+    if (el) { el.classList.add('active', 'open'); }
+  }
+  // Mark sandbox
+  if (path === 'sandbox.html') {
+    document.querySelectorAll('.qn-nav-item').forEach(el => {
+      const lbl = el.querySelector('.qn-nav-item-label');
+      if (lbl && lbl.textContent.includes('Sandbox')) el.classList.add('active');
+    });
+  }
+})();
+</script>
