@@ -160,26 +160,23 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; h
 <link rel="stylesheet" href="q-notes.css">
 
 <style id="sidebar-scorebar-fix">
-/* ── Sidebar-aware layout ── */
 body.with-sidebar {
   display: flex;
   min-height: 100vh;
+  background: var(--bg, #faf8f3);
 }
 body.with-sidebar .qn-main {
   margin-left: var(--sidebar-w, 260px);
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;   /* ← centres the .page horizontally */
-  background: var(--bg, #faf8f3);
+  min-width: 0;
 }
-/* Keep .page centred and at correct max-width */
 body.with-sidebar .page {
-  width: 100%;
   max-width: 780px;
-  margin: 0;             /* auto-margin not needed; align-items:center does it */
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
 }
-body.with-sidebar body.with-sidebar body.with-sidebar @media (max-width: 768px) {
+@media (max-width: 768px) {
   body.with-sidebar .qn-main { margin-left: 0; }
 }
 </style>
@@ -291,8 +288,6 @@ body.with-sidebar body.with-sidebar body.with-sidebar @media (max-width: 768px) 
 </nav>
 <!-- ── /SIDEBAR ── -->
 <div class="qn-main">
-</div>
-
 <div class="page">
 
 <div class="section-num">Interactive Notes · Quantum Computing · 2026</div>
