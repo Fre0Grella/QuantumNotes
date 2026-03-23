@@ -1,6 +1,5 @@
 /*
   q-notes.css — Unified stylesheet for Quantum Computing Interactive Notes
-  Lorenzo Valentini · Prof. M. Chiani · Univ. Bologna · 2026
   ─────────────────────────────────────────────────────────────────────────
   Import in every note page:  <link rel="stylesheet" href="q-notes.css">
 */
@@ -102,7 +101,7 @@ body.with-sidebar {
 }
 .qn-sidebar-logo .logo-tag {
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.58rem;
+  font-size: 0.80rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--sidebar-muted);
@@ -110,7 +109,7 @@ body.with-sidebar {
 }
 .qn-sidebar-logo .logo-title {
   font-family: 'Lora', serif;
-  font-size: 1.05rem;
+  font-size: 1.25rem;
   font-weight: 600;
   color: var(--sidebar-ink);
   line-height: 1.25;
@@ -201,7 +200,7 @@ body.with-sidebar {
 .qn-sidebar-footer {
   padding: 0.8rem 1.2rem;
   border-top: 1px solid rgba(255,255,255,.08);
-  font-size: 0.68rem;
+  font-size: 1rem;
   color: var(--sidebar-muted);
   flex-shrink: 0;
 }

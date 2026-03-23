@@ -1,22 +1,3 @@
-<!--
-  ═══════════════════════════════════════════════════════════════
-  SIDEBAR INTEGRATION GUIDE
-  ═══════════════════════════════════════════════════════════════
-  
-  To add the sidebar navigation to an existing note page, make
-  these changes to the HTML file:
-
-  1. Add to <head>:
-       <link rel="stylesheet" href="q-notes.css">
-     (replace the inline <style> block or append it)
-
-  2. Add class to <body>:
-       <body class="with-sidebar">
-
-  3. Paste this entire block BEFORE the <main> / .page div:
-  ═══════════════════════════════════════════════════════════════
--->
-
 <!-- Hamburger (mobile) -->
 <button class="qn-hamburger" id="hamburger" aria-label="Open menu">☰</button>
 <div class="qn-sidebar-overlay" id="overlay"></div>
@@ -27,7 +8,6 @@
     <a href="index.html">
       <div class="logo-tag">Interactive Notes</div>
       <div class="logo-title">Quantum<br>Computing</div>
-      <div class="logo-sub">Prof. M. Chiani · Bologna 2026</div>
     </a>
   </div>
 
@@ -127,23 +107,10 @@
   </div>
 
   <div class="qn-sidebar-footer">
-    Lorenzo Valentini · 2026<br>
-    <a href="https://github.com/" target="_blank">GitHub Pages ↗</a>
+    FreoGrella · 2026<br>
+    <a href="https://github.com/Fre0Grella/QuantumNotes" target="_blank">GitHub ↗</a>
   </div>
 </nav>
-
-<!--
-  4. Wrap your existing .page div in a <div class="qn-main">:
-
-    <div class="qn-main">
-      <div class="score-bar">...</div>     ← existing score bar
-      <div class="page">                   ← existing page
-        ...content...
-      </div>
-    </div>
-
-  5. Add this JS before </body>:
--->
 
 <script>
 /* Sidebar toggle (mobile) */
