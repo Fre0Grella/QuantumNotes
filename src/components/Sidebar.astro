@@ -8,6 +8,7 @@ interface Props {
 
 const { currentSlug, isHome = false } = Astro.props;
 const notes = getNotes();
+const base = import.meta.env.BASE_URL;
 ---
 
 <button class="qn-hamburger" id="hamburger" aria-label="Open menu">☰</button>
@@ -15,7 +16,7 @@ const notes = getNotes();
 
 <nav class="qn-sidebar" id="sidebar">
   <div class="qn-sidebar-logo">
-    <a href="/">
+    <a href={base}>
       <div class="logo-tag">Interactive Notes</div>
       <div class="logo-title">Quantum<br>Computing</div>
     </a>
@@ -24,7 +25,7 @@ const notes = getNotes();
   <div class="qn-nav">
     <div class="qn-nav-section-label">Navigation</div>
 
-    <a class={`qn-nav-item ${isHome ? 'active' : ''}`} href="/">
+    <a class={`qn-nav-item ${isHome ? 'active' : ''}`} href={base}>
       <div class="qn-nav-item-header">
         <span class="qn-nav-item-num">🏠</span>
         <span class="qn-nav-item-label">Home</span>
@@ -46,7 +47,7 @@ const notes = getNotes();
         </div>
         <div class="qn-subnav">
           {note.sections.map(s => (
-            <a href={`/notes/${note.slug}#${s.id}`}>{s.label}</a>
+            <a href={`${base}notes/${note.slug}#${s.id}`}>{s.label}</a>
           ))}
         </div>
       </div>
@@ -54,7 +55,7 @@ const notes = getNotes();
 
     <div class="qn-nav-section-label" style="margin-top:0.5rem;">Labs</div>
 
-    <a class={`qn-nav-item ${currentSlug === 'sandbox' ? 'active' : ''}`} href="/sandbox">
+    <a class={`qn-nav-item ${currentSlug === 'sandbox' ? 'active' : ''}`} href={`${base}sandbox`}>
       <div class="qn-nav-item-header">
         <span class="qn-nav-item-num">⚛</span>
         <span class="qn-nav-item-label">Circuit Sandbox</span>
