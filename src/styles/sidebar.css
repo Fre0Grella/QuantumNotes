@@ -1,0 +1,215 @@
+/*
+  sidebar.css — Sidebar navigation, hamburger toggle, mobile responsive overrides
+  Quantum Computing Interactive Notes · 2026
+  ─────────────────────────────────────────────────────────────
+*/
+
+/* ══════════════════════════════════════════════════════════
+   1. SIDEBAR SHELL
+══════════════════════════════════════════════════════════ */
+.qn-sidebar {
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  width: var(--sidebar-w);
+  background: var(--sidebar-bg);
+  color: var(--sidebar-ink);
+  display: flex;
+  flex-direction: column;
+  z-index: 200;
+  overflow-y: auto;
+  transition: transform 0.3s ease;
+}
+
+/* ══════════════════════════════════════════════════════════
+   2. LOGO / BRAND
+══════════════════════════════════════════════════════════ */
+.qn-sidebar-logo {
+  padding: 1.4rem 1.2rem 1rem;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  flex-shrink: 0;
+}
+.qn-sidebar-logo a {
+  text-decoration: none;
+  display: block;
+}
+.qn-sidebar-logo .logo-tag {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--sidebar-muted);
+  margin-bottom: 0.3rem;
+}
+.qn-sidebar-logo .logo-title {
+  font-family: 'Lora', serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--sidebar-ink);
+  line-height: 1.25;
+}
+.qn-sidebar-logo .logo-sub {
+  font-size: 0.72rem;
+  color: var(--sidebar-muted);
+  margin-top: 0.2rem;
+}
+
+/* ══════════════════════════════════════════════════════════
+   3. NAV LIST
+══════════════════════════════════════════════════════════ */
+.qn-nav { flex: 1; padding: 0.6rem 0 2rem; }
+
+.qn-nav-section-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--sidebar-muted);
+  padding: 1rem 1.2rem 0.3rem;
+}
+
+.qn-nav-item {
+  display: block;
+  text-decoration: none;
+  color: var(--sidebar-ink);
+  font-size: 0.83rem;
+  padding: 0;
+  border-left: 3px solid transparent;
+  transition: all 0.15s;
+}
+.qn-nav-item-header {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.48rem 1rem 0.48rem 1.1rem;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: background 0.15s, border-color 0.15s;
+}
+.qn-nav-item-header:hover {
+  background: rgba(255,255,255,.08);
+}
+.qn-nav-item.active > .qn-nav-item-header {
+  border-left-color: var(--sidebar-active);
+  background: rgba(253,230,138,.10);
+  color: var(--sidebar-active);
+}
+.qn-nav-item-num {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--sidebar-muted);
+  min-width: 1.4rem;
+  flex-shrink: 0;
+}
+.qn-nav-item.active .qn-nav-item-num { color: var(--sidebar-active); }
+.qn-nav-item-label { flex: 1; line-height: 1.3; }
+.qn-nav-chevron {
+  font-size: 0.6rem;
+  color: var(--sidebar-muted);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+.qn-nav-item.open .qn-nav-chevron { transform: rotate(90deg); }
+
+/* ══════════════════════════════════════════════════════════
+   4. SUB-NAV (section links within a note)
+══════════════════════════════════════════════════════════ */
+.qn-subnav {
+  display: none;
+  background: rgba(0,0,0,.15);
+  border-left: 3px solid transparent;
+}
+.qn-nav-item.open .qn-subnav { display: block; }
+.qn-subnav a {
+  display: block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--sidebar-muted);
+  padding: 0.35rem 1rem 0.35rem 2.8rem;
+  text-decoration: none;
+  transition: color 0.15s;
+  border-left: none;
+  line-height: 1.4;
+}
+.qn-subnav a:hover { color: var(--sidebar-ink); }
+.qn-subnav a.active { color: var(--sidebar-active); }
+
+/* ══════════════════════════════════════════════════════════
+   5. SIDEBAR FOOTER
+══════════════════════════════════════════════════════════ */
+.qn-sidebar-footer {
+  padding: 0.8rem 1.2rem;
+  border-top: 1px solid rgba(255,255,255,.08);
+  font-size: 0.68rem;
+  color: var(--sidebar-muted);
+  flex-shrink: 0;
+}
+.qn-sidebar-footer a { color: var(--sidebar-muted); text-decoration: none; }
+.qn-sidebar-footer a:hover { color: var(--sidebar-active); }
+
+/* ══════════════════════════════════════════════════════════
+   6. HAMBURGER TOGGLE (mobile)
+══════════════════════════════════════════════════════════ */
+.qn-hamburger {
+  display: none;
+  position: fixed;
+  top: 0.7rem; left: 0.7rem;
+  z-index: 300;
+  background: var(--sidebar-bg);
+  color: var(--sidebar-ink);
+  border: none;
+  width: 38px; height: 38px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ══════════════════════════════════════════════════════════
+   7. OVERLAY (mobile backdrop)
+══════════════════════════════════════════════════════════ */
+.qn-sidebar-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 190;
+}
+
+/* ══════════════════════════════════════════════════════════
+   8. MOBILE / RESPONSIVE SIDEBAR RULES
+══════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .qn-sidebar {
+    transform: translateX(-100%);
+  }
+  .qn-sidebar.open {
+    transform: translateX(0);
+  }
+  .qn-sidebar-overlay.show { display: block; }
+  .qn-hamburger { display: flex; }
+}
+
+/* ══════════════════════════════════════════════════════════
+   9. SIDEBAR-SCOREBAR COMPATIBILITY FIX
+   (applied via inline <style id="sidebar-scorebar-fix"> in each page)
+══════════════════════════════════════════════════════════ */
+body.with-sidebar {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg, #faf8f3);
+}
+body.with-sidebar .qn-main {
+  margin-left: var(--sidebar-w, 260px);
+  flex: 1;
+  min-width: 0;
+}
+body.with-sidebar .page {
+  max-width: 780px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  body.with-sidebar .qn-main { margin-left: 0; }
+}

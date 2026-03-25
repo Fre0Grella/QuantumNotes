@@ -1,0 +1,402 @@
+/*
+  layout.css — Page skeleton, structural layout, grid/flex containers
+  Quantum Computing Interactive Notes · 2026
+  ─────────────────────────────────────────────────────────────
+*/
+
+/* ══════════════════════════════════════════════════════════
+   1. MAIN CONTENT AREA (with sidebar)
+══════════════════════════════════════════════════════════ */
+.qn-main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ══════════════════════════════════════════════════════════
+   2. PAGE
+══════════════════════════════════════════════════════════ */
+.page {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 2rem 2rem 6rem 4rem;
+  background: var(--page);
+  min-height: 100vh;
+  border-left: 1px solid #e0ddd5;
+  border-right: 1px solid #e0ddd5;
+  box-shadow: var(--shadow-card);
+  position: relative;
+  width: 100%;
+}
+
+/* Red margin line (notebook effect) */
+.page::before {
+  content: '';
+  position: absolute;
+  left: 3.2rem; top: 0; bottom: 0;
+  width: 1px;
+  background: rgba(192,57,43,.2);
+  pointer-events: none;
+}
+
+/* When used standalone (without sidebar), remove left offset */
+body:not(.with-sidebar) .page {
+  border-left: 3px solid #e8c4b8;
+}
+
+/* ══════════════════════════════════════════════════════════
+   3. COVER
+══════════════════════════════════════════════════════════ */
+.cover {
+  padding: 4rem 3rem 3rem 5rem;
+  border-bottom: 2px solid var(--line);
+  background: linear-gradient(180deg, #f5f0e8 0%, var(--page) 100%);
+  position: relative;
+  overflow: hidden;
+}
+.cover-eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--red);
+  margin-bottom: 0.9rem;
+}
+.cover-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--red);
+  margin-bottom: 0.8rem;
+}
+.cover h1 {
+  font-family: 'Lora', serif;
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--ink);
+  margin-bottom: 0.5rem;
+}
+.cover h1 em { font-style: italic; color: var(--accent); }
+.cover p {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+.cover-sub {
+  font-size: 0.9rem;
+  color: var(--muted);
+  font-style: italic;
+  max-width: 500px;
+  line-height: 1.65;
+  margin-bottom: 1.5rem;
+}
+.cover-meta {
+  margin-top: 1.2rem;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--muted);
+  display: flex; gap: 2rem; flex-wrap: wrap;
+}
+.cover-meta span::before { content: '— '; color: var(--red); opacity: .5; }
+.cover-atom {
+  position: absolute;
+  right: 3rem; top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.07;
+  pointer-events: none;
+}
+
+/* ══════════════════════════════════════════════════════════
+   4. TABLE OF CONTENTS
+══════════════════════════════════════════════════════════ */
+.toc {
+  background: var(--accent-soft);
+  border-radius: var(--border-r);
+  padding: 1rem 1.2rem;
+  margin: 1.2rem 0 2rem;
+}
+.toc-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.6rem;
+}
+.toc-list { list-style: none; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.toc-list li a {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  background: white;
+  color: var(--accent);
+  padding: 0.25rem 0.65rem;
+  border-radius: 20px;
+  border: 1px solid #bcd0e8;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: inline-block;
+}
+.toc-list li a:hover { background: var(--accent); color: white; }
+
+/* ══════════════════════════════════════════════════════════
+   5. SECTIONS
+══════════════════════════════════════════════════════════ */
+.section { margin-bottom: 3rem; padding-top: 0.5rem; }
+
+.section-num {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.2rem;
+}
+
+/* ══════════════════════════════════════════════════════════
+   6. SCORE BAR
+══════════════════════════════════════════════════════════ */
+#scorebar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--ink);
+  color: white;
+  padding: 0.45rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+}
+#pbar-wrap { flex: 1; height: 3px; background: #444; border-radius: 2px; }
+#pbar {
+  height: 100%;
+  background: #68d391;
+  border-radius: 2px;
+  width: 0;
+  transition: width 0.4s;
+}
+
+.score-bar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--page);
+  border-bottom: 1px solid var(--line);
+  padding: 0.5rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-family: 'IBM Plex Mono', monospace;
+}
+.score-right { display: flex; align-items: center; gap: 0.8rem; }
+.score-num { color: var(--accent); font-size: 0.9rem; }
+.progress-mini { width: 100px; height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.progress-mini-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.4s; }
+
+/* ══════════════════════════════════════════════════════════
+   7. MATH BLOCK GRID HELPERS
+══════════════════════════════════════════════════════════ */
+.mx-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem 2rem;
+  align-items: center;
+  margin: 0.4rem 0;
+}
+.mx-cols-auto {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.8rem 1.5rem;
+  align-items: center;
+  margin: 0.4rem 0;
+}
+.mx-label {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+}
+
+/* ══════════════════════════════════════════════════════════
+   8. CANVAS & INTERACTIVE VISUALS
+══════════════════════════════════════════════════════════ */
+canvas {
+  display: block;
+  border: 1px solid var(--line);
+  border-radius: var(--border-r);
+  margin: 0.8rem 0 0.3rem;
+  background: #fafaf8;
+  cursor: crosshair;
+  max-width: 100%;
+}
+.canvas-caption {
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-style: italic;
+  margin-bottom: 0.8rem;
+  text-align: center;
+}
+
+/* Controls row */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin: 0.5rem 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+input[type=range] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 160px;
+  height: 3px;
+  background: var(--line);
+  border-radius: 2px;
+  cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+.ctrl-val {
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--accent);
+  font-size: 0.82rem;
+  min-width: 50px;
+}
+.live {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.82rem;
+  color: var(--ink2);
+  background: #f3f0e8;
+  padding: 0.4rem 0.7rem;
+  border-radius: 3px;
+  margin-top: 0.4rem;
+  min-height: 1.8rem;
+}
+
+/* ══════════════════════════════════════════════════════════
+   9. CIRCUIT DIAGRAM (inline text-art)
+══════════════════════════════════════════════════════════ */
+.circuit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 1rem 0;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.85rem;
+}
+.circuit-row { display: flex; align-items: center; gap: 0; }
+.circuit-label { color: var(--ink2); margin-right: 0.6rem; min-width: 3rem; font-size: 0.82rem; }
+.circuit-line { height: 2px; background: var(--ink2); width: 1.5rem; display: inline-block; vertical-align: middle; }
+.circuit-gate {
+  border: 2px solid var(--ink);
+  background: white;
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  display: inline-block;
+}
+.circuit-gate.h  { border-color: var(--accent); color: var(--accent); }
+.circuit-gate.x  { border-color: var(--red);    color: var(--red); }
+.circuit-gate.z  { border-color: var(--green);  color: var(--green); }
+.circuit-gate.s  { border-color: var(--orange); color: var(--orange); }
+.circuit-meas {
+  border: 2px solid var(--muted);
+  background: #f8f6f0;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.circuit-out { color: var(--ink2); margin-left: 0.5rem; font-size: 0.82rem; }
+
+/* ══════════════════════════════════════════════════════════
+   10. BELL CARDS & GATE CARDS (composite/notes pages)
+══════════════════════════════════════════════════════════ */
+.bell-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin: 0.8rem 0; }
+.bell-card {
+  background: #f5f2ea;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.6rem 0.9rem;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.88rem;
+}
+.bell-name { color: var(--accent); font-weight: 600; margin-bottom: 0.2rem; font-size: 0.8rem; }
+
+/* ══════════════════════════════════════════════════════════
+   11. TELEPORTATION TABLE
+══════════════════════════════════════════════════════════ */
+.tele-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.82rem;
+  margin: 0.8rem 0;
+}
+.tele-table th { background: var(--accent); color: white; padding: 0.4rem 0.8rem; text-align: left; }
+.tele-table td { padding: 0.35rem 0.8rem; border-bottom: 1px solid var(--line); }
+.tele-table tr:nth-child(even) td { background: #f8f6f0; }
+
+/* ══════════════════════════════════════════════════════════
+   12. TRUTH TABLE
+══════════════════════════════════════════════════════════ */
+table.truth { border-collapse: collapse; margin: 0.8rem 0; font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem; }
+table.truth th { background: var(--ink); color: white; padding: 0.3rem 0.8rem; font-weight: 600; }
+table.truth td { border: 1px solid var(--line); padding: 0.25rem 0.8rem; text-align: center; }
+table.truth tr.win td  { background: var(--green-hl); }
+table.truth tr.lose td { background: var(--red-hl); }
+
+/* ══════════════════════════════════════════════════════════
+   13. MISC STRUCTURAL
+══════════════════════════════════════════════════════════ */
+.divider { border: none; border-top: 1px dashed var(--line); margin: 1.2rem 0; }
+
+.annotation {
+  font-family: 'Lora', serif;
+  font-style: italic;
+  font-size: 0.82rem;
+  color: var(--red);
+  margin: 0.2rem 0;
+  padding-left: 0.5rem;
+  border-left: 2px solid rgba(192,57,43,.3);
+}
+
+/* ══════════════════════════════════════════════════════════
+   14. RESPONSIVE
+══════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .qn-main { margin-left: 0; }
+  .page { padding: 2rem 1.2rem 4rem; }
+  .page::before { display: none; }
+  .score-bar { padding: 0.5rem 1rem; }
+  .bell-grid { grid-template-columns: 1fr; }
+  .mx-cols { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  .page::before { display: none; }
+}
+
+@media (max-width: 480px) {
+  .toc-list { gap: 0.3rem; }
+}

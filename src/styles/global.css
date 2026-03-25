@@ -1,0 +1,112 @@
+/*
+  global.css — CSS custom properties, resets, and typography
+  Quantum Computing Interactive Notes · 2026
+  ─────────────────────────────────────────────────────────────
+*/
+
+/* ══════════════════════════════════════════════════════════
+   1. DESIGN TOKENS  (:root variables)
+══════════════════════════════════════════════════════════ */
+:root {
+  /* Palette */
+  --bg:             #faf8f3;
+  --page:           #fffef9;
+  --ink:            #1a1a14;
+  --ink2:           #3a3a2e;
+  --muted:          #888877;
+  --line:           #e8e4d8;
+
+  /* Brand accent */
+  --accent:         #2c5282;
+  --accent-light:   #3b6ca8;
+  --accent-soft:    #ebf0f8;
+
+  /* Semantic colours */
+  --red:            #c0392b;
+  --green:          #1a6b3a;
+  --orange:         #b7530a;
+  --purple:         #6b21a8;
+
+  /* Highlight backgrounds */
+  --yellow-hl:      #fff3b0;
+  --yellow-hl2:     #fde68a;
+  --blue-hl:        #dbeafe;
+  --green-hl:       #d1fae5;
+  --red-hl:         #fee2e2;
+  --purple-hl:      #ede9fe;
+
+  /* Feedback */
+  --correct:        #1a6b3a;
+  --wrong:          #c0392b;
+
+  /* Misc */
+  --border-r:       4px;
+  --shadow-card:    0 2px 8px rgba(0,0,0,.07);
+
+  /* Sidebar */
+  --sidebar-w:      260px;
+  --sidebar-bg:     #2a2f3d;
+  --sidebar-ink:    #dde4f0;
+  --sidebar-muted:  #7a8499;
+  --sidebar-active: #fde68a;
+}
+
+/* ══════════════════════════════════════════════════════════
+   2. RESET & BASE
+══════════════════════════════════════════════════════════ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; font-size: 15px; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-weight: 300;
+  line-height: 1.7;
+}
+
+/* Sidebar layout wrapper */
+body.with-sidebar {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ══════════════════════════════════════════════════════════
+   3. TYPOGRAPHY
+══════════════════════════════════════════════════════════ */
+h1 {
+  font-family: 'Lora', serif;
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--ink);
+  margin-bottom: 0.4rem;
+}
+h2 {
+  font-family: 'Lora', serif;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 2rem 0 0.8rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--line);
+}
+h3 {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--orange);
+  margin: 1.4rem 0 0.5rem;
+}
+p { margin-bottom: 0.8rem; }
+strong { font-weight: 600; color: var(--ink); }
+em { color: var(--ink2); }
+a { color: var(--accent); }
+
+/* ══════════════════════════════════════════════════════════
+   4. GOOGLE FONTS IMPORT
+══════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@300;400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');

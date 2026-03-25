@@ -1,687 +1,30 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quantum Computing Notes — from scratch</title>
-<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@300;400;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<style>
-:root {
-  --bg: #faf8f3;
-  --page: #fffef9;
-  --ink: #1a1a14;
-  --ink2: #3a3a2e;
-  --muted: #888877;
-  --line: #e8e4d8;
-  --accent: #2c5282;
-  --accent-soft: #ebf0f8;
-  --red: #c0392b;
-  --green: #1a6b3a;
-  --orange: #b7530a;
-  --yellow-hl: #fff3b0;
-  --yellow-hl2: #fde68a;
-  --blue-hl: #dbeafe;
-  --green-hl: #d1fae5;
-  --red-hl: #fee2e2;
-  --correct: #1a6b3a;
-  --wrong: #c0392b;
-  --border-r: 4px;
-}
+---
+import type { NoteMeta, NoteSection } from '../../lib/notes';
 
-* { margin:0; padding:0; box-sizing:border-box; }
-
-body {
-  background: var(--bg);
-  color: var(--ink);
-  font-family: 'IBM Plex Sans', sans-serif;
-  font-weight: 300;
-  line-height: 1.7;
-  font-size: 15px;
-}
-
-/* Notebook lines background */
-.page {
-  max-width: 780px;
-  margin: 0 auto;
-  background: var(--page);
-  min-height: 100vh;
-  padding: 0 0 6rem 0;
-  border-left: 1px solid #e0ddd5;
-  border-right: 1px solid #e0ddd5;
-  box-shadow: 0 0 40px rgba(0,0,0,0.06);
-  position: relative;
-}
-
-/* Red margin line */
-.page::before {
-  content:'';
-  position: absolute;
-  left: 72px; top: 0; bottom: 0;
-  width: 1px;
-  background: rgba(192,57,43,0.2);
-  pointer-events: none;
-}
-
-/* Cover */
-.cover {
-  padding: 4rem 3rem 3rem 5rem;
-  border-bottom: 2px solid var(--line);
-  background: linear-gradient(180deg, #f5f0e8 0%, var(--page) 100%);
-}
-.cover-label {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.65rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--red);
-  margin-bottom: 0.8rem;
-}
-.cover h1 {
-  font-family: 'Lora', serif;
-  font-size: clamp(1.8rem, 4vw, 2.6rem);
-  font-weight: 600;
-  line-height: 1.2;
-  color: var(--ink);
-  margin-bottom: 0.5rem;
-}
-.cover p {
-  color: var(--muted);
-  font-size: 0.85rem;
-  font-style: italic;
-}
-.cover-meta {
-  margin-top: 1.2rem;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.72rem;
-  color: var(--muted);
-  display: flex; gap: 2rem; flex-wrap: wrap;
-}
-
-/* TOC */
-.toc {
-  padding: 1.5rem 3rem 1.5rem 5rem;
-  border-bottom: 1px solid var(--line);
-  background: #f8f6f0;
-}
-.toc-title {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.68rem; letter-spacing: 0.15em;
-  text-transform: uppercase; color: var(--muted);
-  margin-bottom: 0.8rem;
-}
-.toc-list { list-style: none; display: flex; flex-wrap: wrap; gap: 0.4rem; }
-.toc-list li a {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.75rem;
-  color: var(--accent);
-  text-decoration: none;
-  padding: 0.2rem 0.6rem;
-  border: 1px solid rgba(44,82,130,0.25);
-  border-radius: 2px;
-  transition: all 0.15s;
-  white-space: nowrap;
-}
-.toc-list li a:hover { background: var(--accent); color: white; }
-
-/* Sections */
-.section {
-  padding: 2rem 3rem 1.5rem 5rem;
-  border-bottom: 1px solid var(--line);
-}
-.section:last-child { border-bottom: none; }
-
-.section-num {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.65rem; letter-spacing: 0.15em;
-  text-transform: uppercase; color: var(--red);
-  margin-bottom: 0.3rem;
-}
-.section h2 {
-  font-family: 'Lora', serif;
-  font-size: 1.35rem;
-  font-weight: 600;
-  color: var(--ink);
-  margin-bottom: 1.2rem;
-  padding-bottom: 0.4rem;
-  border-bottom: 1.5px solid var(--line);
-}
-.section h3 {
-  font-family: 'Lora', serif;
-  font-size: 1.05rem;
-  font-weight: 400;
-  font-style: italic;
-  color: var(--ink2);
-  margin: 1.4rem 0 0.6rem 0;
-}
-
-p { margin-bottom: 0.8rem; }
-strong { font-weight: 600; color: var(--ink); }
-em { color: var(--ink2); }
-
-/* Definition box */
-.def {
-  background: var(--blue-hl);
-  border-left: 3px solid var(--accent);
-  padding: 0.8rem 1rem;
-  margin: 1rem 0;
-  border-radius: 0 var(--border-r) var(--border-r) 0;
-  font-size: 0.9rem;
-}
-.def .def-title {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.7rem; letter-spacing: 0.1em;
-  text-transform: uppercase; color: var(--accent);
-  margin-bottom: 0.3rem;
-}
-
-/* Note box */
-.note-box {
-  background: var(--yellow-hl);
-  border-left: 3px solid #d97706;
-  padding: 0.7rem 1rem;
-  margin: 1rem 0;
-  border-radius: 0 var(--border-r) var(--border-r) 0;
-  font-size: 0.87rem;
-  color: var(--ink2);
-}
-.note-box::before {
-  content: '📝 ';
-  font-size: 0.8rem;
-}
-
-/* Warning / insight */
-.insight {
-  background: var(--green-hl);
-  border-left: 3px solid var(--green);
-  padding: 0.7rem 1rem;
-  margin: 1rem 0;
-  border-radius: 0 var(--border-r) var(--border-r) 0;
-  font-size: 0.87rem;
-}
-.insight::before { content: '💡 '; }
-
-/* ── Math block container ── */
-.math-block {
-  background: #f5f2ea;
-  border: 1px solid #dedad0;
-  border-radius: 6px;
-  padding: 1rem 1.4rem;
-  margin: 0.9rem 0;
-  overflow-x: auto;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.88rem;
-  color: var(--ink);
-  line-height: 1.6;
-}
-
-/* ── Equation row ── */
-.eq {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.4rem 0.55rem;
-  margin: 0.45rem 0;
-  font-size: 0.9rem;
-}
-.eq-note  { color: var(--muted); font-size: 0.78rem; font-style: italic; }
-.eq-arrow { color: var(--red);   font-weight: 700; }
-
-/* ── Matrix (uses <table>) ── */
-.mx {
-  display: inline-flex;
-  align-items: stretch;
-  vertical-align: middle;
-  margin: 0 0.3rem;
-  gap: 2px;
-}
-.mx::before, .mx::after {
-  content: '';
-  width: 5px;
-  border-top: 2px solid var(--ink);
-  border-bottom: 2px solid var(--ink);
-  flex-shrink: 0;
-}
-.mx::before {
-  border-left: 2px solid var(--ink);
-  border-radius: 2px 0 0 2px;
-}
-.mx::after {
-  border-right: 2px solid var(--ink);
-  border-radius: 0 2px 2px 0;
-}
-.mx table {
-  border-collapse: separate;
-  border-spacing: 0;
-  display: inline-table;
-}
-.mx td {
-  text-align: center;
-  padding: 0.22rem 0.55rem;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.88rem;
-  white-space: nowrap;
-  line-height: 1.45;
-}
-.mx td.c-0  { color: var(--muted); }
-.mx td.c-n  { color: var(--red);   }
-.mx td.c-l  { color: var(--accent);}
-
-/* ── Column vector ── */
-.vec {
-  display: inline-flex;
-  align-items: stretch;
-  vertical-align: middle;
-  margin: 0 0.25rem;
-  gap: 2px;
-}
-.vec::before, .vec::after {
-  content: '';
-  width: 4px;
-  border-top: 2px solid var(--ink);
-  border-bottom: 2px solid var(--ink);
-  flex-shrink: 0;
-}
-.vec::before {
-  border-left: 2px solid var(--ink);
-  border-radius: 2px 0 0 2px;
-}
-.vec::after {
-  border-right: 2px solid var(--ink);
-  border-radius: 0 2px 2px 0;
-}
-.vec table {
-  border-collapse: separate;
-  border-spacing: 0;
-  display: inline-table;
-}
-.vec td {
-  display: table-cell;
-  text-align: center;
-  padding: 0.18rem 0.55rem;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.88rem;
-  white-space: nowrap;
-  line-height: 1.45;
-}
-.vec td.c-0  { color: var(--muted); }
-.vec td.c-n  { color: var(--red);   }
-
-/* ── Step list inside math block ── */
-.mstep {
-  display: grid;
-  grid-template-columns: 90px 1fr;
-  gap: 0.1rem 0.6rem;
-  margin: 0.4rem 0;
-  font-size: 0.87rem;
-  align-items: baseline;
-}
-.mstep-label {
-  color: var(--red);
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-align: right;
-  white-space: nowrap;
-  padding-top: 0.05rem;
-}
-.mstep-body { color: var(--ink2); line-height: 1.65; }
-
-/* ── scalar prefix (e.g. 1/√2 ·) ── */
-.scalar { color: var(--accent); font-weight: 600; margin-right: 0.2rem; }
-
-/* ── separator inside math block ── */
-.math-sep { border:none; border-top: 1px dashed #ccc8ba; margin: 0.65rem 0; }
-
-/* ── two-column layout inside math block ── */
-.mx-cols {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.8rem 2rem;
-  align-items: center;
-  margin: 0.4rem 0;
-}
-.mx-cols-auto {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.8rem 1.5rem;
-  align-items: center;
-  margin: 0.4rem 0;
-}
-.mx-label {
-  font-size: 0.72rem;
-  color: var(--muted);
-  font-weight: 600;
-  margin-bottom: 0.3rem;
-}
-.math-inline {
-  font-family: 'IBM Plex Mono', monospace;
-  background: #f3f0e8;
-  padding: 0.05rem 0.35rem;
-  border-radius: 2px;
-  font-size: 0.88em;
-  color: var(--ink);
-}
-
-/* Canvas */
-canvas {
-  display: block;
-  border: 1px solid var(--line);
-  border-radius: var(--border-r);
-  margin: 0.8rem 0 0.3rem 0;
-  background: #fafaf8;
-  cursor: crosshair;
-  max-width: 100%;
-}
-.canvas-caption {
-  font-size: 0.72rem;
-  color: var(--muted);
-  font-style: italic;
-  margin-bottom: 0.8rem;
-  text-align: center;
-}
-
-/* Interactive controls */
-.controls {
-  display: flex; align-items: center; gap: 0.8rem;
-  flex-wrap: wrap; margin: 0.5rem 0;
-  font-size: 0.82rem; color: var(--muted);
-}
-input[type=range] {
-  -webkit-appearance:none; appearance:none;
-  width: 160px; height: 3px;
-  background: var(--line); border-radius:2px; cursor:pointer;
-}
-input[type=range]::-webkit-slider-thumb {
-  -webkit-appearance:none; width:14px; height:14px;
-  border-radius:50%; background: var(--accent); cursor:pointer;
-  border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-}
-.ctrl-val {
-  font-family: 'IBM Plex Mono', monospace;
-  color: var(--accent); font-size: 0.82rem;
-  min-width: 50px;
-}
-
-/* Buttons */
-.btn {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.75rem; letter-spacing: 0.04em;
-  padding: 0.35rem 0.9rem;
-  border: 1px solid var(--accent);
-  background: transparent; color: var(--accent);
-  cursor: pointer; border-radius: 3px;
-  transition: all 0.15s;
-}
-.btn:hover { background: var(--accent); color: white; }
-.btn.sm { padding: 0.25rem 0.6rem; font-size: 0.7rem; }
-.btn.ghost { border-color: var(--line); color: var(--muted); }
-.btn.ghost:hover { background: var(--line); color: var(--ink); }
-
-/* Exercises */
-.ex-block {
-  background: #faf9f5;
-  border: 1px solid var(--line);
-  border-top: 3px solid var(--accent);
-  border-radius: 0 0 var(--border-r) var(--border-r);
-  padding: 1rem 1.2rem;
-  margin: 1.2rem 0;
-}
-.ex-header {
-  display: flex; align-items: baseline; gap: 0.6rem;
-  margin-bottom: 0.7rem;
-}
-.ex-tag {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.62rem; letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: white; background: var(--accent);
-  padding: 0.15rem 0.5rem; border-radius: 2px;
-}
-.ex-title {
-  font-family: 'Lora', serif;
-  font-style: italic;
-  font-size: 0.95rem;
-  color: var(--ink2);
-}
-.ex-body { font-size: 0.88rem; color: var(--ink2); line-height: 1.75; }
-.ex-body p { margin-bottom: 0.5rem; }
-
-.answer-area { margin-top: 0.8rem; }
-.answer-row { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin: 0.4rem 0; }
-.ans-label { font-family: 'IBM Plex Mono', monospace; font-size: 0.82rem; color: var(--muted); white-space: nowrap; }
-.answer-input {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.85rem;
-  padding: 0.3rem 0.6rem;
-  border: 1px solid var(--line);
-  background: white;
-  color: var(--ink);
-  border-radius: 3px;
-  width: 110px;
-  transition: border-color 0.15s;
-}
-.answer-input:focus { outline: none; border-color: var(--accent); }
-.answer-input.ok { border-color: var(--correct); background: var(--green-hl); }
-.answer-input.no { border-color: var(--wrong); background: var(--red-hl); }
-.answer-input.wide { width: 160px; }
-
-.feedback {
-  display: none; margin-top: 0.6rem;
-  padding: 0.5rem 0.8rem; font-size: 0.82rem;
-  border-radius: 3px; line-height: 1.5;
-}
-.feedback.show { display: block; }
-.feedback.ok { background: var(--green-hl); border-left: 3px solid var(--correct); color: var(--correct); }
-.feedback.no { background: var(--red-hl); border-left: 3px solid var(--wrong); color: var(--wrong); }
-.feedback.hint { background: var(--yellow-hl); border-left: 3px solid #d97706; color: var(--orange); }
-
-.hint-toggle {
-  font-size: 0.72rem; color: var(--muted);
-  background: none; border: none; cursor: pointer;
-  text-decoration: underline; margin-top: 0.4rem;
-  display: block;
-}
-.hint-toggle:hover { color: var(--accent); }
-
-/* Step-by-step */
-.steps { margin: 0.6rem 0; counter-reset: step; }
-.step {
-  display: flex; gap: 0.7rem; margin-bottom: 0.5rem;
-  font-size: 0.88rem; color: var(--ink2);
-}
-.step-num {
-  flex-shrink: 0;
-  width: 20px; height: 20px;
-  background: var(--accent); color: white;
-  border-radius: 50%;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.68rem;
-  display: flex; align-items: center; justify-content: center;
-  margin-top: 0.1rem;
-}
-
-/* Matrix pretty */
-.mat {
-  display: inline-flex; align-items: center; gap: 2px;
-  vertical-align: middle; margin: 0 0.2rem;
-}
-.mat-bracket { font-size: 1.8em; line-height: 1; color: var(--muted); font-weight: 100; }
-.mat-inner { font-family: 'IBM Plex Mono', monospace; font-size: 0.82rem; }
-.mat-inner table { border-collapse: collapse; }
-.mat-inner td { padding: 0.05rem 0.35rem; text-align: center; }
-
-/* Info tags inline */
-.tag-pill {
-  display: inline-block;
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.65rem; letter-spacing: 0.05em;
-  padding: 0.1rem 0.4rem;
-  border-radius: 2px; margin: 0 0.15rem;
-  vertical-align: middle;
-}
-.tag-blue { background: var(--blue-hl); color: var(--accent); }
-.tag-green { background: var(--green-hl); color: var(--green); }
-.tag-yellow { background: var(--yellow-hl); color: #92400e; }
-
-.divider { border: none; border-top: 1px dashed var(--line); margin: 1.2rem 0; }
-
-/* Annotation style */
-.annotation {
-  font-family: 'Lora', serif;
-  font-style: italic;
-  font-size: 0.82rem;
-  color: var(--red);
-  margin: 0.2rem 0;
-  padding-left: 0.5rem;
-  border-left: 2px solid rgba(192,57,43,0.3);
-}
-
-/* Live value display */
-.live {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.82rem; color: var(--ink2);
-  background: #f3f0e8; padding: 0.4rem 0.7rem;
-  border-radius: 3px; margin-top: 0.4rem;
-  min-height: 1.8rem;
-}
-
-@media (max-width: 600px) {
-  .page::before { display: none; }
-  .section, .toc, .cover { padding-left: 1.2rem; padding-right: 1.2rem; }
-  }
-</style>
-<link rel="stylesheet" href="q-notes.css">
-
-<style id="sidebar-scorebar-fix">
-body.with-sidebar {
-  display: flex;
-  min-height: 100vh;
-  background: var(--bg, #faf8f3);
-}
-body.with-sidebar .qn-main {
-  margin-left: var(--sidebar-w, 260px);
-  flex: 1;
-  min-width: 0;
-}
-body.with-sidebar .page {
-  max-width: 780px;
-  margin: 0 auto;
-  width: 100%;
-  box-sizing: border-box;
-}
-@media (max-width: 768px) {
-  body.with-sidebar .qn-main { margin-left: 0; }
-}
-</style>
-</head>
-<body class="with-sidebar">
-
-<!-- ── SIDEBAR INJECTED ── -->
-<button class="qn-hamburger" id="hamburger" aria-label="Open menu">☰</button>
-<div class="qn-sidebar-overlay" id="overlay"></div>
-
-<nav class="qn-sidebar" id="sidebar">
-  <div class="qn-sidebar-logo">
-    <a href="index.html">
-      <div class="logo-tag">Interactive Notes</div>
-      <div class="logo-title">Quantum<br>Computing</div>
-      <div class="logo-sub">Marco Galeri · 2026</div>
-    </a>
-  </div>
-  <div class="qn-nav">
-    <div class="qn-nav-section-label">Navigation</div>
-    <a class="qn-nav-item" href="index.html">
-      <div class="qn-nav-item-header">
-        <span class="qn-nav-item-num">🏠</span>
-        <span class="qn-nav-item-label">Home</span>
-      </div>
-    </a>
-    <div class="qn-nav-item" id="nav-note1">
-      <div class="qn-nav-item-header" onclick="toggleNav('nav-note1')">
-        <span class="qn-nav-item-num">01</span>
-        <span class="qn-nav-item-label">Linear Algebra</span>
-        <span class="qn-nav-chevron">▶</span>
-      </div>
-      <div class="qn-subnav">
-        <a href="1-BasicAlgebraForQuantum.html#s1">Vectors</a>
-        <a href="1-BasicAlgebraForQuantum.html#s2">Space + Norm</a>
-        <a href="1-BasicAlgebraForQuantum.html#s3">Complex Numbers</a>
-        <a href="1-BasicAlgebraForQuantum.html#s4">Inner Product</a>
-        <a href="1-BasicAlgebraForQuantum.html#s5">Dirac Notation</a>
-        <a href="1-BasicAlgebraForQuantum.html#s6">Why |0⟩=(1,0)?</a>
-        <a href="1-BasicAlgebraForQuantum.html#s7">The Qubit</a>
-        <a href="1-BasicAlgebraForQuantum.html#s8">Measurement</a>
-        <a href="1-BasicAlgebraForQuantum.html#s9">Matrices &amp; Gates</a>
-        <a href="1-BasicAlgebraForQuantum.html#s10">Eigenvalues</a>
-      </div>
-    </div>
-    <div class="qn-nav-item" id="nav-note2">
-      <div class="qn-nav-item-header" onclick="toggleNav('nav-note2')">
-        <span class="qn-nav-item-num">02</span>
-        <span class="qn-nav-item-label">Quantum Basics</span>
-        <span class="qn-nav-chevron">▶</span>
-      </div>
-      <div class="qn-subnav">
-        <a href="2-QuantumBasics.html#s1">QM Postulates</a>
-        <a href="2-QuantumBasics.html#s1b">Pauli Matrices</a>
-        <a href="2-QuantumBasics.html#s1c">Measurement Bases</a>
-        <a href="2-QuantumBasics.html#s2">The Qubit</a>
-        <a href="2-QuantumBasics.html#s3">Measuring a Qubit</a>
-        <a href="2-QuantumBasics.html#s4">Transforming a Qubit</a>
-        <a href="2-QuantumBasics.html#s5">Quantum Gates</a>
-        <a href="2-QuantumBasics.html#s6">Basis Change</a>
-        <a href="2-QuantumBasics.html#s7">Arbitrary Basis</a>
-        <a href="2-QuantumBasics.html#s8">Tricks &amp; Summary</a>
-      </div>
-    </div>
-    <div class="qn-nav-item" id="nav-note3">
-      <div class="qn-nav-item-header" onclick="toggleNav('nav-note3')">
-        <span class="qn-nav-item-num">03</span>
-        <span class="qn-nav-item-label">Composite Systems</span>
-        <span class="qn-nav-chevron">▶</span>
-      </div>
-      <div class="qn-subnav">
-        <a href="3-CompositeQuantumSystems.html#s1">Tensor Products</a>
-        <a href="3-CompositeQuantumSystems.html#s2">Two-Qubit States</a>
-        <a href="3-CompositeQuantumSystems.html#s3">Entanglement</a>
-        <a href="3-CompositeQuantumSystems.html#s4">CHSH Game</a>
-        <a href="3-CompositeQuantumSystems.html#s5">Multi-Qubit Gates</a>
-        <a href="3-CompositeQuantumSystems.html#s6">Mixed States</a>
-      </div>
-    </div>
-    <div class="qn-nav-item" id="nav-note4">
-      <div class="qn-nav-item-header" onclick="toggleNav('nav-note4')">
-        <span class="qn-nav-item-num">04</span>
-        <span class="qn-nav-item-label">Quantum Circuits</span>
-        <span class="qn-nav-chevron">▶</span>
-      </div>
-      <div class="qn-subnav">
-        <a href="4-QuantumCircuits.html#s1">Universality</a>
-        <a href="4-QuantumCircuits.html#s2">Boolean Functions</a>
-        <a href="4-QuantumCircuits.html#s3">Quantum Parallelism</a>
-        <a href="4-QuantumCircuits.html#s4">State Transformation</a>
-        <a href="4-QuantumCircuits.html#s5">Generating α|0⟩+β|1⟩</a>
-        <a href="4-QuantumCircuits.html#s6">No-Cloning Theorem</a>
-        <a href="4-QuantumCircuits.html#s7">Bell Measurement</a>
-        <a href="4-QuantumCircuits.html#s8">Teleportation</a>
-        <a href="4-QuantumCircuits.html#s9">Tomography</a>
-      </div>
-    </div>
-    <div class="qn-nav-section-label" style="margin-top:0.5rem;">Labs</div>
-    <a class="qn-nav-item" href="sandbox.html">
-      <div class="qn-nav-item-header">
-        <span class="qn-nav-item-num">⚛</span>
-        <span class="qn-nav-item-label">Circuit Sandbox</span>
-      </div>
-    </a>
-  </div>
-  <div class="qn-sidebar-footer">
-    FreoGrella · 2026<br>
-    <a href="https://github.com/Fre0Grella/QuantumNotes" target="_blank">GitHub ↗</a>
-  </div>
-</nav>
-<!-- ── /SIDEBAR ── -->
-<div class="qn-main">
-<div class="page">
+/**
+ * CRITICAL: Each note must export meta as NoteMeta type
+ * This is how getNotes() auto-discovers the note
+ * slug must match filename (without .astro extension)
+ */
+export const meta: NoteMeta = {
+  title: "Linear Algebra for Quantum",
+  order: 1,
+  slug: "1-algebra",
+  description: "Vectors, complex numbers, inner products, Dirac notation, matrices and eigenvalues — everything needed to understand qubits from scratch.",
+  sections: [
+    { id: "s1", label: "Vectors" },
+    { id: "s2", label: "Space and Norm" },
+    { id: "s3", label: "Complex Numbers" },
+    { id: "s4", label: "Inner Product" },
+    { id: "s5", label: "Dirac Notation" },
+    { id: "s6", label: "Why |0⟩=(1,0)?" },
+    { id: "s7", label: "The Qubit" },
+    { id: "s8", label: "Measurement" },
+    { id: "s9", label: "Matrices & Gates" },
+    { id: "s10", label: "Eigenvalues" }
+  ]
+}
+---
 
 <!-- COVER -->
 <div class="cover">
@@ -710,7 +53,7 @@ body.with-sidebar .page {
 <!-- ══════════════════════════════════════
      SEZIONE 1 — VETTORI
 ═══════════════════════════════════════ -->
-<div class="section" id="s1">
+<section id="s1" class="section">
   <div class="section-num">Section 01</div>
   <h2>Vectors — what they really are</h2>
 
@@ -770,12 +113,12 @@ body.with-sidebar .page {
       <div class="feedback" id="fb12"></div>
     </div>
   </div>
-</div>
+</section>
 
 <!-- ══════════════════════════════════════
      SEZIONE 2 — SPAZIO VETTORIALE + NORMA
 ═══════════════════════════════════════ -->
-<div class="section" id="s2">
+<section id="s2" class="section">
   <div class="section-num">Section 02</div>
   <h2>Vector Space, Norm and Hilbert Space</h2>
 
@@ -844,12 +187,12 @@ body.with-sidebar .page {
       <div class="feedback" id="fb22"></div>
     </div>
   </div>
-</div>
+</section>
 
 <!-- ══════════════════════════════════════
      SEZIONE 3 — NUMERI COMPLESSI
 ═══════════════════════════════════════ -->
-<div class="section" id="s3">
+<section id="s3" class="section">
   <div class="section-num">Section 03</div>
   <h2>Complex Numbers — conjugate and phase</h2>
 
@@ -965,12 +308,12 @@ body.with-sidebar .page {
       <div class="feedback" id="fbc33"></div>
     </div>
   </div>
-</div>
+</section>
 
 <!-- ══════════════════════════════════════
      SEZIONE 4 — PRODOTTO INTERNO
 ═══════════════════════════════════════ -->
-<div class="section" id="s4">
+<section id="s4" class="section">
   <div class="section-num">Section 04</div>
   <h2>Inner Product — measuring "alignment"</h2>
 
@@ -1035,12 +378,12 @@ body.with-sidebar .page {
       <div class="feedback" id="fb32"></div>
     </div>
   </div>
-</div>
+</section>
 
 <!-- ══════════════════════════════════════
      SEZIONE 5 — NOTAZIONE DIRAC
 ═══════════════════════════════════════ -->
-<div class="section" id="s5">
+<section id="s5" class="section">
   <div class="section-num">Section 05</div>
   <h2>Dirac Notation — the language of Quantum</h2>
 
@@ -1097,12 +440,12 @@ body.with-sidebar .page {
       <div class="feedback" id="fb42"></div>
     </div>
   </div>
-</div>
+</section>
 
 <!-- ══════════════════════════════════════
      SEZIONE 5 — PERCHÉ |0⟩ = (1,0)?
 ═══════════════════════════════════════ -->
-<div class="section" id="s6">
+<section id="s6" class="section">
   <div class="section-num">Section 06</div>
   <h2>Why |0⟩ = (1, 0)ᵀ and |1⟩ = (0, 1)ᵀ?</h2>
 
@@ -1176,12 +519,12 @@ body.with-sidebar .page {
       <div class="feedback" id="fb52"></div>
     </div>
   </div>
-</div>
+</section>
 
 <!-- ══════════════════════════════════════
      SEZIONE 6 — IL QUBIT
 ═══════════════════════════════════════ -->
-<div class="section" id="s7">
+<section class="section" id="s7">
   <div class="section-num">Section 07</div>
   <h2>The Qubit — the basic quantum state</h2>
 
@@ -1254,12 +597,12 @@ body.with-sidebar .page {
       <div class="feedback" id="fb62"></div>
     </div>
   </div>
-</div>
+</section>
 
 <!-- ══════════════════════════════════════
      SEZIONE 7 — MISURA
 ═══════════════════════════════════════ -->
-<div class="section" id="s8">
+<section class="section" id="s8">
   <div class="section-num">Section 08</div>
   <h2>Measurement — where the quantum world meets the classical</h2>
 
@@ -1347,12 +690,12 @@ body.with-sidebar .page {
       <div class="feedback" id="fb72"></div>
     </div>
   </div>
-</div>
+</section>
 
 <!-- ══════════════════════════════════════
      SEZIONE 8 — MATRICI & GATE
 ═══════════════════════════════════════ -->
-<div class="section" id="s9">
+<section class="section" id="s9">
   <div class="section-num">Section 09</div>
   <h2>Matrices and Quantum Gates — transforming qubits</h2>
 
@@ -1454,12 +797,12 @@ body.with-sidebar .page {
       <div class="feedback" id="fb82"></div>
     </div>
   </div>
-</div>
+</section>
 
 <!-- ══════════════════════════════════════
      SEZIONE 10 — AUTOVALORI
 ═══════════════════════════════════════ -->
-<div class="section" id="s10">
+<section class="section" id="s10">
   <div class="section-num">Section 10</div>
   <h2>Eigenvalues and Eigenvectors — in matrix form</h2>
 
@@ -1692,7 +1035,7 @@ body.with-sidebar .page {
       </div>
       <div class="feedback" id="fbe14"></div>
     </div>
-  </div>
+</section>
 
   <!-- TRUCCHI -->
   <h3>Practical tricks to speed up calculations</h3>
@@ -1739,7 +1082,7 @@ body.with-sidebar .page {
 </div>
 
 
-<script>
+<script is:inline>
 function setFb(id, ok, msg) {
   const el = document.getElementById(id);
   el.className = 'feedback show ' + (ok ? 'ok' : 'no');
@@ -2375,8 +1718,3 @@ function goTo(id) {
 /* Sub-nav accordion — must be global for onclick */
 function toggleNav(id){ document.getElementById(id).classList.toggle('open'); }
 </script>
-
-</body>
-</div><!-- end .page -->
-</div><!-- end qn-main -->
-</html>

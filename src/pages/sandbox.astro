@@ -1,261 +1,37 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Circuit Sandbox — Quantum Notes</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@300;400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="q-notes.css">
-<link rel="stylesheet" href="q.css">
-<script src="q.js"></script>
-<style>
-body { display:flex; min-height:100vh; margin:0; background:var(--bg); }
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
 
-.sandbox-main {
-  margin-left: var(--sidebar-w);
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background: var(--bg);
-}
+<BaseLayout title="Circuit Sandbox" currentSlug="sandbox">
+  <main class="sandbox-main">
 
-/* top bar */
-.topbar {
-  background: var(--page);
-  border-bottom: 2px solid var(--line);
-  padding: 0 1.4rem;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  flex-shrink: 0;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  overflow-x: auto;
-}
-.topbar-title { font-family:'IBM Plex Mono',monospace; font-size:0.6rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--red); white-space:nowrap; flex-shrink:0; }
-.topbar-sep  { width:1px; height:22px; background:var(--line); flex-shrink:0; }
-.topbar-spacer { flex:1; min-width:0.3rem; }
-
-.tbtn {
-  font-family:'IBM Plex Mono',monospace; font-size:0.7rem;
-  padding:0.2rem 0.65rem;
-  border:1px solid var(--accent); background:white; color:var(--accent);
-  border-radius:var(--border-r); cursor:pointer; transition:all 0.14s;
-  white-space:nowrap; flex-shrink:0;
-}
-.tbtn:hover { background:var(--accent); color:white; }
-.tbtn.ev { border-color:var(--green); color:var(--green); }
-.tbtn.ev:hover { background:var(--green); color:white; }
-.tbtn.sh { border-color:var(--orange); color:var(--orange); }
-.tbtn.sh:hover { background:var(--orange); color:white; }
-.tbtn.mu { border-color:var(--muted); color:var(--muted); }
-.tbtn.mu:hover { background:var(--muted); color:white; }
-
-.cfg-label { font-family:'IBM Plex Mono',monospace; font-size:0.63rem; color:var(--muted); white-space:nowrap; }
-.cfg-row { display:flex; align-items:center; gap:3px; }
-.cfg-num { font-family:'IBM Plex Mono',monospace; font-size:0.82rem; color:var(--accent); font-weight:600; min-width:1.2rem; text-align:center; }
-.cfg-btn { width:20px; height:20px; border:1px solid var(--line); background:white; border-radius:3px; cursor:pointer; font-size:0.85rem; display:flex; align-items:center; justify-content:center; color:var(--muted); transition:all 0.12s; }
-.cfg-btn:hover { background:var(--accent); color:white; border-color:var(--accent); }
-
-/* scroll area */
-.sb-scroll {
-  flex:1; overflow-y:auto;
-  padding: 1.4rem 2rem 4rem;
-  max-width: 1060px;
-  width: 100%;
-  margin: 0 auto;
-  box-sizing: border-box;
-}
-
-/* section labels */
-.sb-num { font-family:'IBM Plex Mono',monospace; font-size:0.6rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--muted); margin-bottom:0.2rem; }
-.sb-h2 { font-family:'Lora',serif; font-size:1.15rem; font-weight:600; color:var(--accent); margin-bottom:0.75rem; padding-bottom:0.3rem; border-bottom:1px solid var(--line); }
-
-/* palette + circuit */
-.palette-strip { background:#f0f4ff; border:1px solid var(--line); border-bottom:none; border-radius:var(--border-r) var(--border-r) 0 0; padding:0.28rem 0.8rem 0.32rem; }
-.palette-strip-label { font-family:'IBM Plex Mono',monospace; font-size:0.57rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--muted); margin-bottom:0.12rem; }
-.circuit-wrap { border:1px solid var(--line); border-top:none; border-radius:0 0 var(--border-r) var(--border-r); background:#fafaf8; min-height:190px; overflow-x:auto; padding:0.4rem; margin-bottom:1.4rem; }
-
-/* results: two cols */
-.results-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.1rem; margin-bottom:2rem; }
-@media(max-width:680px){ .results-grid { grid-template-columns:1fr; } }
-
-.panel { background:var(--page); border:1px solid var(--line); border-radius:6px; overflow:hidden; }
-.panel-head { background:#f5f2ea; border-bottom:1px solid var(--line); padding:0.5rem 0.95rem; display:flex; align-items:center; justify-content:space-between; gap:0.5rem; flex-wrap:wrap; }
-.panel-head-title { font-family:'IBM Plex Mono',monospace; font-size:0.61rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--ink2); font-weight:600; }
-.panel-body { padding:0.8rem 0.95rem; }
-
-/* prob bars */
-.prob-bars { display:flex; flex-direction:column; gap:0.4rem; }
-.prob-row  { display:flex; align-items:center; gap:0.45rem; }
-.prob-state { font-family:'IBM Plex Mono',monospace; font-size:0.71rem; color:var(--accent); min-width:3.1rem; text-align:right; flex-shrink:0; }
-.prob-track { flex:1; height:9px; background:var(--line); border-radius:3px; overflow:hidden; }
-.prob-fill  { height:100%; border-radius:3px; transition:width 0.45s ease; }
-.prob-pct   { font-family:'IBM Plex Mono',monospace; font-size:0.67rem; color:var(--ink2); min-width:2.5rem; text-align:right; flex-shrink:0; }
-
-.amp-table { font-family:'IBM Plex Mono',monospace; font-size:0.67rem; color:var(--ink2); background:#f5f2ea; border:1px solid var(--line); border-radius:4px; padding:0.4rem 0.6rem; white-space:pre; overflow-x:auto; line-height:1.8; margin-top:0.65rem; }
-#cvBloch { display:block; width:100%; border-radius:4px; background:#f8f6f0; margin-top:0.55rem; }
-.empty { font-family:'IBM Plex Mono',monospace; font-size:0.75rem; color:var(--muted); text-align:center; padding:1.1rem 0; }
-
-/* measure panel */
-.shot-btns { display:flex; gap:0.38rem; flex-wrap:wrap; margin-bottom:0.55rem; }
-.shot-bar  { display:flex; align-items:center; justify-content:space-between; font-family:'IBM Plex Mono',monospace; font-size:0.67rem; color:var(--muted); margin-bottom:0.4rem; }
-.shot-bar strong { color:var(--accent); font-weight:600; }
-.last-out  { font-family:'IBM Plex Mono',monospace; font-size:0.8rem; color:var(--ink2); min-height:1.5rem; margin-bottom:0.45rem; }
-.last-out .out { font-weight:700; font-size:0.95rem; color:var(--green); animation:pop .25s ease; }
-@keyframes pop { from{transform:scale(1.4);color:var(--orange)} to{transform:scale(1)} }
-#cvHist { display:block; border:1px solid var(--line); border-radius:4px; background:#fafaf8; width:100%; }
-
-/* presets */
-.presets-wrap { background:var(--page); border:1px solid var(--line); border-radius:6px; padding:0.8rem 1rem; margin-bottom:2rem; }
-.preset-groups { display:flex; gap:0.9rem; flex-wrap:wrap; margin-top:0.4rem; }
-.preset-group  { display:flex; flex-direction:column; gap:0.28rem; min-width:155px; flex:1; }
-.pgroup-label  { font-family:'IBM Plex Mono',monospace; font-size:0.57rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin-bottom:0.05rem; }
-.preset-btn { font-family:'IBM Plex Mono',monospace; font-size:0.7rem; padding:0.38rem 0.65rem; border:1px solid var(--line); border-radius:var(--border-r); background:#fdfcf8; color:var(--ink2); cursor:pointer; transition:all 0.14s; text-align:left; display:flex; flex-direction:column; gap:0.07rem; width:100%; }
-.preset-btn strong { color:var(--accent); font-size:0.71rem; font-weight:600; }
-.preset-btn span   { color:var(--muted); font-size:0.61rem; font-style:italic; }
-.preset-btn:hover  { border-color:var(--accent); background:var(--accent-soft); }
-
-/* tutorial */
-.tutorial { background:var(--page); border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:0 6px 6px 0; padding:1.1rem 1.3rem; margin-bottom:2rem; }
-.tut-intro { font-size:0.9rem; color:var(--ink2); line-height:1.7; margin-bottom:1.1rem; }
-.tut-intro a { color:var(--accent); }
-
-.tut-steps { display:flex; flex-direction:column; gap:1.05rem; }
-.tut-step  { display:grid; grid-template-columns:30px 1fr; gap:0 0.8rem; align-items:start; }
-.tut-num   { width:26px; height:26px; background:var(--accent); color:white; border-radius:50%; font-family:'IBM Plex Mono',monospace; font-size:0.7rem; font-weight:600; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:0.1rem; }
-.tut-body  { font-size:0.87rem; color:var(--ink2); line-height:1.7; }
-.tut-body strong { color:var(--ink); font-weight:600; }
-.tut-body code { font-family:'IBM Plex Mono',monospace; background:#f3f0e8; padding:0.05rem 0.38rem; border-radius:3px; font-size:0.82em; color:var(--accent); }
-.tut-body ol, .tut-body ul { margin:0.45rem 0 0 1.1rem; line-height:2.1; font-size:0.86rem; }
-
-.tut-note { background:var(--yellow-hl); border-left:3px solid var(--orange); padding:0.42rem 0.65rem; margin-top:0.5rem; border-radius:0 4px 4px 0; font-size:0.83rem; color:var(--ink2); }
-.tut-insight { background:var(--green-hl); border-left:3px solid var(--green); padding:0.42rem 0.65rem; margin-top:0.5rem; border-radius:0 4px 4px 0; font-size:0.83rem; color:var(--ink2); }
-
-.tut-diagram { background:#f5f2ea; border:1px solid var(--line); border-radius:4px; padding:0.55rem 0.8rem; margin-top:0.5rem; font-family:'IBM Plex Mono',monospace; font-size:0.73rem; color:var(--ink2); line-height:2; white-space:pre; overflow-x:auto; }
-
-.gate-pill { display:inline-flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:0.8rem; padding:0.08rem 0.45rem; border:2px solid; border-radius:3px; vertical-align:middle; margin:0 0.08rem; }
-.gate-pill.h  { border-color:var(--accent); color:var(--accent); }
-.gate-pill.x  { border-color:var(--red);    color:var(--red); }
-.gate-pill.z  { border-color:var(--green);  color:var(--green); }
-.gate-pill.dot{ border-color:var(--ink); color:var(--ink); border-radius:50%; width:20px; height:20px; padding:0; font-size:1rem; }
-.gate-pill.any{ border-color:var(--muted);  color:var(--muted); }
-
-@media(max-width:768px){ .sandbox-main{ margin-left:0; } .sb-scroll{ padding:1rem 1rem 3rem; } }
-</style>
-</head>
-<body>
-
-<button class="qn-hamburger" id="hamburger" aria-label="Open menu">☰</button>
-<div class="qn-sidebar-overlay" id="overlay"></div>
-
-<nav class="qn-sidebar" id="sidebar">
-  <div class="qn-sidebar-logo">
-    <a href="index.html">
-      <div class="logo-tag">Interactive Notes</div>
-      <div class="logo-title">Quantum<br>Computing</div>
-      <div class="logo-sub">Quantum Computing · 2026</div>
-    </a>
-  </div>
-  <div class="qn-nav">
-    <div class="qn-nav-section-label">Navigation</div>
-    <a class="qn-nav-item" href="index.html">
-      <div class="qn-nav-item-header">
-        <span class="qn-nav-item-num">🏠</span>
-        <span class="qn-nav-item-label">Home</span>
+    <div class="topbar">
+      <span class="topbar-title">⚛ Circuit Sandbox</span>
+      <div class="topbar-sep"></div>
+      <button class="tbtn ev" onclick="runCircuit()">▶ Evaluate</button>
+      <button class="tbtn sh" onclick="doShot(1)">⚄ ×1</button>
+      <button class="tbtn sh" onclick="doShot(100)">⚄ ×100</button>
+      <button class="tbtn sh" onclick="doShot(1000)">⚄ ×1000</button>
+      <button class="tbtn mu" onclick="resetShots()">↺ shots</button>
+      <div class="topbar-sep"></div>
+      <span class="cfg-label">Qubits</span>
+      <div class="cfg-row">
+        <button class="cfg-btn" onclick="changeSize(-1,0)">−</button>
+        <span class="cfg-num" id="cfgQ">2</span>
+        <button class="cfg-btn" onclick="changeSize(+1,0)">+</button>
       </div>
-    </a>
-    <div class="qn-nav-item" id="nav-note1">
-      <div class="qn-nav-item-header" onclick="toggleNav('nav-note1')">
-        <span class="qn-nav-item-num">01</span>
-        <span class="qn-nav-item-label">Linear Algebra</span>
-        <span class="qn-nav-chevron">▶</span>
+      <span class="cfg-label">Moments</span>
+      <div class="cfg-row">
+        <button class="cfg-btn" onclick="changeSize(0,-1)">−</button>
+        <span class="cfg-num" id="cfgM">4</span>
+        <button class="cfg-btn" onclick="changeSize(0,+1)">+</button>
       </div>
-      <div class="qn-subnav">
-        <a href="1-BasicAlgebraForQuantum.html#s1">Vectors</a>
-        <a href="1-BasicAlgebraForQuantum.html#s7">The Qubit</a>
-        <a href="1-BasicAlgebraForQuantum.html#s9">Matrices &amp; Gates</a>
-        <a href="1-BasicAlgebraForQuantum.html#s10">Eigenvalues</a>
-      </div>
+      <div class="topbar-sep"></div>
+      <button class="tbtn mu" onclick="resetCircuit()">⊘ Reset</button>
+      <div class="topbar-spacer"></div>
     </div>
-    <div class="qn-nav-item" id="nav-note2">
-      <div class="qn-nav-item-header" onclick="toggleNav('nav-note2')">
-        <span class="qn-nav-item-num">02</span>
-        <span class="qn-nav-item-label">Quantum Basics</span>
-        <span class="qn-nav-chevron">▶</span>
-      </div>
-      <div class="qn-subnav">
-        <a href="2-QuantumBasics.html#s1">QM Postulates</a>
-        <a href="2-QuantumBasics.html#s5">Quantum Gates</a>
-      </div>
-    </div>
-    <div class="qn-nav-item" id="nav-note3">
-      <div class="qn-nav-item-header" onclick="toggleNav('nav-note3')">
-        <span class="qn-nav-item-num">03</span>
-        <span class="qn-nav-item-label">Composite Systems</span>
-        <span class="qn-nav-chevron">▶</span>
-      </div>
-      <div class="qn-subnav">
-        <a href="3-CompositeQuantumSystems.html#s3">Entanglement</a>
-        <a href="3-CompositeQuantumSystems.html#s5">Multi-Qubit Gates</a>
-      </div>
-    </div>
-    <div class="qn-nav-item" id="nav-note4">
-      <div class="qn-nav-item-header" onclick="toggleNav('nav-note4')">
-        <span class="qn-nav-item-num">04</span>
-        <span class="qn-nav-item-label">Quantum Circuits</span>
-        <span class="qn-nav-chevron">▶</span>
-      </div>
-      <div class="qn-subnav">
-        <a href="4-QuantumCircuits.html#s3">Parallelism</a>
-        <a href="4-QuantumCircuits.html#s8">Teleportation</a>
-      </div>
-    </div>
-    <div class="qn-nav-section-label" style="margin-top:0.5rem;">Labs</div>
-    <a class="qn-nav-item active" href="sandbox.html">
-      <div class="qn-nav-item-header">
-        <span class="qn-nav-item-num">⚛</span>
-        <span class="qn-nav-item-label">Circuit Sandbox</span>
-      </div>
-    </a>
-  </div>
-  <div class="qn-sidebar-footer">
-    <a href="https://github.com/" target="_blank">GitHub Pages ↗</a>
-  </div>
-</nav>
 
-<main class="sandbox-main">
-
-  <div class="topbar">
-    <span class="topbar-title">⚛ Circuit Sandbox</span>
-    <div class="topbar-sep"></div>
-    <button class="tbtn ev" onclick="runCircuit()">▶ Evaluate</button>
-    <button class="tbtn sh" onclick="doShot(1)">⚄ ×1</button>
-    <button class="tbtn sh" onclick="doShot(100)">⚄ ×100</button>
-    <button class="tbtn sh" onclick="doShot(1000)">⚄ ×1000</button>
-    <button class="tbtn mu" onclick="resetShots()">↺ shots</button>
-    <div class="topbar-sep"></div>
-    <span class="cfg-label">Qubits</span>
-    <div class="cfg-row">
-      <button class="cfg-btn" onclick="changeSize(-1,0)">−</button>
-      <span class="cfg-num" id="cfgQ">2</span>
-      <button class="cfg-btn" onclick="changeSize(+1,0)">+</button>
-    </div>
-    <span class="cfg-label">Moments</span>
-    <div class="cfg-row">
-      <button class="cfg-btn" onclick="changeSize(0,-1)">−</button>
-      <span class="cfg-num" id="cfgM">4</span>
-      <button class="cfg-btn" onclick="changeSize(0,+1)">+</button>
-    </div>
-    <div class="topbar-sep"></div>
-    <button class="tbtn mu" onclick="resetCircuit()">⊘ Reset</button>
-    <div class="topbar-spacer"></div>
-  </div>
-
-  <div class="sb-scroll">
+    <div class="sb-scroll">
 
     <!-- ══ CIRCUIT ══ -->
     <div class="sb-num">Section 01</div>
@@ -465,10 +241,151 @@ body { display:flex; min-height:100vh; margin:0; background:var(--bg); }
       </div><!-- tut-steps -->
     </div><!-- tutorial -->
 
-  </div><!-- sb-scroll -->
-</main>
+  </div>
 
-<script>
+  </main>
+</BaseLayout>
+
+<style>
+body { display:flex; min-height:100vh; margin:0; background:var(--bg); }
+
+.sandbox-main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+/* top bar */
+.topbar {
+  background: var(--page);
+  border-bottom: 2px solid var(--line);
+  padding: 0 1.4rem;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  overflow-x: auto;
+}
+.topbar-title { font-family:'IBM Plex Mono',monospace; font-size:0.6rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--red); white-space:nowrap; flex-shrink:0; }
+.topbar-sep  { width:1px; height:22px; background:var(--line); flex-shrink:0; }
+.topbar-spacer { flex:1; min-width:0.3rem; }
+
+.tbtn {
+  font-family:'IBM Plex Mono',monospace; font-size:0.7rem;
+  padding:0.2rem 0.65rem;
+  border:1px solid var(--accent); background:white; color:var(--accent);
+  border-radius:var(--border-r); cursor:pointer; transition:all 0.14s;
+  white-space:nowrap; flex-shrink:0;
+}
+.tbtn:hover { background:var(--accent); color:white; }
+.tbtn.ev { border-color:var(--green); color:var(--green); }
+.tbtn.ev:hover { background:var(--green); color:white; }
+.tbtn.sh { border-color:var(--orange); color:var(--orange); }
+.tbtn.sh:hover { background:var(--orange); color:white; }
+.tbtn.mu { border-color:var(--muted); color:var(--muted); }
+.tbtn.mu:hover { background:var(--muted); color:white; }
+
+.cfg-label { font-family:'IBM Plex Mono',monospace; font-size:0.63rem; color:var(--muted); white-space:nowrap; }
+.cfg-row { display:flex; align-items:center; gap:3px; }
+.cfg-num { font-family:'IBM Plex Mono',monospace; font-size:0.82rem; color:var(--accent); font-weight:600; min-width:1.2rem; text-align:center; }
+.cfg-btn { width:20px; height:20px; border:1px solid var(--line); background:white; border-radius:3px; cursor:pointer; font-size:0.85rem; display:flex; align-items:center; justify-content:center; color:var(--muted); transition:all 0.12s; }
+.cfg-btn:hover { background:var(--accent); color:white; border-color:var(--accent); }
+
+/* scroll area */
+.sb-scroll {
+  flex:1; overflow-y:auto;
+  padding: 1.4rem 2rem 4rem;
+  max-width: 1060px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* section labels */
+.sb-num { font-family:'IBM Plex Mono',monospace; font-size:0.6rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--muted); margin-bottom:0.2rem; }
+.sb-h2 { font-family:'Lora',serif; font-size:1.15rem; font-weight:600; color:var(--accent); margin-bottom:0.75rem; padding-bottom:0.3rem; border-bottom:1px solid var(--line); }
+
+/* palette + circuit */
+.palette-strip { background:#f0f4ff; border:1px solid var(--line); border-bottom:none; border-radius:var(--border-r) var(--border-r) 0 0; padding:0.28rem 0.8rem 0.32rem; }
+.palette-strip-label { font-family:'IBM Plex Mono',monospace; font-size:0.57rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--muted); margin-bottom:0.12rem; }
+.circuit-wrap { border:1px solid var(--line); border-top:none; border-radius:0 0 var(--border-r) var(--border-r); background:#fafaf8; min-height:190px; overflow-x:auto; padding:0.4rem; margin-bottom:1.4rem; }
+
+/* results: two cols */
+.results-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.1rem; margin-bottom:2rem; }
+@media(max-width:680px){ .results-grid { grid-template-columns:1fr; } }
+
+.panel { background:var(--page); border:1px solid var(--line); border-radius:6px; overflow:hidden; }
+.panel-head { background:#f5f2ea; border-bottom:1px solid var(--line); padding:0.5rem 0.95rem; display:flex; align-items:center; justify-content:space-between; gap:0.5rem; flex-wrap:wrap; }
+.panel-head-title { font-family:'IBM Plex Mono',monospace; font-size:0.61rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--ink2); font-weight:600; }
+.panel-body { padding:0.8rem 0.95rem; }
+
+/* prob bars */
+.prob-bars { display:flex; flex-direction:column; gap:0.4rem; }
+.prob-row  { display:flex; align-items:center; gap:0.45rem; }
+.prob-state { font-family:'IBM Plex Mono',monospace; font-size:0.71rem; color:var(--accent); min-width:3.1rem; text-align:right; flex-shrink:0; }
+.prob-track { flex:1; height:9px; background:var(--line); border-radius:3px; overflow:hidden; }
+.prob-fill  { height:100%; border-radius:3px; transition:width 0.45s ease; }
+.prob-pct   { font-family:'IBM Plex Mono',monospace; font-size:0.67rem; color:var(--ink2); min-width:2.5rem; text-align:right; flex-shrink:0; }
+
+.amp-table { font-family:'IBM Plex Mono',monospace; font-size:0.67rem; color:var(--ink2); background:#f5f2ea; border:1px solid var(--line); border-radius:4px; padding:0.4rem 0.6rem; white-space:pre; overflow-x:auto; line-height:1.8; margin-top:0.65rem; }
+#cvBloch { display:block; width:100%; border-radius:4px; background:#f8f6f0; margin-top:0.55rem; }
+.empty { font-family:'IBM Plex Mono',monospace; font-size:0.75rem; color:var(--muted); text-align:center; padding:1.1rem 0; }
+
+/* measure panel */
+.shot-btns { display:flex; gap:0.38rem; flex-wrap:wrap; margin-bottom:0.55rem; }
+.shot-bar  { display:flex; align-items:center; justify-content:space-between; font-family:'IBM Plex Mono',monospace; font-size:0.67rem; color:var(--muted); margin-bottom:0.4rem; }
+.shot-bar strong { color:var(--accent); font-weight:600; }
+.last-out  { font-family:'IBM Plex Mono',monospace; font-size:0.8rem; color:var(--ink2); min-height:1.5rem; margin-bottom:0.45rem; }
+.last-out .out { font-weight:700; font-size:0.95rem; color:var(--green); animation:pop .25s ease; }
+@keyframes pop { from{transform:scale(1.4);color:var(--orange)} to{transform:scale(1)} }
+#cvHist { display:block; border:1px solid var(--line); border-radius:4px; background:#fafaf8; width:100%; }
+
+/* presets */
+.presets-wrap { background:var(--page); border:1px solid var(--line); border-radius:6px; padding:0.8rem 1rem; margin-bottom:2rem; }
+.preset-groups { display:flex; gap:0.9rem; flex-wrap:wrap; margin-top:0.4rem; }
+.preset-group  { display:flex; flex-direction:column; gap:0.28rem; min-width:155px; flex:1; }
+.pgroup-label  { font-family:'IBM Plex Mono',monospace; font-size:0.57rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin-bottom:0.05rem; }
+.preset-btn { font-family:'IBM Plex Mono',monospace; font-size:0.7rem; padding:0.38rem 0.65rem; border:1px solid var(--line); border-radius:var(--border-r); background:#fdfcf8; color:var(--ink2); cursor:pointer; transition:all 0.14s; text-align:left; display:flex; flex-direction:column; gap:0.07rem; width:100%; }
+.preset-btn strong { color:var(--accent); font-size:0.71rem; font-weight:600; }
+.preset-btn span   { color:var(--muted); font-size:0.61rem; font-style:italic; }
+.preset-btn:hover  { border-color:var(--accent); background:var(--accent-soft); }
+
+/* tutorial */
+.tutorial { background:var(--page); border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:0 6px 6px 0; padding:1.1rem 1.3rem; margin-bottom:2rem; }
+.tut-intro { font-size:0.9rem; color:var(--ink2); line-height:1.7; margin-bottom:1.1rem; }
+.tut-intro a { color:var(--accent); }
+
+.tut-steps { display:flex; flex-direction:column; gap:1.05rem; }
+.tut-step  { display:grid; grid-template-columns:30px 1fr; gap:0 0.8rem; align-items:start; }
+.tut-num   { width:26px; height:26px; background:var(--accent); color:white; border-radius:50%; font-family:'IBM Plex Mono',monospace; font-size:0.7rem; font-weight:600; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:0.1rem; }
+.tut-body  { font-size:0.87rem; color:var(--ink2); line-height:1.7; }
+.tut-body strong { color:var(--ink); font-weight:600; }
+.tut-body code { font-family:'IBM Plex Mono',monospace; background:#f3f0e8; padding:0.05rem 0.38rem; border-radius:3px; font-size:0.82em; color:var(--accent); }
+.tut-body ol, .tut-body ul { margin:0.45rem 0 0 1.1rem; line-height:2.1; font-size:0.86rem; }
+
+.tut-note { background:var(--yellow-hl); border-left:3px solid var(--orange); padding:0.42rem 0.65rem; margin-top:0.5rem; border-radius:0 4px 4px 0; font-size:0.83rem; color:var(--ink2); }
+.tut-insight { background:var(--green-hl); border-left:3px solid var(--green); padding:0.42rem 0.65rem; margin-top:0.5rem; border-radius:0 4px 4px 0; font-size:0.83rem; color:var(--ink2); }
+
+.tut-diagram { background:#f5f2ea; border:1px solid var(--line); border-radius:4px; padding:0.55rem 0.8rem; margin-top:0.5rem; font-family:'IBM Plex Mono',monospace; font-size:0.73rem; color:var(--ink2); line-height:2; white-space:pre; overflow-x:auto; }
+
+.gate-pill { display:inline-flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono',monospace; font-weight:700; font-size:0.8rem; padding:0.08rem 0.45rem; border:2px solid; border-radius:3px; vertical-align:middle; margin:0 0.08rem; }
+.gate-pill.h  { border-color:var(--accent); color:var(--accent); }
+.gate-pill.x  { border-color:var(--red);    color:var(--red); }
+.gate-pill.z  { border-color:var(--green);  color:var(--green); }
+.gate-pill.dot{ border-color:var(--ink); color:var(--ink); border-radius:50%; width:20px; height:20px; padding:0; font-size:1rem; }
+.gate-pill.any{ border-color:var(--muted);  color:var(--muted); }
+
+@media(max-width:768px){ .sandbox-main{ margin-left:0; } .sb-scroll{ padding:1rem 1rem 3rem; } }
+</style>
+
+
+<script is:inline>
 /* sidebar */
 const sidebar=document.getElementById('sidebar'), overlay=document.getElementById('overlay'), hamburger=document.getElementById('hamburger');
 hamburger.addEventListener('click',()=>{sidebar.classList.add('open');overlay.classList.add('show');});
@@ -624,5 +541,3 @@ const PRESETS={
 };
 function loadPreset(name){const t=PRESETS[name];if(!t)return;resetShots();buildCircuit(t);}
 </script>
-</body>
-</html>

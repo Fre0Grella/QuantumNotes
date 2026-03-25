@@ -1,0 +1,126 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getNotes, getNoteColor } from '../lib/notes';
+import '../styles/home.css';
+
+const notes = getNotes();
+---
+
+<BaseLayout title="Quantum Computing — Interactive Notes" isHome={true}>
+<main class="home-main">
+<div class="home-page">
+
+  <!-- COVER -->
+  <div class="cover">
+    <div class="cover-eyebrow">Interactive Notes · Quantum Computing · 2026</div>
+    <h1>From Zero to<br><em>Quantum Computing</em></h1>
+    <p class="cover-sub">Self-contained interactive notes covering linear algebra, quantum mechanics, entanglement and quantum circuits — with live visualisations, exercises and a circuit simulator.</p>
+    <div class="cover-meta">
+      <span>{notes.length} notes · {notes.reduce((acc, n) => acc + n.sections.length, 0)}+ sections</span>
+      <span>50+ exercises</span>
+      <span>Circuit sandbox</span>
+    </div>
+    <svg class="cover-atom" width="300" height="300" viewBox="0 0 300 300" fill="none">
+      <ellipse cx="150" cy="150" rx="135" ry="46" stroke="#2c5282" stroke-width="1.5"/>
+      <ellipse cx="150" cy="150" rx="135" ry="46" stroke="#2c5282" stroke-width="1.5" transform="rotate(60 150 150)"/>
+      <ellipse cx="150" cy="150" rx="135" ry="46" stroke="#2c5282" stroke-width="1.5" transform="rotate(120 150 150)"/>
+      <circle cx="150" cy="150" r="13" fill="#2c5282"/>
+      <circle cx="285" cy="150" r="6" fill="#c0392b"/>
+      <circle cx="82"  cy="34"  r="6" fill="#c0392b"/>
+      <circle cx="82"  cy="266" r="6" fill="#c0392b"/>
+    </svg>
+  </div>
+
+  <!-- THE NOTES -->
+  <div class="home-section">
+    <div class="home-section-num">Section 01</div>
+    <h2>The Notes</h2>
+    <div class="cards-grid">
+
+      {notes.map(note => (
+        <a class="note-card" href={`/notes/${note.slug}`} style={`--card-color:${getNoteColor(note.order)};`}>
+          <div class="note-card-num">Note {String(note.order).padStart(2,'0')} · {note.title}</div>
+          <h3 set:html={note.title} />
+          <p>{note.description}</p>
+          <div class="note-card-chips">
+			<span class="chip">{note.sections.length} sections</span>
+		  </div>
+        </a>
+      ))}
+
+      <a class="sandbox-card" href="/sandbox">
+        <div class="note-card-num">Interactive Lab</div>
+        <h3>⚛ Circuit Sandbox</h3>
+        <p>Drag-and-drop quantum circuit editor — up to 4 qubits, 8 moments. Live probability outcomes, preset circuits, Bloch sphere display.</p>
+        <span class="sandbox-arrow">Launch Sandbox ↗</span>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- CONCEPTS INDEX — fully auto-generated from all sections of all notes -->
+  <div class="home-section">
+    <div class="home-section-num">Section 02</div>
+    <h2>Key Concepts Index</h2>
+    <div class="concepts-grid">
+      {notes.map(note =>
+        note.sections.map(s => (
+          <a class="concept-item" href={`/notes/${note.slug}#${s.id}`}>
+            <strong>{s.label}</strong>
+            <span>Note {String(note.order).padStart(2,'0')} · §{s.id.replace('s','')}</span>
+          </a>
+        ))
+      )}
+    </div>
+  </div>
+
+  <!-- HOW TO USE -->
+  <div class="home-section">
+    <div class="home-section-num">Section 03</div>
+    <h2>How to Use These Notes</h2>
+    <div class="how-grid">
+      <div class="how-step">
+        <div class="how-num">1</div>
+        <p>Start with <strong>Note 01</strong> if you are new to linear algebra. Otherwise jump directly to any section from the sidebar.</p>
+      </div>
+      <div class="how-step">
+        <div class="how-num">2</div>
+        <p>Read the theory boxes, then work through the <strong>exercises</strong>. Hints are hidden — always try first!</p>
+      </div>
+      <div class="how-step">
+        <div class="how-num">3</div>
+        <p>Use the <strong>interactive canvases</strong> to build intuition — click, drag and adjust sliders.</p>
+      </div>
+      <div class="how-step">
+        <div class="how-num">4</div>
+        <p>Open the <strong>Circuit Sandbox</strong> to experiment freely with quantum gates and see live probability outcomes.</p>
+      </div>
+    </div>
+    <div class="note-box">
+      <strong>No prerequisites.</strong> Each note starts from absolute basics. All maths is introduced step-by-step with worked examples and interactive visualisations.
+    </div>
+  </div>
+
+  <footer class="home-footer">
+    <div class="footer-inner">
+      <div class="footer-attribution">
+        <span class="footer-label">Inspired by</span>
+        These notes were inspired by the course <em>Quantum Computing</em> taught by
+        <strong>Prof. Marco Chiani</strong> at the Università di Bologna.
+        Original study notes by <strong>Lorenzo Valentini</strong>, 2026.
+      </div>
+      <div class="footer-qjs">
+        <span class="footer-label">Circuit simulator</span>
+        The interactive circuit sandbox is powered by
+        <a href="https://quantumjavascript.app" target="_blank"><strong>Q.js</strong></a>
+        — a quantum circuit simulator, drag-and-drop editor and JavaScript library
+        by <a href="https://stewartsmith.io" target="_blank">Stewart Smith</a>.
+        Free, open-source, runs entirely in your browser.
+        <a href="https://github.com/stewdio/q.js" target="_blank">GitHub ↗</a>
+      </div>
+    </div>
+  </footer>
+
+</div>
+</main>
+</BaseLayout>

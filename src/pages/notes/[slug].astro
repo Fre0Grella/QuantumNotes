@@ -1,0 +1,39 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getNotes } from '../../lib/notes';
+
+export async function getStaticPaths() {
+  const notes = getNotes();
+  return notes.map(note => ({
+    params: { slug: note.slug },
+    props: { note }
+  }));
+}
+
+interface Props {
+  note: any;
+}
+
+const { note } = Astro.props;
+
+const modules = import.meta.glob<{ default: any }>(
+  '/src/content/notes/*.astro',
+  { eager: true }
+);
+
+console.log('Available paths:', Object.keys(modules));  // ← here
+console.log('Looking for slug:', note.slug);            // ← and here
+
+const match = Object.entries(modules).find(([path]) =>
+  path.includes(note.slug)
+);
+const NoteComponent = match?.[1]?.default;
+---
+
+<BaseLayout title={note.title} currentSlug={note.slug}>
+  <main class="qn-main">
+    <div class="page">
+      {NoteComponent ? <NoteComponent /> : <p>Note not found</p>}
+    </div>
+  </main>
+</BaseLayout>

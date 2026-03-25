@@ -1,0 +1,35 @@
+---
+import Sidebar from '../components/Sidebar.astro';
+import '../styles/global.css';
+import '../styles/layout.css';
+import '../styles/components.css';
+import '../styles/sidebar.css';
+import '../styles/q-notes.css';
+
+
+interface Props {
+  title: string;
+  currentSlug?: string;
+  isHome?: boolean;
+}
+
+const { title, currentSlug } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title} | QuantumNotes</title>
+    <link rel="stylesheet" href="/lib/q.css" />
+    <script is:inline src="/lib/q.js"></script>
+  </head>
+  <body class="with-sidebar">
+    <Sidebar currentSlug={currentSlug} isHome={Astro.props.isHome} />
+    <main class="qn-main">
+        <slot />
+    </main>
+    <script src="/lib/q.js" is:inline></script>
+  </body>
+</html>
