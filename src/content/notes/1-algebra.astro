@@ -1,11 +1,6 @@
 ---
 import type { NoteMeta, NoteSection } from '../../lib/notes';
 
-/**
- * CRITICAL: Each note must export meta as NoteMeta type
- * This is how getNotes() auto-discovers the note
- * slug must match filename (without .astro extension)
- */
 export const meta: NoteMeta = {
   title: "Linear Algebra for Quantum",
   order: 1,
@@ -30,8 +25,8 @@ export const meta: NoteMeta = {
 <div class="cover">
   <div class="cover-label">Interactive Notes</div>
   <h1>Linear Algebra<br>for Quantum Computing</h1>
-  <p>From the absolute basics to the qubit — with visualisations and exercises</p>
-  </div>
+  <p>From the absolute basics to the qubit — with visualizations and exercises</p>
+</div>
 
 <!-- TOC -->
 <div class="toc">
@@ -51,7 +46,7 @@ export const meta: NoteMeta = {
 </div>
 
 <!-- ══════════════════════════════════════
-     SEZIONE 1 — VETTORI
+     SECTION 1 — VECTORS
 ═══════════════════════════════════════ -->
 <section id="s1" class="section">
   <div class="section-num">Section 01</div>
@@ -61,7 +56,7 @@ export const meta: NoteMeta = {
 
   <div class="math-block"><div class="eq"><span>v =</span><span><span class="vec"><table><tbody><tr><td>v₁</td></tr><tr><td>v₂</td></tr><tr><td>v₃</td></tr></tbody></table></span></span><span class="eq-note">column vector with 3 components</span></div></div>
 
-  <p>A vector in 2D has 2 components, in 3D it has 3, and in general in <strong>N dimensions</strong> it has N. We work in 2D for now because it is easy to visualise — but everything generalises.</p>
+  <p>A vector in 2D has 2 components, in 3D it has 3, and in general in <strong>N dimensions</strong> it has N. We work in 2D for now because it is easy to visualize — but everything generalizes.</p>
 
   <div class="note-box">
     When you write <strong>v = (3, 2)</strong>, you are saying: "start at the origin, go 3 units right and 2 up". The vector is the arrow from (0,0) to (3,2).
@@ -116,7 +111,7 @@ export const meta: NoteMeta = {
 </section>
 
 <!-- ══════════════════════════════════════
-     SEZIONE 2 — SPAZIO VETTORIALE + NORMA
+     SECTION 2 — VECTORIAL SPACE + NORM
 ═══════════════════════════════════════ -->
 <section id="s2" class="section">
   <div class="section-num">Section 02</div>
@@ -136,15 +131,15 @@ export const meta: NoteMeta = {
   <div class="canvas-caption">Click to place a vector — see the norm computed in real time</div>
 
   <div class="note-box">
-    A vector with norm = 1 is called a <strong>unit vector</strong> or <em>normalised vector</em>. In quantum computing, all states are unit vectors (‖ψ‖ = 1). This ensures the probabilities sum to 1.
+    A vector with norm = 1 is called a <strong>unit vector</strong> or <em>normalized vector</em>. In quantum computing, all states are unit vectors (‖ψ‖ = 1). This ensures the probabilities sum to 1.
   </div>
 
   <h3>What is Hilbert Space?</h3>
   <p>A <strong>Hilbert Space</strong> is simply a vector space equipped with an additional structure called the <em>inner product</em> (covered in section 3). In practice, for quantum computing:</p>
 
   <div class="insight">
-    Spazio di Hilbert = spazio dei vettori complessi ℂᴺ + prodotto interno.<br>
-    Per un <strong>qubit</strong> N=2, quindi lo spazio di Hilbert è ℂ² — i vettori hanno 2 componenti <em>complesse</em>.
+    Hilbert space = space of complex vectors ℂᴺ + inner product.<br>
+    For a <strong>qubit</strong> N=2, therefore the Hilbert space is ℂ² — the vectors have 2 complex components.
   </div>
 
   <p>Don't be intimidated by the name. "Hilbert" is simply the mathematician who studied these structures. Physically, <em>every quantum state is a unit vector in this space</em>.</p>
@@ -169,10 +164,10 @@ export const meta: NoteMeta = {
   </div>
 
   <div class="ex-block">
-    <div class="ex-header"><span class="ex-tag">Ex 2.2</span><span class="ex-title">Normalising a vector</span></div>
+    <div class="ex-header"><span class="ex-tag">Ex 2.2</span><span class="ex-title">normalizing a vector</span></div>
     <div class="ex-body">
       <p>To make a unit vector, divide by its norm: <span class="math-inline">û = v / ‖v‖</span></p>
-      <p>Normalise <span class="math-inline">v = (3, 4)ᵀ</span>. Write the first component as a fraction (e.g. 3/5):</p>
+      <p>normalize <span class="math-inline">v = (3, 4)ᵀ</span>. Write the first component as a fraction (e.g. 3/5):</p>
     </div>
     <div class="answer-area">
       <div class="answer-row">
@@ -190,7 +185,7 @@ export const meta: NoteMeta = {
 </section>
 
 <!-- ══════════════════════════════════════
-     SEZIONE 3 — NUMERI COMPLESSI
+     SECTION 3 — COMPLEX NUMBERS
 ═══════════════════════════════════════ -->
 <section id="s3" class="section">
   <div class="section-num">Section 03</div>
@@ -210,7 +205,7 @@ export const meta: NoteMeta = {
     In physics and engineering <strong>j</strong> is used for the imaginary unit (mathematicians use <em>i</em>). You will see both in your notes — they mean the same thing.
   </div>
 
-  <h3>Visualisation — the Argand Plane</h3>
+  <h3>visualization — the Argand Plane</h3>
   <p>Every complex number is a <strong>point in the plane</strong> (or an arrow from the origin). The horizontal axis is the real part, the vertical axis is the imaginary part. Click to explore.</p>
 
   <canvas id="c_complex" width="480" height="260"></canvas>
@@ -229,7 +224,7 @@ export const meta: NoteMeta = {
   <h3>Modulus |z| — the "length" of a complex number</h3>
   <p>The <strong>modulus</strong> of z is its distance from the origin — always a real number ≥ 0:</p>
 
-  <div class="math-block"><div class="eq"><span>|z| = √( a² + b² )</span><span class="eq-note">← Pythagorean theorem!</span></div><hr class="math-sep"><div class="eq"><span><span class="eq-note">Esempio:</span></span><span>z = 3+4j &nbsp;→&nbsp; |z| = √(9+16) = √25 = <strong>5</strong></span></div></div>
+  <div class="math-block"><div class="eq"><span>|z| = √( a² + b² )</span><span class="eq-note">← Pythagorean theorem!</span></div><hr class="math-sep"><div class="eq"><span><span class="eq-note">Example:</span></span><span>z = 3+4j &nbsp;→&nbsp; |z| = √(9+16) = √25 = <strong>5</strong></span></div></div>
 
   <h3>Squared modulus |z|² — fundamental in quantum</h3>
   <p>In quantum computing <strong>|z|²</strong> appears constantly. There is an elegant trick using the conjugate:</p>
@@ -304,14 +299,14 @@ export const meta: NoteMeta = {
         <button class="btn sm" onclick="chkZZstar('fbc33')">Check</button>
       </div>
       <button class="hint-toggle" onclick="showHint('hc33')">show hint</button>
-      <div class="feedback hint" id="hc33">j² = −1 per definizione. Quindi −9j² = −9·(−1) = +9. Poi 4 + 9 = 13. Verifica: |z|² = 2² + 3² = 4 + 9 = 13 ✓</div>
+      <div class="feedback hint" id="hc33">j² = −1 for definition. Therefore −9j² = −9·(−1) = +9. Poi 4 + 9 = 13. Let's verify: |z|² = 2² + 3² = 4 + 9 = 13 ✓</div>
       <div class="feedback" id="fbc33"></div>
     </div>
   </div>
 </section>
 
 <!-- ══════════════════════════════════════
-     SEZIONE 4 — PRODOTTO INTERNO
+     SECTION 4 — INNER PRODUCT
 ═══════════════════════════════════════ -->
 <section id="s4" class="section">
   <div class="section-num">Section 04</div>
@@ -381,7 +376,7 @@ export const meta: NoteMeta = {
 </section>
 
 <!-- ══════════════════════════════════════
-     SEZIONE 5 — NOTAZIONE DIRAC
+     SECTION 5 — DIRAC NOTATION
 ═══════════════════════════════════════ -->
 <section id="s5" class="section">
   <div class="section-num">Section 05</div>
@@ -443,7 +438,7 @@ export const meta: NoteMeta = {
 </section>
 
 <!-- ══════════════════════════════════════
-     SEZIONE 5 — PERCHÉ |0⟩ = (1,0)?
+     SECTION 5 — Why |0⟩ = (1,0)?
 ═══════════════════════════════════════ -->
 <section id="s6" class="section">
   <div class="section-num">Section 06</div>
@@ -464,7 +459,7 @@ export const meta: NoteMeta = {
   <div class="math-block"><div class="eq"><span>|0⟩ =</span><span><span class="vec"><table><tbody><tr><td>1</td></tr><tr><td class="c-0">0</td></tr></tbody></table></span></span><span class="eq-note">← "spin up"</span></div><div class="eq"><span>|1⟩ =</span><span><span class="vec"><table><tbody><tr><td class="c-0">0</td></tr><tr><td>1</td></tr></tbody></table></span></span><span class="eq-note">← "spin down"</span></div></div>
 
   <div class="insight">
-    The reason for this choice: <strong>|0⟩ and |1⟩ are orthogonal</strong> (⟨0|1⟩ = 0) and <strong>normalised</strong> (⟨0|0⟩ = 1). They form an <em>orthonormal basis</em> — the most convenient basis type in all of quantum computing.
+    The reason for this choice: <strong>|0⟩ and |1⟩ are orthogonal</strong> (⟨0|1⟩ = 0) and <strong>normalized</strong> (⟨0|0⟩ = 1). They form an <em>orthonormal basis</em> — the most convenient basis type in all of quantum computing.
   </div>
 
   <canvas id="c_basis" width="480" height="260"></canvas>
@@ -522,7 +517,7 @@ export const meta: NoteMeta = {
 </section>
 
 <!-- ══════════════════════════════════════
-     SEZIONE 6 — IL QUBIT
+     SECTION 6 — IL QUBIT
 ═══════════════════════════════════════ -->
 <section class="section" id="s7">
   <div class="section-num">Section 07</div>
@@ -537,7 +532,7 @@ export const meta: NoteMeta = {
   </div>
 
   <h3>Why |α|² + |β|² = 1?</h3>
-  <p>This is exactly the normalisation condition we studied. In Dirac terms:</p>
+  <p>This is exactly the normalization condition we studied. In Dirac terms:</p>
   <div class="math-block"><div class="eq"><span>⟨ψ|ψ⟩ = ( α*  β* ) ·</span><span><span class="vec"><table><tbody><tr><td>α</td></tr><tr><td>β</td></tr></tbody></table></span></span><span>= |α|² + |β|² = 1</span></div></div>
   <p>Physically: the total probability of finding the qubit in some state must be 1 (100%).</p>
 
@@ -584,7 +579,7 @@ export const meta: NoteMeta = {
       <p>Given <span class="math-inline">|ψ⟩ = (1/√3)|0⟩ + β|1⟩</span> with β real and positive,</p>
       <p>find β knowing it is a valid qubit.</p>
       <div class="steps">
-        <div class="step"><div class="step-num">1</div><span>Write the normalisation condition: (1/√3)² + β² = 1</span></div>
+        <div class="step"><div class="step-num">1</div><span>Write the normalization condition: (1/√3)² + β² = 1</span></div>
         <div class="step"><div class="step-num">2</div><span>1/3 + β² = 1  →  β² = 2/3  →  β = ?</span></div>
       </div>
     </div>
@@ -600,7 +595,7 @@ export const meta: NoteMeta = {
 </section>
 
 <!-- ══════════════════════════════════════
-     SEZIONE 7 — MISURA
+     SECTION 7 — MEASUREMENT
 ═══════════════════════════════════════ -->
 <section class="section" id="s8">
   <div class="section-num">Section 08</div>
@@ -628,7 +623,7 @@ export const meta: NoteMeta = {
   </div>
   <div class="live" id="measLive"></div>
   <div style="display:flex;gap:0.5rem;margin-top:0.6rem;flex-wrap:wrap;">
-    <button class="btn sm" onclick="doMeasure(1)">Misura 1×</button>
+    <button class="btn sm" onclick="doMeasure(1)">Measure 1×</button>
     <button class="btn sm" onclick="doMeasure(200)">Measure 200×</button>
     <button class="btn sm ghost" onclick="resetMeasure()">Reset</button>
   </div>
@@ -686,21 +681,21 @@ export const meta: NoteMeta = {
         <button class="btn sm" onclick="chkQRNG('fb72')">Check</button>
       </div>
       <button class="hint-toggle" onclick="showHint('h72')">show hint</button>
-      <div class="feedback hint" id="h72">α = 1/√2 ≈ 0.707. P(|0⟩) = (1/√2)² = 1/2 = 50%. Entrambe le probabilità sono uguali → casuale perfetto!</div>
+      <div class="feedback hint" id="h72">α = 1/√2 ≈ 0.707. P(|0⟩) = (1/√2)² = 1/2 = 50%. Both the probabilities are equal → perfect randomness!</div>
       <div class="feedback" id="fb72"></div>
     </div>
   </div>
 </section>
 
 <!-- ══════════════════════════════════════
-     SEZIONE 8 — MATRICI & GATE
+     SECTION 8 — MATRIX & GATE
 ═══════════════════════════════════════ -->
 <section class="section" id="s9">
   <div class="section-num">Section 09</div>
   <h2>Matrices and Quantum Gates — transforming qubits</h2>
 
   <h3>How to read a matrix</h3>
-  <p>A matrix is a grid of numbers organised in <strong>rows</strong> and <strong>columns</strong>. A 2×2 matrix has 2 rows and 2 columns:</p>
+  <p>A matrix is a grid of numbers organized in <strong>rows</strong> and <strong>columns</strong>. A 2×2 matrix has 2 rows and 2 columns:</p>
 
   <div class="math-block"><div class="mx-cols"><div><div class="mx-label">Standard notation</div><div class="eq"><span><span class="mx"><table><tbody><tr><td>a</td><td>b</td></tr><tr><td>c</td><td>d</td></tr></tbody></table></span></span></div></div><div><div class="mx-label">Compact notation</div><div class="eq"><span>((a,b), (c,d))</span></div><div class="eq"><span><span style="font-size:0.75rem;color:var(--muted)">or: [[a,b],[c,d]]</span></span></div></div></div><hr class="math-sep"><div class="eq"><span><span class="eq-note">Each inner pair = one row. First pair = row 1, second = row 2.</span></span></div></div>
 
@@ -748,7 +743,7 @@ export const meta: NoteMeta = {
   <div class="math-block"><div class="mx-cols"><div><div class="mx-label">Gate X &nbsp;<span style="font-weight:300">(NOT)</span></div><div class="eq"><span><span class="mx"><table><tbody><tr><td class="c-0">0</td><td>1</td></tr><tr><td class="c-1">1</td><td class="c-0">0</td></tr></tbody></table></span></span><span><span class="eq-note">((0,1),(1,0))</span></span></div></div><div><div class="mx-label">Gate Z &nbsp;<span style="font-weight:300">(Phase flip)</span></div><div class="eq"><span><span class="mx"><table><tbody><tr><td>1</td><td class="c-0">0</td></tr><tr><td class="c-0">0</td><td class="c-n">−1</td></tr></tbody></table></span></span><span><span class="eq-note">((1,0),(0,−1))</span></span></div></div><div><div class="mx-label">Gate Y</div><div class="eq"><span><span class="mx"><table><tbody><tr><td class="c-0">0</td><td class="c-n">−j</td></tr><tr><td>j</td><td class="c-0">0</td></tr></tbody></table></span></span><span><span class="eq-note">((0,−j),(j,0))</span></span></div></div><div><div class="mx-label">Gate H &nbsp;<span style="font-weight:300">(Hadamard)</span></div><div class="eq"><span><span class="scalar">1/√2 ·</span></span><span><span class="mx"><table><tbody><tr><td>1</td><td>1</td></tr><tr><td>1</td><td class="c-n">−1</td></tr></tbody></table></span></span><span><span class="eq-note">1/√2·((1,1),(1,−1))</span></span></div></div></div></div>
 
   <canvas id="c_gate" width="480" height="270"></canvas>
-  <div class="canvas-caption">Gate visualisation — observe how it transforms the basis vectors</div>
+  <div class="canvas-caption">Gate visualization — observe how it transforms the basis vectors</div>
   <div class="controls">
     <button class="btn sm" onclick="setGateViz('X')">X</button>
     <button class="btn sm" onclick="setGateViz('Z')">Z</button>
@@ -800,13 +795,13 @@ export const meta: NoteMeta = {
 </section>
 
 <!-- ══════════════════════════════════════
-     SEZIONE 10 — AUTOVALORI
+     SECTION 10 — EIGENVALUES
 ═══════════════════════════════════════ -->
 <section class="section" id="s10">
   <div class="section-num">Section 10</div>
   <h2>Eigenvalues and Eigenvectors — in matrix form</h2>
 
-  <!-- DEFINIZIONE -->
+  <!-- DEFINITION -->
   <div class="def">
     <div class="def-title">Definition — Eigenvector and Eigenvalue</div>
     A vector <strong>|u⟩ ≠ 0</strong> is an <em>eigenvector</em> of matrix L with <em>eigenvalue</em> λ if:
@@ -825,7 +820,7 @@ export const meta: NoteMeta = {
   </div>
   <div class="live" id="eigenLive" style="margin-top:0.4rem;"></div>
 
-  <!-- STEP 1: equazione caratteristica -->
+  <!-- STEP 1: characteristic equation -->
   <h3>Step 1 — Rewrite as a homogeneous system</h3>
   <p>Start from L|u⟩ = λ|u⟩ and move everything to the left. Recall that λ|u⟩ = λI|u⟩ where I is the identity matrix:</p>
 
@@ -839,12 +834,12 @@ export const meta: NoteMeta = {
     </div>
   </div>
 
-  <!-- STEP 2: determinante -->
+  <!-- STEP 2: determinant -->
   <h3>Step 2 — Existence condition: det = 0</h3>
   <p>The system (L − λI)|u⟩ = 0 has a <strong>non-zero</strong> solution only if (L − λI) is <em>singular</em> (non-invertible). This occurs when the determinant is zero:</p>
 
   <div class="math-block">
-  <div class="eq"><strong>det(L − λI) = 0</strong><span class="eq-note">&nbsp;&nbsp;← equazione caratteristica</span></div>
+  <div class="eq"><strong>det(L − λI) = 0</strong><span class="eq-note">&nbsp;&nbsp;← characteristic equation</span></div>
   <hr class="math-sep">
   <div style="font-size:0.72rem;color:var(--muted);margin-bottom:0.4rem;">For a 2×2 matrix:</div>
   <div class="eq">
@@ -857,14 +852,14 @@ export const meta: NoteMeta = {
   </div>
   <hr class="math-sep">
   <div class="mstep"><div class="mstep-label">Expanding:</div><div class="mstep-body">ad − aλ − dλ + λ² − bc = 0</div></div>
-  <div class="mstep"><div class="mstep-label">&nbsp;</div><div class="mstep-body"><strong>λ² − (a+d)λ + (ad−bc) = 0</strong><span class="eq-note">&nbsp;← polinomio di grado 2</span></div></div>
+  <div class="mstep"><div class="mstep-label">&nbsp;</div><div class="mstep-body"><strong>λ² − (a+d)λ + (ad−bc) = 0</strong><span class="eq-note">&nbsp;← polynomial of degree 2</span></div></div>
 </div>
 
   <div class="note-box">
-    Per una matrice N×N l'equazione caratteristica è un polinomio di grado N in λ → ci sono sempre N autovalori (contando le molteplicità), eventualmente complessi.
+    For a matrix N×N the characteristic equation is a polynomial of degree N in λ → there are always N eigenvalues (counting multiplicities), possibly complex.
   </div>
 
-  <!-- ESEMPIO COMPLETO: Pauli Z -->
+  <!-- Example: Pauli Z -->
   <h3>Full example — Pauli Z, all steps</h3>
 
   <p><strong>Step 1</strong> — Write the matrix:</p>
@@ -879,7 +874,7 @@ export const meta: NoteMeta = {
   <p><strong>Step 4</strong> — Solve the characteristic equation:</p>
   <div class="math-block"><div class="mstep"><div class="mstep-label"></div><div class="mstep-body">λ² − 1 = 0 &nbsp;→&nbsp; λ² = 1 &nbsp;→&nbsp; λ = ±1</div></div><hr class="math-sep"><div class="eq"><span><span class="eq-arrow">→</span></span><span>λ₁ = <strong>+1</strong> &nbsp;&nbsp;&nbsp; λ₂ = <strong>−1</strong></span></div></div>
 
-  <!-- TROVARE GLI AUTOVETTORI -->
+  <!-- FINDING EIGENVECTORS -->
   <h3>Step 3 — Finding the eigenvectors</h3>
   <p>For each eigenvalue λₖ, substitute into (L − λₖI) and solve (L − λₖI)|u⟩ = 0:</p>
 
@@ -889,14 +884,14 @@ export const meta: NoteMeta = {
   <p><strong>Case λ₂ = −1</strong> — substitute λ=−1:</p>
   <div class="math-block"><div class="eq"><span><span class="mx"><table><tbody><tr><td class="c-l">1+1</td><td class="c-0">0</td></tr><tr><td class="c-0">0</td><td class="c-l">−1+1</td></tr></tbody></table></span></span><span>=</span><span><span class="mx"><table><tbody><tr><td>2</td><td class="c-0">0</td></tr><tr><td class="c-0">0</td><td class="c-0">0</td></tr></tbody></table></span></span><span>·</span><span><span class="vec"><table><tbody><tr><td>u₁</td></tr><tr><td>u₂</td></tr></tbody></table></span></span><span>=</span><span><span class="vec"><table><tbody><tr><td class="c-0">0</td></tr><tr><td class="c-0">0</td></tr></tbody></table></span></span></div><hr class="math-sep"><div class="mstep"><div class="mstep-label">row 1:</div><div class="mstep-body">2·u₁ = 0 &nbsp;→&nbsp; <strong>u₁ = 0</strong></div></div><div class="mstep"><div class="mstep-label">row 2:</div><div class="mstep-body">0 = 0 &nbsp;→&nbsp; u₂ free</div></div><hr class="math-sep"><div class="eq"><span>Choose u₂=1 &nbsp;→&nbsp; |u₂⟩ =</span><span><span class="vec"><table><tbody><tr><td class="c-0">0</td></tr><tr><td>1</td></tr></tbody></table></span></span><span>= |1⟩ ✓</span></div></div>
 
-  <!-- ESEMPIO COMPLETO: Pauli X -->
+  <!-- EXAMPLE: Pauli X -->
   <h3>Second example — Pauli X, non-trivial eigenvectors</h3>
   <p>Gate X has the same eigenvalues as Z (±1) but different and more interesting eigenvectors:</p>
 
   <p><strong>Steps 1–4</strong> — Eigenvalues (computed above): λ₁ = +1, λ₂ = −1</p>
 
   <p><strong>Eigenvector for λ₁ = +1</strong>:</p>
-  <div class="math-block"><div class="eq"><span><span class="mx"><table><tbody><tr><td class="c-l">0−1</td><td>1</td></tr><tr><td>1</td><td class="c-l">0−1</td></tr></tbody></table></span></span><span>=</span><span><span class="mx"><table><tbody><tr><td class="c-n">−1</td><td>1</td></tr><tr><td>1</td><td class="c-n">−1</td></tr></tbody></table></span></span><span>·</span><span><span class="vec"><table><tbody><tr><td>u₁</td></tr><tr><td>u₂</td></tr></tbody></table></span></span><span>=</span><span><span class="vec"><table><tbody><tr><td class="c-0">0</td></tr><tr><td class="c-0">0</td></tr></tbody></table></span></span></div><hr class="math-sep"><div class="mstep"><div class="mstep-label">row 1:</div><div class="mstep-body">−u₁ + u₂ = 0 &nbsp;→&nbsp; <strong>u₂ = u₁</strong></div></div><hr class="math-sep"><div class="eq"><span>u₁=1, u₂=1. Normalise:</span></div><div class="eq"><span>|u₁⟩ =</span><span><span class="scalar">1/√2</span> ·</span><span><span class="vec"><table><tbody><tr><td>1</td></tr><tr><td>1</td></tr></tbody></table></span></span><span>=</span><span><span class="vec"><table><tbody><tr><td>1/√2</td></tr><tr><td>1/√2</td></tr></tbody></table></span></span><span>= |+⟩</span></div></div>
+  <div class="math-block"><div class="eq"><span><span class="mx"><table><tbody><tr><td class="c-l">0−1</td><td>1</td></tr><tr><td>1</td><td class="c-l">0−1</td></tr></tbody></table></span></span><span>=</span><span><span class="mx"><table><tbody><tr><td class="c-n">−1</td><td>1</td></tr><tr><td>1</td><td class="c-n">−1</td></tr></tbody></table></span></span><span>·</span><span><span class="vec"><table><tbody><tr><td>u₁</td></tr><tr><td>u₂</td></tr></tbody></table></span></span><span>=</span><span><span class="vec"><table><tbody><tr><td class="c-0">0</td></tr><tr><td class="c-0">0</td></tr></tbody></table></span></span></div><hr class="math-sep"><div class="mstep"><div class="mstep-label">row 1:</div><div class="mstep-body">−u₁ + u₂ = 0 &nbsp;→&nbsp; <strong>u₂ = u₁</strong></div></div><hr class="math-sep"><div class="eq"><span>u₁=1, u₂=1. Normalize:</span></div><div class="eq"><span>|u₁⟩ =</span><span><span class="scalar">1/√2</span> ·</span><span><span class="vec"><table><tbody><tr><td>1</td></tr><tr><td>1</td></tr></tbody></table></span></span><span>=</span><span><span class="vec"><table><tbody><tr><td>1/√2</td></tr><tr><td>1/√2</td></tr></tbody></table></span></span><span>= |+⟩</span></div></div>
 
   <p><strong>Eigenvector for λ₂ = −1</strong>:</p>
   <div class="math-block">
@@ -919,7 +914,7 @@ export const meta: NoteMeta = {
   <div class="mstep"><div class="mstep-label">row 1:</div><div class="mstep-body">u₁ + u₂ = 0 &nbsp;→&nbsp; <strong>u₂ = −u₁</strong></div></div>
   <hr class="math-sep">
   <div class="eq">
-    <span>Choose u₁=1, u₂=−1. Normalise:</span>
+    <span>Choose u₁=1, u₂=−1. Normalize:</span>
   </div>
   <div class="eq">
     <span>|u₂⟩ = <span class="scalar">1/√2</span> ·</span>
@@ -934,12 +929,12 @@ export const meta: NoteMeta = {
     The eigenvectors of X are |+⟩ and |−⟩ — the same states the Hadamard gate produces from |0⟩ and |1⟩! Measuring X means measuring in the "Hadamard basis" instead of the computational one.
   </div>
 
-  <!-- NORMALIZZAZIONE -->
-  <h3>Normalising an eigenvector</h3>
-  <p>An eigenvector found by solving the system has arbitrary components. To use it as a quantum state it must be normalised: divide by its norm.</p>
+  <!-- normalization -->
+  <h3>Normalizing an eigenvector</h3>
+  <p>An eigenvector found by solving the system has arbitrary components. To use it as a quantum state it must be normalized: divide by its norm.</p>
   <div class="math-block"><div class="eq"><span>|u⟩ =</span><span><span class="vec"><table><tbody><tr><td>a</td></tr><tr><td>b</td></tr></tbody></table></span></span><span>&nbsp;&nbsp; ‖|u⟩‖ = √(a²+b²)</span></div><hr class="math-sep"><div class="eq"><span>|û⟩ = <span class="scalar">1/√(a²+b²)</span> ·</span><span><span class="vec"><table><tbody><tr><td>a</td></tr><tr><td>b</td></tr></tbody></table></span></span><span>=</span><span><span class="vec"><table><tbody><tr><td>a/√(a²+b²)</td></tr><tr><td>b/√(a²+b²)</td></tr></tbody></table></span></span></div><div class="eq"><span><span class="eq-note">Check: ⟨û|û⟩ = a²/(a²+b²) + b²/(a²+b²) = 1 ✓</span></span></div></div>
 
-  <!-- COLLEGAMENTO QUANTUM -->
+  <!-- LINK TO QUANTUM -->
   <h3>The connection to quantum measurement</h3>
   <div class="insight">
     <strong>Every quantum observable is a Hermitian matrix L.</strong><br>
@@ -949,7 +944,7 @@ export const meta: NoteMeta = {
     Pauli X → measures "is it |+⟩ or |−⟩?" → eigenvalues ±1, eigenvectors |+⟩, |−⟩
   </div>
 
-  <!-- ESERCIZI -->
+  <!-- Exercise -->
   <div class="ex-block">
     <div class="ex-header"><span class="ex-tag">Ex 10.1</span><span class="ex-title">Subtracting λI from the diagonal</span></div>
     <div class="ex-body">
@@ -990,7 +985,7 @@ export const meta: NoteMeta = {
         <button class="btn sm" onclick="chkEigA('fbe12')">Check</button>
       </div>
       <button class="hint-toggle" onclick="showHint('he12')">show hint</button>
-      <div class="feedback hint" id="he12">√(36−32) = √4 = 2. Then λ = (6±2)/2 → λ₁ = 8/2 = 4, λ₂ = 4/2 = 2. Or factorise: λ²−6λ+8 = (λ−4)(λ−2) = 0.</div>
+      <div class="feedback hint" id="he12">√(36−32) = √4 = 2. Then λ = (6±2)/2 → λ₁ = 8/2 = 4, λ₂ = 4/2 = 2. Or factorize: λ²−6λ+8 = (λ−4)(λ−2) = 0.</div>
       <div class="feedback" id="fbe12"></div>
     </div>
   </div>
@@ -1000,8 +995,8 @@ export const meta: NoteMeta = {
     <div class="ex-body">
       <p>Substitute λ=4 in (A − λI)|u⟩ = 0:</p>
       <div class="math-block"><div class="eq"><span><span class="mx"><table><tbody><tr><td class="c-l">3−4</td><td>1</td></tr><tr><td>1</td><td class="c-l">3−4</td></tr></tbody></table></span></span><span>=</span><span><span class="mx"><table><tbody><tr><td class="c-n">−1</td><td>1</td></tr><tr><td>1</td><td class="c-n">−1</td></tr></tbody></table></span></span><span>·</span><span><span class="vec"><table><tbody><tr><td>u₁</td></tr><tr><td>u₂</td></tr></tbody></table></span></span><span>=</span><span><span class="vec"><table><tbody><tr><td class="c-0">0</td></tr><tr><td class="c-0">0</td></tr></tbody></table></span></span></div></div>
-      <p>From row 1: −u₁ + u₂ = 0 → u₂ = u₁. Choose u₁=1, then <strong>normalise</strong>.</p>
-      <p>The normalised eigenvector |u₁⟩ = ?</p>
+      <p>From row 1: −u₁ + u₂ = 0 → u₂ = u₁. Choose u₁=1, then <strong>normalize</strong>.</p>
+      <p>The normalized eigenvector |u₁⟩ = ?</p>
     </div>
     <div class="answer-area">
       <div class="answer-row">
@@ -1037,7 +1032,7 @@ export const meta: NoteMeta = {
     </div>
 </section>
 
-  <!-- TRUCCHI -->
+  <!-- trick -->
   <h3>Practical tricks to speed up calculations</h3>
 
   <div class="insight">
@@ -1075,7 +1070,7 @@ export const meta: NoteMeta = {
 
   <div class="insight">
     <strong>Trick 6 — Once you find one eigenvector, the other is orthogonal to it</strong><br>
-    For a 2×2 Hermitian matrix, once the first eigenvector (a, b)ᵀ is found, the second is automatically (−b*, a*)ᵀ (normalised). So you only need to solve one of the two equations and get the other for free.<br><br>
+    For a 2×2 Hermitian matrix, once the first eigenvector (a, b)ᵀ is found, the second is automatically (−b*, a*)ᵀ (normalized). So you only need to solve one of the two equations and get the other for free.<br><br>
     <span style="color:var(--ink2)">Example: found |+⟩ = (1/√2, 1/√2)ᵀ for X &nbsp;→&nbsp; the other is (−1/√2, 1/√2)ᵀ... which is |−⟩ up to a global phase (irrelevant in quantum).</span>
   </div>
 
@@ -1162,7 +1157,7 @@ function chk3(i1,e1,i2,e2,i3,e3,fb) {
     document.getElementById(id).className='answer-input '+(ok?'ok':'no');
   });
   const ok = ok1&&ok2&&ok3;
-  setFb(fb, ok, ok ? '✓ Orthonormal basis verified! ⟨0|0⟩=⟨1|1⟩=1 (normalised), ⟨0|1⟩=0 (orthogonal).' : '✗ Try again. Remember: row × column product.');
+  setFb(fb, ok, ok ? '✓ Orthonormal basis verified! ⟨0|0⟩=⟨1|1⟩=1 (normalized), ⟨0|1⟩=0 (orthogonal).' : '✗ Try again. Remember: row × column product.');
   }
 
 function chkQubit(fb) {
@@ -1284,7 +1279,7 @@ function arrow(ctx,x1,y1,x2,y2,col,lbl,lw=2) {
     arrow(ctx,cx,cy,cx+vx*sc,cy-vy*sc, isU?'#1a6b3a':'#2c5282','v');
     // norm label
     ctx.fillStyle=isU?'#1a6b3a':'#2c5282';ctx.font='11px IBM Plex Mono,monospace';
-    ctx.fillText(`‖v‖ = ${norm.toFixed(3)}${isU?' ✓ (unitario)':''}`,10,H-10);
+    ctx.fillText(`‖v‖ = ${norm.toFixed(3)}${isU?' ✓ (unitary)':''}`,10,H-10);
   }
   draw(0.7,0.5);
   c.addEventListener('click',e=>{
@@ -1358,7 +1353,7 @@ function updateDot(){
   ctx.strokeRect(cx,barY-6,projLen,12);
   arrow(ctx,cx,cy,cx+u[0]*sc,cy-u[1]*sc,'#c0392b','u');
   arrow(ctx,cx,cy,cx+v[0]*sc,cy-v[1]*sc,'#2c5282','v');
-  document.getElementById('dotLive').textContent=`u·v = cos(${th}°) = ${dot.toFixed(4)}  |  ${th===90?'⊥ Ortogonali!':th===0?'Paralleli (max)':th===180?'Antiparalleli (min)':''}`;
+  document.getElementById('dotLive').textContent=`u·v = cos(${th}°) = ${dot.toFixed(4)}  |  ${th===90?'⊥ Orthogonal!':th===0?'Parallel (max)':th===180?'Antiparallel (min)':''}`;
 }
 updateDot();
 

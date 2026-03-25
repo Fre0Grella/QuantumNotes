@@ -8,7 +8,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <div class="topbar">
       <span class="topbar-title">⚛ Circuit Sandbox</span>
       <div class="topbar-sep"></div>
-      <button class="tbtn ev" onclick="runCircuit()">▶ Evaluate</button>
       <button class="tbtn sh" onclick="doShot(1)">⚄ ×1</button>
       <button class="tbtn sh" onclick="doShot(100)">⚄ ×100</button>
       <button class="tbtn sh" onclick="doShot(1000)">⚄ ×1000</button>
@@ -51,16 +50,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       <div class="panel">
         <div class="panel-head">
           <span class="panel-head-title">Theory — exact probabilities (Born rule)</span>
-          <button class="tbtn ev" onclick="runCircuit()" style="font-size:0.62rem;padding:0.14rem 0.48rem;">▶ Evaluate</button>
         </div>
         <div class="panel-body">
           <div class="prob-bars" id="theoryBars">
-            <div class="empty">Build a circuit and click ▶ Evaluate</div>
           </div>
           <div id="blochBlock" style="display:none;">
             <canvas id="cvBloch" height="155"></canvas>
           </div>
-          <div class="amp-table" id="ampTable">—</div>
+          <div class="amp-table" id="ampTable"></div>
         </div>
       </div>
 
@@ -121,7 +118,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         a free open-source quantum circuit simulator by <a href="https://stewartsmith.io" target="_blank">Stewart Smith</a>.
         Each horizontal wire is one qubit starting in |0⟩.
         Each column is one <em>moment</em> (a clock tick).
-        Below is everything you need to build and analyse any circuit.
+        Below is everything you need to build and analyze any circuit.
       </p>
 
       <div class="tut-steps">
@@ -428,7 +425,18 @@ function runCircuit(){
   if(!circuit)return;
   try{
     circuit.evaluate$();
-    theoryResults=circuit.results||[];
+    const bw=circuit.bandwidth, nStates=Math.pow(2,bw);
+    const U=circuit.matrix;
+    theoryResults=[];
+    if(U&&U.rows){
+      // U is the unitary matrix; first column = output state from |00..0> input
+      for(let i=0;i<nStates;i++){
+        const cell=U.rows[i]&&U.rows[i][0];
+        const prob=cell&&typeof cell.real!=='undefined'
+          ?cell.real*cell.real+cell.imaginary*cell.imaginary:0;
+        theoryResults.push({state:'|'+i.toString(2).padStart(bw,'0')+'⟩',probability:prob});
+      }
+    }
     renderTheory();
     drawHistogram();
   }catch(err){
