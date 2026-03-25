@@ -22,14 +22,14 @@ const { title, currentSlug } = Astro.props;
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title} | QuantumNotes</title>
-    <link rel="stylesheet" href="/lib/q.css" />
-    <script is:inline src="/lib/q.js"></script>
+    <link rel="stylesheet" href="/QuantumNotes/lib/q.css" />
+    <script is:inline src="/QuantumNotes/lib/q.js"></script>
   </head>
   <body class="with-sidebar">
     <Sidebar currentSlug={currentSlug} isHome={Astro.props.isHome} />
     <main class="qn-main">
         <slot />
     </main>
-    <script src="/lib/q.js" is:inline></script>
+    <script src="/QuantumNotes/lib/q.js" is:inline></script>
   </body>
 </html>
