@@ -1,5 +1,5 @@
 # Quantum Computing - Interactive Notes
-![website cover](cover.png)
+![website cover](public/cover.png)
  
 *Inspired by the Quantum Computing course of Prof. Marco Chiani and the notes of **Lorenzo Valentini**, Università di Bologna*
 
