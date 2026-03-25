@@ -323,12 +323,12 @@ body { display:flex; min-height:100vh; margin:0; background:var(--bg); }
 .panel-body { padding:0.8rem 0.95rem; }
 
 /* prob bars */
-.prob-bars { display:flex; flex-direction:column; gap:0.4rem; }
-.prob-row  { display:flex; align-items:center; gap:0.45rem; }
-.prob-state { font-family:'IBM Plex Mono',monospace; font-size:0.71rem; color:var(--accent); min-width:3.1rem; text-align:right; flex-shrink:0; }
-.prob-track { flex:1; height:9px; background:var(--line); border-radius:3px; overflow:hidden; }
-.prob-fill  { height:100%; border-radius:3px; transition:width 0.45s ease; }
-.prob-pct   { font-family:'IBM Plex Mono',monospace; font-size:0.67rem; color:var(--ink2); min-width:2.5rem; text-align:right; flex-shrink:0; }
+:global(.prob-bars) { display:flex; flex-direction:column; gap:0.4rem; }
+:global(.prob-row)  { display:flex; align-items:center; gap:0.45rem; }
+:global(.prob-state) { font-family:'IBM Plex Mono',monospace; font-size:0.71rem; color:var(--accent); min-width:3.1rem; text-align:right; flex-shrink:0; }
+:global(.prob-track) { flex:1; height:9px; background:var(--line); border-radius:3px; overflow:hidden; }
+:global(.prob-fill)  { height:100%; border-radius:3px; transition:width 0.45s ease; }
+:global(.prob-pct)   { font-family:'IBM Plex Mono',monospace; font-size:0.67rem; color:var(--ink2); min-width:2.5rem; text-align:right; flex-shrink:0; }
 
 .amp-table { font-family:'IBM Plex Mono',monospace; font-size:0.67rem; color:var(--ink2); background:#f5f2ea; border:1px solid var(--line); border-radius:4px; padding:0.4rem 0.6rem; white-space:pre; overflow-x:auto; line-height:1.8; margin-top:0.65rem; }
 #cvBloch { display:block; width:100%; border-radius:4px; background:#f8f6f0; margin-top:0.55rem; }
