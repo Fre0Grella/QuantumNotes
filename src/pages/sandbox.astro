@@ -35,6 +35,29 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <!-- ══ CIRCUIT ══ -->
     <div class="sb-num">Section 01</div>
     <div class="sb-h2">Circuit Builder</div>
+        <!-- ══ CUSTOM GATES ══ -->
+    <div class="custom-gate-panel" id="customGatePanel">
+      <div class="cg-form" id="cgForm">
+        <select class="cg-input" id="cgAxis">
+          <option value="X">Rx</option>
+          <option value="Y">Ry</option>
+          <option value="Z">Rz (Phase)</option>
+        </select>
+        <input class="cg-input" id="cgAngle" type="number"
+               step="0.01" placeholder="Angle (rad)" style="width:120px"/>
+        <span class="cg-pi-btns">
+          <button class="cfg-btn" onclick="insertFrac(1,2)">π/2</button>
+          <button class="cfg-btn" onclick="insertFrac(1,4)">π/4</button>
+          <button class="cfg-btn" onclick="insertFrac(1,8)">π/8</button>
+          <button class="cfg-btn" onclick="insertFrac(1,1)">π</button>
+        </span>
+        <input class="cg-input" id="cgLabel" type="text"
+               placeholder="Label (e.g. Rx45)" style="width:100px" maxlength="6"/>
+        <button class="tbtn ev" onclick="addCustomGate()">+ Add to palette</button>
+      </div>
+      <div class="cg-chips" id="cgChips"></div>
+    </div>
+
     <div class="palette-strip">
       <div class="palette-strip-label">Gate palette — drag a gate onto the circuit below</div>
       <div id="sandboxPalette"></div>
@@ -379,6 +402,43 @@ body { display:flex; min-height:100vh; margin:0; background:var(--bg); }
 .gate-pill.any{ border-color:var(--muted);  color:var(--muted); }
 
 @media(max-width:768px){ .sandbox-main{ margin-left:0; } .sb-scroll{ padding:1rem 1rem 3rem; } }
+
+.custom-gate-panel {
+  background: var(--page);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.8rem 1rem;
+  margin-bottom: 1.2rem;
+}
+.cg-form {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.cg-input {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--border-r);
+  background: #fdfcf8;
+  color: var(--ink);
+}
+.cg-pi-btns { display: flex; gap: 3px; }
+.cg-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.55rem;
+}
+.cg-chip {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.65rem;
+  color: white;
+  padding: 0.18rem 0.6rem;
+  border-radius: 999px;
+}
 </style>
 
 
@@ -402,7 +462,78 @@ function attachListeners(){
 }
 window.addEventListener('load',()=>setTimeout(buildCircuit,300));
 
+/* ── custom gate registry ── */
+const customGates = [];
+const CG_COLORS = ['#2a9d8f','#e76f51','#6b21a8','#0e7490','#b5451b','#065f46'];
+
+function insertFrac(num, den) {
+  document.getElementById('cgAngle').value = (Math.PI * num / den).toFixed(4);
+}
+
+function addCustomGate() {
+  const axis  = document.getElementById('cgAxis').value;
+  const theta = parseFloat(document.getElementById('cgAngle').value);
+  const label = document.getElementById('cgLabel').value.trim() || `R${axis}${customGates.length+1}`;
+
+  if (isNaN(theta)) { alert('Enter a valid angle in radians.'); return; }
+  if (typeof Q === 'undefined') { alert('Q.js not loaded yet.'); return; }
+
+  const c = Math.cos(theta / 2), s = Math.sin(theta / 2);
+  let matrix;
+
+  if (axis === 'X') {
+    matrix = new Q.Matrix(
+      [ c,                             new Q.ComplexNumber(0, -s) ],
+      [ new Q.ComplexNumber(0, -s),    c                          ]
+    );
+  } else if (axis === 'Y') {
+    matrix = new Q.Matrix([ c, -s ], [ s,  c ]);
+  } else { // Rz / Phase
+    matrix = new Q.Matrix(
+      [ new Q.ComplexNumber(Math.cos(-theta/2), Math.sin(-theta/2)), 0 ],
+      [ 0, new Q.ComplexNumber(Math.cos(theta/2),  Math.sin(theta/2)) ]
+    );
+  }
+
+  const cssKey = 'cg-' + label.toLowerCase().replace(/[^a-z0-9]/g,'');
+  const color  = CG_COLORS[customGates.length % CG_COLORS.length];
+
+  // inject dynamic CSS for this gate's tile color
+  const style = document.createElement('style');
+  style.textContent = `.q-circuit-gate.${cssKey}{background:${color};color:#fff;border-color:${color};}`;
+  document.head.appendChild(style);
+
+  const gate = new Q.Gate({
+    symbol:  label,
+    name:    `R${axis}(${theta.toFixed(3)})`,
+    nameCss: cssKey,
+    matrix
+  });
+
+  const constName = 'CUSTOM_' + label.toUpperCase().replace(/[^A-Z0-9]/g,'');
+  Q.Gate.createConstant(constName, gate);
+  customGates.push({ label, axis, theta, constName, color });
+
+  customSymbol = customGates.map(g => g.label).join(',');
+  // re-render palette so new gate appears
+  const palEl = document.getElementById('sandboxPalette');
+  palEl.innerHTML = '';
+  Q.Circuit.Editor.createPalette(palEl, customSymbol);
+
+  renderChips();
+}
+
+function renderChips() {
+  const el = document.getElementById('cgChips');
+  el.innerHTML = customGates.map((g, i) =>
+    `<span class="cg-chip" style="background:${g.color}">
+      ${g.label} · R${g.axis}(${g.theta.toFixed(3)})
+    </span>`
+  ).join('');
+}
+
 function buildCircuit(initText){
+  console.log('Building circuit editor...');
   if(typeof Q==='undefined'){
     document.getElementById('sandboxCircuit').innerHTML='<p style="padding:1rem;color:var(--red);font-family:IBM Plex Mono,monospace;font-size:0.82rem;">⚠️ Q.js not found — put <strong>q.js</strong> and <strong>q.css</strong> in the same folder.</p>';
     return;
@@ -413,7 +544,11 @@ function buildCircuit(initText){
   nQubits=circuit.bandwidth; nMoments=circuit.timewidth;
   document.getElementById('cfgQ').textContent=nQubits;
   document.getElementById('cfgM').textContent=nMoments;
-  Q.Circuit.Editor.createPalette(palEl);
+  
+  customSymbol = (customGates?.length ? customGates.map(g => g.label).join(',') : '');
+
+  console.log('customSymbol:', customSymbol);
+  Q.Circuit.Editor.createPalette(palEl, customSymbol);
   circuit.toDom(circEl);
   attachListeners();
   resetShots();

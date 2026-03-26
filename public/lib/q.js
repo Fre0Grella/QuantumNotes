@@ -5338,7 +5338,7 @@ Object.assign( Q.Circuit.Editor, {
 			y: event[ pageOrClient +'Y' ]
 		}
 	},
-	createPalette: function( targetEl ){
+	createPalette: function( targetEl , customSymbols ){
 
 		if( typeof targetEl === 'string' ) targetEl = document.getElementById( targetEl )	
 
@@ -5351,9 +5351,14 @@ Object.assign( Q.Circuit.Editor, {
 		}
 
 		paletteEl.classList.add( 'Q-circuit-palette' )
+		computedSymbols = 		'H,X,Y,Z,P,T,*'
 
-		'HXYZPT*'
-		.split( '' )
+		if( typeof customSymbols === 'string' && customSymbols.length ) {
+			computedSymbols = customSymbols + ',' + computedSymbols
+		}
+
+		computedSymbols
+		.split( ',' )
 		.forEach( function( symbol ){
 
 			const gate = Q.Gate.findBySymbol( symbol )
