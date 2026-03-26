@@ -1,0 +1,2281 @@
+---
+import type { NoteMeta } from '../../lib/notes';
+
+export const meta: NoteMeta = {
+  title: "Composite Quantum Systems",
+  order: 3,
+  slug: "3-composite",
+  description: "How to describe joint quantum systems? Introduction to the tensor product, computing basis states of composite systems, and visualizing two-qubit states.",
+  sections: [
+    { id: "s1", label: "Composite Systems" },
+    { id: "s2", label: "Two-Qubit States" },
+    { id: "s3", label: "Entangled States" },
+    { id: "s4", label: "CHSH Game" },
+    { id: "s5", label: "Multi-Qubit Gates" },
+    { id: "s6", label: "Mixed States" },
+  ]
+}
+---
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-label">Interactive Notes</div>
+  <h1>Composite Quantum Systems<br>and Tensor Products</h1>
+  <p>Introduction to the tensor product, computing basis states of composite systems, and visualizing two-qubit states.</p>
+</div>
+
+<div class="toc">
+  <div class="toc-title">Table of Contents</div>
+  <ul class="toc-list">
+    <li><a onclick="goTo('s1')" href="javascript:void(0)">1 · Composite Systems</a></li>
+    <li><a onclick="goTo('qjsEx1')" href="javascript:void(0)" style="background:#ede9fe;border-color:#7c3aed;color:#7c3aed;">⚛ Lab 1.1</a></li>
+    <li><a onclick="goTo('s2')" href="javascript:void(0)">2 · Two-Qubit States</a></li>
+    <li><a onclick="goTo('s3')" href="javascript:void(0)">3 · Entangled States</a></li>
+    <li><a onclick="goTo('qjsEx3')" href="javascript:void(0)" style="background:#ede9fe;border-color:#7c3aed;color:#7c3aed;">⚛ Lab 3.1 Bell</a></li>
+    <li><a onclick="goTo('s4')" href="javascript:void(0)">4 · CHSH Game</a></li>
+    <li><a onclick="goTo('s5')" href="javascript:void(0)">5 · Multi-Qubit Gates</a></li>
+    <li><a onclick="goTo('qjsEx5')" href="javascript:void(0)" style="background:#ede9fe;border-color:#7c3aed;color:#7c3aed;">⚛ Lab 5.1 Gates</a></li>
+    <li><a onclick="goTo('s6')" href="javascript:void(0)">6 · Mixed States</a></li>
+    <li><a onclick="goTo('qjsEx6')" href="javascript:void(0)" style="background:#ede9fe;border-color:#7c3aed;color:#7c3aed;">⚛ Lab 6.1 Mixed</a></li>
+  </ul>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 1 — COMPOSITE QUANTUM SYSTEM -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="section" id="s1">
+<div class="section-num">Section 01</div>
+<h2>Composite Quantum Systems &amp; Tensor Products</h2>
+
+<p>So far we have studied a single quantum system — a single qubit. But what happens when two quantum systems interact, or are studied together? We need a way to describe a <strong>joint system</strong>.</p>
+
+<p>Imagine <strong>Alice</strong> has a quantum system with state space S<sub>A</sub>, and <strong>Bob</strong> has one with state space S<sub>B</sub>. Their combined (composite) system lives in a new, larger state space S<sub>AB</sub>.</p>
+
+<div class="def">
+  <div class="def-title">Definition — Composite System</div>
+  If Alice's state space is S<sub>A</sub> = ℂᴺ with basis &#123;|0⟩<sub>A</sub>, …, |N−1⟩<sub>A</sub>&#125;, and Bob's is S<sub>B</sub> = ℂᴹ with basis &#123;|0⟩<sub>B</sub>, …, |M−1⟩<sub>B</sub>&#125;, then the <strong>composite state space</strong> is:
+  <div class="math-block" style="margin-top:0.5rem;">
+    <div class="eq">S<sub>AB</sub> = S<sub>A</sub> ⊗ S<sub>B</sub></div>
+    <div class="eq-note">This is the <em>tensor product</em> of the two spaces. It has dimension N·M.</div>
+  </div>
+  The basis of S<sub>AB</sub> consists of all combinations |a⟩<sub>A</sub> ⊗ |b⟩<sub>B</sub>, written as |ab⟩ or |a,b⟩.
+</div>
+
+<div class="note-box">
+  <strong>Notation:</strong> |a⟩<sub>A</sub> ⊗ |b⟩<sub>B</sub> = |ab⟩<sub>AB</sub> = |ab⟩ — all three mean the same thing. The first letter refers to Alice (MSB), the last to Bob (LSB) — more on this convention below.
+</div>
+
+<h3>Example — Two Qubits</h3>
+<p>Alice has 1 qubit: basis &#123;|0⟩<sub>A</sub>, |1⟩<sub>A</sub>&#125;. Bob has 1 qubit: basis &#123;|0⟩<sub>B</sub>, |1⟩<sub>B</sub>&#125;. The composite system has 2×2 = 4 basis states:</p>
+
+<div class="math-block">
+  <div class="eq">S<sub>AB</sub> basis: |00⟩, |01⟩, |10⟩, |11⟩</div>
+</div>
+
+<h3>The Tensor (Kronecker) Product</h3>
+<p>The tensor product tells us how to combine two vectors (or matrices) into a bigger one. For two column vectors:</p>
+
+<div class="math-block">
+  <div class="eq">
+    <span class="vec"><table><tr><td>a₁</td></tr><tr><td>a₂</td></tr></table></span>
+    ⊗
+    <span class="vec"><table><tr><td>b₁</td></tr><tr><td>b₂</td></tr></table></span>
+    =
+    <span class="vec"><table><tr><td>a₁·b₁</td></tr><tr><td>a₁·b₂</td></tr><tr><td>a₂·b₁</td></tr><tr><td>a₂·b₂</td></tr></table></span>
+    <span class="eq-note">— the result has 4 entries (N·M)</span>
+  </div>
+</div>
+
+<p>For a general matrix A (n×m) and any matrix B, the Kronecker product replaces each entry a<sub>ij</sub> of A with the entire block a<sub>ij</sub>·B.</p>
+
+<h3>Computing the Basis States</h3>
+<p>Let's verify the two-qubit basis states concretely. Recall |0⟩ = (1,0)ᵀ and |1⟩ = (0,1)ᵀ:</p>
+
+<div class="math-block">
+  <div class="mstep">
+    <div class="mstep-label">|00⟩ =</div>
+    <div class="mstep-body">
+      <span class="vec"><table><tr><td>1</td></tr><tr><td>0</td></tr></table></span>
+      ⊗
+      <span class="vec"><table><tr><td>1</td></tr><tr><td>0</td></tr></table></span>
+      =
+      <span class="vec"><table><tr><td>1·1</td></tr><tr><td>1·0</td></tr><tr><td>0·1</td></tr><tr><td>0·0</td></tr></table></span>
+      =
+      <span class="vec"><table><tr><td class="c-l">1</td></tr><tr><td class="c-0">0</td></tr><tr><td class="c-0">0</td></tr><tr><td class="c-0">0</td></tr></table></span>
+    </div>
+  </div>
+  <hr class="math-sep">
+  <div class="mstep">
+    <div class="mstep-label">|01⟩ =</div>
+    <div class="mstep-body">
+      <span class="vec"><table><tr><td>1</td></tr><tr><td>0</td></tr></table></span>
+      ⊗
+      <span class="vec"><table><tr><td>0</td></tr><tr><td>1</td></tr></table></span>
+      =
+      <span class="vec"><table><tr><td class="c-0">0</td></tr><tr><td class="c-l">1</td></tr><tr><td class="c-0">0</td></tr><tr><td class="c-0">0</td></tr></table></span>
+    </div>
+  </div>
+  <hr class="math-sep">
+  <div class="mstep">
+    <div class="mstep-label">|10⟩ =</div>
+    <div class="mstep-body">
+      <span class="vec"><table><tr><td>0</td></tr><tr><td>1</td></tr></table></span>
+      ⊗
+      <span class="vec"><table><tr><td>1</td></tr><tr><td>0</td></tr></table></span>
+      =
+      <span class="vec"><table><tr><td class="c-0">0</td></tr><tr><td class="c-0">0</td></tr><tr><td class="c-l">1</td></tr><tr><td class="c-0">0</td></tr></table></span>
+    </div>
+  </div>
+  <hr class="math-sep">
+  <div class="mstep">
+    <div class="mstep-label">|11⟩ =</div>
+    <div class="mstep-body">
+      <span class="vec"><table><tr><td>0</td></tr><tr><td>1</td></tr></table></span>
+      ⊗
+      <span class="vec"><table><tr><td>0</td></tr><tr><td>1</td></tr></table></span>
+      =
+      <span class="vec"><table><tr><td class="c-0">0</td></tr><tr><td class="c-0">0</td></tr><tr><td class="c-0">0</td></tr><tr><td class="c-l">1</td></tr></table></span>
+    </div>
+  </div>
+</div>
+
+<div class="insight">
+  <strong>Pattern:</strong> The basis state |ab⟩ has a 1 exactly at position (a·2 + b) in the vector — matching binary counting: |00⟩ = position 0, |01⟩ = position 1, |10⟩ = position 2, |11⟩ = position 3. The whole system behaves like a binary number!
+</div>
+
+<!-- Interactive canvas: tensor product visualizer -->
+<canvas id="cvTensor" width="620" height="160"></canvas>
+<div class="canvas-caption">Interactive: click a basis state to see its vector representation.</div>
+<div class="controls" style="justify-content:center; gap:0.5rem;">
+  <button class="btn sm" onclick="showBasis('00')">|00⟩</button>
+  <button class="btn sm" onclick="showBasis('01')">|01⟩</button>
+  <button class="btn sm" onclick="showBasis('10')">|10⟩</button>
+  <button class="btn sm" onclick="showBasis('11')">|11⟩</button>
+</div>
+
+<!-- EXERCISES S1 -->
+<div class="ex-block">
+  <div class="ex-header">
+    <span class="ex-tag">Exercise 1.1</span>
+    <span class="ex-title">Kronecker product of matrices</span>
+  </div>
+  <div class="ex-body">
+    <p>Consider the matrices A = <span class="mx"><table><tr><td>0</td><td>1</td></tr><tr><td>1</td><td>0</td></tr></table></span> (Pauli X) and B = I = <span class="mx"><table><tr><td>1</td><td>0</td></tr><tr><td>0</td><td>1</td></tr></table></span>. What is A ⊗ B?</p>
+    <p style="margin-top:0.5rem;">The result should be a 4×4 matrix. Hint: replace each entry of A with that entry times B.</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">Top-left 2×2 block is the zero matrix?</span>
+      <select id="e1a" class="answer-input" style="width:80px;">
+        <option value="">—</option>
+        <option value="yes">Yes</option>
+        <option value="no">No</option>
+      </select>
+      <button class="btn sm" onclick="checkE1()">Check</button>
+    </div>
+    <div id="e1fb" class="feedback"></div>
+    <button class="hint-toggle" onclick="showHint('e1h')">Show hint</button>
+    <div id="e1h" class="feedback hint">A[0][0] = 0, so the top-left block is 0·I = zero matrix. A[0][1] = 1, so the top-right block is 1·I = I. And so on.</div>
+  </div>
+</div>
+
+<div class="ex-block">
+  <div class="ex-header">
+    <span class="ex-tag">Exercise 1.2</span>
+    <span class="ex-title">Dimension of composite system</span>
+  </div>
+  <div class="ex-body">
+    <p>Alice has a 3-level quantum system (a <em>qutrit</em>, ℂ³). Bob has a standard qubit (ℂ²). What is the dimension of their composite system S<sub>AB</sub>?</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">dim(S<sub>AB</sub>) =</span>
+      <input id="e2a" class="answer-input" type="number" placeholder="?">
+      <button class="btn sm" onclick="checkE2()">Check</button>
+    </div>
+    <div id="e2fb" class="feedback"></div>
+    <button class="hint-toggle" onclick="showHint('e2h')">Show hint</button>
+    <div id="e2h" class="feedback hint">The dimension of S_A ⊗ S_B is dim(S_A) × dim(S_B).</div>
+  </div>
+</div>
+</section>
+
+<!-- ── Q.js Exercise S1 ─────────────────────────────────── -->
+<section class="qjs-section" id="qjsEx1">
+  <div class="qjs-header">
+    <span class="qjs-tag">⚛ Circuit Lab 1.1</span>
+    <span class="qjs-title">Tensor Product — Explore basis states</span>
+  </div>
+  <div class="qjs-body">
+    <p>Each horizontal wire is one qubit starting in |0⟩. Gates from the palette change the state. The outcome panel updates live as you edit.</p>
+    <div class="qjs-task">Drag an <strong>X</strong> gate onto register 1 (top wire) to prepare |10⟩. You should see 100% probability for |10⟩ in the outcomes.</div>
+    <div class="qjs-editor-wrap">
+      <div class="qjs-palette" id="qjs1-palette"></div>
+      <div class="qjs-circuit-wrap" id="qjs1-circuit"></div>
+    </div>
+    <div class="qjs-live-wrap">
+      <div class="qjs-live-label">Live outcomes</div>
+      <div class="qjs-results show" id="qjs1-results">Run to see outcomes…</div>
+    </div>
+    <div class="qjs-controls">
+      <button class="qjs-btn run" onclick="qjsEval('qjs1')">▶ Evaluate</button>
+      <button class="qjs-btn" onclick="qjsReset('qjs1', 2, 2)">↺ Reset</button>
+      <button class="qjs-btn" onclick="showHint('qjs1h')">Hint</button>
+    </div>
+    <div class="qjs-hint" id="qjs1h">X acts as a quantum NOT: X|0⟩ = |1⟩. Drag X to the top wire (register 1) and you get |1⟩⊗|0⟩ = |10⟩ — 100% |10⟩.</div>
+    <div class="qjs-task" style="margin-top:0.8rem;">
+      Now <strong>build |11⟩</strong>: drag X onto both wires. Then try <strong>H on one wire</strong> to create a superposition like (|00⟩+|10⟩)/√2.
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 2 — TWO-QUBIT STATE -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="section" id="s2">
+  <div class="section-num">Section 02</div>
+  <h2>Two-Qubit States: Superposition, Measurement &amp; Product States</h2>
+
+<p>A general state in the two-qubit space is a <strong>superposition</strong> of all four basis states:</p>
+
+<div class="def">
+  <div class="def-title">General Two-Qubit State</div>
+  <div class="math-block">
+    <div class="eq">|Ψ⟩ = α<sub>00</sub>|00⟩ + α<sub>01</sub>|01⟩ + α<sub>10</sub>|10⟩ + α<sub>11</sub>|11⟩</div>
+    <div class="eq" style="margin-top:0.4rem;">Normalization: |α<sub>00</sub>|² + |α<sub>01</sub>|² + |α<sub>10</sub>|² + |α<sub>11</sub>|² = 1</div>
+  </div>
+  Each α<sub>ab</sub> ∈ ℂ is the probability amplitude for the outcome (a,b).
+</div>
+
+<h3>MSB / LSB Convention</h3>
+<p>In the notation |ab⟩, <strong>a</strong> refers to Alice's qubit (the Most Significant Bit, q<sub>A</sub>) and <strong>b</strong> to Bob's (the Least Significant Bit, q<sub>B</sub>). When drawing circuits, LSB is represented on top.</p>
+
+<div class="note-box">
+  <strong>Example:</strong> In |abc⟩, the order is: c = LSB (top wire), b = middle, a = MSB (bottom wire, q<sub>A</sub>). This matches standard circuit notation.
+</div>
+
+<h3>Measuring a Two-Qubit State</h3>
+<p>If we measure <strong>both</strong> qubits simultaneously, the probability of outcome (a,b) is simply:</p>
+<div class="math-block">
+  <div class="eq">P(ab) = |⟨ab|Ψ⟩|² = |α<sub>ab</sub>|²</div>
+</div>
+
+<h3>Partial Measurement</h3>
+<p>What if only <strong>Alice</strong> measures her qubit? This is more subtle — Bob's qubit is not measured, so we sum over Bob's possible outcomes.</p>
+
+<div class="def">
+  <div class="def-title">Partial Measurement — Alice measures |0⟩</div>
+  <div class="math-block">
+    <div class="mstep">
+      <div class="mstep-label">Probability:</div>
+      <div class="mstep-body">P(Alice → 0) = P(00) + P(01) = |α<sub>00</sub>|² + |α<sub>01</sub>|²</div>
+    </div>
+    <hr class="math-sep">
+    <div class="mstep">
+      <div class="mstep-label">Post-state:</div>
+      <div class="mstep-body">
+        |Ψ⟩ collapses to:
+        <span style="display:inline-block; margin-top:0.3rem;">
+          (α<sub>00</sub>|00⟩ + α<sub>01</sub>|01⟩) / √(|α<sub>00</sub>|² + |α<sub>01</sub>|²)
+        </span>
+        <div class="eq-note" style="margin-top:0.2rem;">— renormalized so total probability remains 1</div>
+      </div>
+    </div>
+  </div>
+  Alice's qubit is now fixed at |0⟩, but Bob's qubit remains in a (renormalized) superposition.
+</div>
+
+<div class="insight">
+  <strong>Key idea:</strong> Measuring one qubit of a composite system <em>narrows down</em> the possibilities for the other qubit. If the two qubits are correlated, Alice's measurement result gives us information about what Bob is likely to measure next.
+</div>
+
+<h3>Product States</h3>
+<p>Suppose Alice and Bob prepare their qubits <em>independently</em>:</p>
+<div class="math-block">
+  <div class="mstep">
+    <div class="mstep-label">Alice:</div>
+    <div class="mstep-body">α₀|0⟩ + α₁|1⟩</div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label">Bob:</div>
+    <div class="mstep-body">β₀|0⟩ + β₁|1⟩</div>
+  </div>
+  <hr class="math-sep">
+  <div class="mstep">
+    <div class="mstep-label">Together:</div>
+    <div class="mstep-body">(α₀|0⟩+α₁|1⟩) ⊗ (β₀|0⟩+β₁|1⟩) = α₀β₀|00⟩ + α₀β₁|01⟩ + α₁β₀|10⟩ + α₁β₁|11⟩</div>
+  </div>
+</div>
+
+<div class="def">
+  <div class="def-title">Definition — Product State</div>
+  A state |Ψ⟩<sub>AB</sub> is a <strong>product state</strong> (or separable state) if it can be written as:
+  <div class="math-block">|Ψ⟩<sub>AB</sub> = |φ⟩<sub>A</sub> ⊗ |χ⟩<sub>B</sub></div>
+  This means Alice's and Bob's qubits are <em>independent</em> — measuring one tells you nothing about the other.
+</div>
+
+<p>In a product state, the probability of Alice measuring |0⟩ is independent of Bob's state: P(Alice→0) = |α₀|²·(|β₀|²+|β₁|²) = |α₀|². Bob's preparation is completely irrelevant to Alice's outcome.</p>
+
+<!-- EXERCISES S2 -->
+<div class="ex-block">
+  <div class="ex-header">
+    <span class="ex-tag">Exercise 2.1</span>
+    <span class="ex-title">Partial measurement probability</span>
+  </div>
+  <div class="ex-body">
+    <p>The state is |Ψ⟩ = (1/2)|00⟩ + (1/2)|01⟩ + (1/√2)|11⟩. What is the probability that Alice measures |0⟩?</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">P(Alice→0) =</span>
+      <input id="e3a" class="answer-input" type="text" placeholder="e.g. 0.5">
+      <button class="btn sm" onclick="checkE3()">Check</button>
+    </div>
+    <div id="e3fb" class="feedback"></div>
+    <button class="hint-toggle" onclick="showHint('e3h')">Show hint</button>
+    <div id="e3h" class="feedback hint">Sum |α|² over all states where Alice's qubit is 0: these are |00⟩ (amplitude 1/2) and |01⟩ (amplitude 1/2). P = (1/2)² + (1/2)² = 1/4 + 1/4 = 1/2.</div>
+  </div>
+</div>
+
+<div class="ex-block">
+  <div class="ex-header">
+    <span class="ex-tag">Exercise 2.2</span>
+    <span class="ex-title">Is it a product state?</span>
+  </div>
+  <div class="ex-body">
+    <p>Is the state |Ψ⟩ = (1/√2)(|00⟩ + |10⟩) a product state? If yes, write it as |φ⟩<sub>A</sub> ⊗ |χ⟩<sub>B</sub>.</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">Product state?</span>
+      <select id="e4a" class="answer-input" style="width:80px;">
+        <option value="">—</option>
+        <option value="yes">Yes</option>
+        <option value="no">No</option>
+      </select>
+      <button class="btn sm" onclick="checkE4()">Check</button>
+    </div>
+    <div id="e4fb" class="feedback"></div>
+    <button class="hint-toggle" onclick="showHint('e4h')">Show hint</button>
+    <div id="e4h" class="feedback hint">Factor it: (1/√2)(|0⟩+|1⟩) ⊗ |0⟩ = |+⟩ ⊗ |0⟩. Yes, it is a product state!</div>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 3 — ENTANGLED STATES -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="section" id="s3">
+  <div class="section-num">Section 03</div>
+  <h2>Entangled States &amp; the Bell Basis</h2>
+
+<p>Not all two-qubit states can be written as a product state. Those that <em>cannot</em> are called <strong>entangled</strong>.</p>
+
+<div class="def">
+  <div class="def-title">Definition — Entangled State</div>
+  A state |Ψ⟩<sub>AB</sub> is <strong>entangled</strong> if it <em>cannot</em> be written as |φ⟩<sub>A</sub> ⊗ |χ⟩<sub>B</sub> for any single-qubit states |φ⟩, |χ⟩.
+  <div class="math-block" style="margin-top:0.5rem;">
+    <div class="eq">There is a <em>correlation</em> between the two qubits that has no classical analogue.</div>
+  </div>
+</div>
+
+<p>For example, (|00⟩ + |01⟩ + |11⟩)/√3 cannot be written as a product state — you can verify this by trying to factor it and failing.</p>
+
+<h3>The Bell States — Maximally Entangled States</h3>
+<p>The four <strong>Bell states</strong> are the most entangled two-qubit states possible. They form an orthonormal basis for the two-qubit space:</p>
+
+<div class="bell-grid">
+  <div class="bell-card">
+    <div class="bell-name">|Φ⁺⟩</div>
+    (|00⟩ + |11⟩) / √2
+  </div>
+  <div class="bell-card">
+    <div class="bell-name">|Φ⁻⟩</div>
+    (|00⟩ − |11⟩) / √2
+  </div>
+  <div class="bell-card">
+    <div class="bell-name">|Ψ⁺⟩</div>
+    (|01⟩ + |10⟩) / √2
+  </div>
+  <div class="bell-card">
+    <div class="bell-name">|Ψ⁻⟩</div>
+    (|01⟩ − |10⟩) / √2
+  </div>
+</div>
+
+<div class="note-box">
+  <strong>Bell Basis (EPR pairs):</strong> |Φ⁺⟩, |Φ⁻⟩, |Ψ⁺⟩, |Ψ⁻⟩ are mutually orthogonal and span the entire two-qubit space. Any two-qubit state can be expressed as a superposition of these four states.
+</div>
+
+<h3>What Entanglement Means Physically</h3>
+<p>Consider |Φ⁺⟩ = (|00⟩ + |11⟩)/√2. If Alice measures her qubit:</p>
+
+<div class="math-block">
+  <div class="mstep">
+    <div class="mstep-label">Before:</div>
+    <div class="mstep-body">|Φ⁺⟩ — Alice's qubit has 50% probability of being |0⟩ or |1⟩ (equally superposed)</div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label">Alice → |0⟩:</div>
+    <div class="mstep-body">State collapses to |00⟩. Now Bob's qubit is <em>definitely</em> |0⟩ — 100% probability.</div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label">Alice → |1⟩:</div>
+    <div class="mstep-body">State collapses to |11⟩. Now Bob's qubit is <em>definitely</em> |1⟩ — 100% probability.</div>
+  </div>
+</div>
+
+<div class="insight">
+  <strong>The spooky part:</strong> Alice and Bob may be light-years apart. The moment Alice measures, Bob's qubit "knows" the result — not because of any signal, but because the two qubits were never truly independent. Einstein called this "spooky action at a distance." Note that this <em>cannot</em> be used to transmit information faster than light, because Alice can't control which outcome she gets.
+</div>
+
+<!-- Interactive entanglement demo -->
+<canvas id="cvEntangle" width="620" height="180"></canvas>
+<div class="canvas-caption">Click "Measure Alice" to see how the entangled state collapses.</div>
+<div class="controls" style="justify-content:center; gap:0.5rem;">
+  <button class="btn sm" onclick="resetEntangle()">Reset |Φ⁺⟩</button>
+  <button class="btn sm" onclick="measureAlice()">Measure Alice</button>
+</div>
+<div id="entangleMsg" style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem;color:var(--accent);text-align:center;margin-top:0.4rem;min-height:1.4rem;"></div>
+
+<!-- EXERCISES S3 -->
+<div class="ex-block">
+  <div class="ex-header">
+    <span class="ex-tag">Exercise 3.1</span>
+    <span class="ex-title">Identify entanglement</span>
+  </div>
+  <div class="ex-body">
+    <p>Which of these states is entangled?<br>
+    <strong>A:</strong> (|00⟩ + |01⟩) / √2 &nbsp;&nbsp;
+    <strong>B:</strong> (|00⟩ + |11⟩) / √2 &nbsp;&nbsp;
+    <strong>C:</strong> |00⟩</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">Entangled state:</span>
+      <select id="e5a" class="answer-input" style="width:80px;">
+        <option value="">—</option>
+        <option value="A">A</option>
+        <option value="B">B</option>
+        <option value="C">C</option>
+      </select>
+      <button class="btn sm" onclick="checkE5()">Check</button>
+    </div>
+    <div id="e5fb" class="feedback"></div>
+    <button class="hint-toggle" onclick="showHint('e5h')">Show hint</button>
+    <div id="e5h" class="feedback hint">Try to factor each: A = |0⟩⊗(|0⟩+|1⟩)/√2 = |0⟩|+⟩ ✓ product. C = |0⟩|0⟩ ✓ product. For B: suppose it equals (a|0⟩+b|1⟩)⊗(c|0⟩+d|1⟩). Then ac=1/√2, ad=0, bc=0, bd=1/√2. From ad=0: a=0 or d=0. But ac≠0 means a≠0, so d=0. But bd≠0 means d≠0. Contradiction!</div>
+  </div>
+</div>
+
+<div class="ex-block">
+  <div class="ex-header">
+    <span class="ex-tag">Exercise 3.2</span>
+    <span class="ex-title">Bell state measurement</span>
+  </div>
+  <div class="ex-body">
+    <p>The system is in state |Ψ⁻⟩ = (|01⟩ − |10⟩)/√2. Alice measures her qubit and gets |1⟩. What is Bob's qubit state after the measurement?</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">Bob's state is:</span>
+      <select id="e6a" class="answer-input" style="width:80px;">
+        <option value="">—</option>
+        <option value="|0⟩">|0⟩</option>
+        <option value="|1⟩">|1⟩</option>
+        <option value="|+⟩">|+⟩</option>
+        <option value="|−⟩">|−⟩</option>
+      </select>
+      <button class="btn sm" onclick="checkE6()">Check</button>
+    </div>
+    <div id="e6fb" class="feedback"></div>
+    <button class="hint-toggle" onclick="showHint('e6h')">Show hint</button>
+    <div id="e6h" class="feedback hint">In |Ψ⁻⟩ = (|01⟩ − |10⟩)/√2, the terms with Alice=|1⟩ are: −|10⟩. So if Alice measures |1⟩, the state collapses to |10⟩ (up to normalization), meaning Bob has |0⟩.</div>
+  </div>
+</div>
+</section><!-- end section s3 -->
+
+<!-- ── Q.js Exercise S3 ─────────────────────────────────── -->
+<section class="qjs-section" id="qjsEx3">
+  <div class="qjs-header">
+    <span class="qjs-tag">⚛ Circuit Lab 3.1</span>
+    <span class="qjs-title">Bell State Factory — Build |Φ⁺⟩ yourself</span>
+  </div>
+  <div class="qjs-body">
+    <p>The circuit board starts empty (2 qubits, 2 moments). Your goal: create the Bell state |Φ⁺⟩ = (|00⟩+|11⟩)/√2.</p>
+    <div class="qjs-task"><strong>Exercise:</strong> Drag <strong>H</strong> onto register 1, moment 1. Then drag a <strong>controlled-X (*)  </strong> gate pair: the <strong>*</strong> (control dot) on register 1 moment 2, and <strong>X</strong> on register 2 moment 2. You should see 50% |00⟩ and 50% |11⟩.</div>
+    <div class="qjs-editor-wrap">
+      <div class="qjs-palette" id="qjs3-palette"></div>
+      <div class="qjs-circuit-wrap" id="qjs3-circuit"></div>
+    </div>
+    <div class="qjs-live-wrap">
+      <div class="qjs-live-label">Live outcomes — <span id="qjs3-check" style="color:var(--green);font-weight:600;"></span></div>
+      <div class="qjs-results show" id="qjs3-results">Build the circuit to see outcomes…</div>
+    </div>
+    <div class="qjs-controls">
+      <button class="qjs-btn run" onclick="qjsEval('qjs3', checkBell)">▶ Evaluate &amp; Check</button>
+      <button class="qjs-btn" onclick="qjsReset('qjs3', 2, 2)">↺ Reset</button>
+      <button class="qjs-btn" onclick="showHint('qjs3h')">Hint</button>
+    </div>
+    <div class="qjs-hint" id="qjs3h">
+      Step 1 — H on r1,m1: puts register 1 into superposition (|0⟩+|1⟩)/√2.<br>
+      Step 2 — CNOT: drag the <strong>*</strong> control tile to r1,m2 and <strong>X</strong> target to r2,m2. CNOT flips register 2 only when register 1 = |1⟩.<br>
+      Result: (|00⟩+|11⟩)/√2 = |Φ⁺⟩ ✓
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 4 — CHSH GAME -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="section" id="s4">
+  <div class="section-num">Section 04</div>
+  <h2>The CHSH Game — Entanglement Beats Classical Correlation</h2>
+
+<p>The CHSH game is a clever thought experiment that demonstrates — in a concrete, game-theoretic way — that quantum entanglement is <em>fundamentally stronger</em> than any classical correlation.</p>
+
+<h3>The Setup</h3>
+<div class="def">
+  <div class="def-title">CHSH Game Rules</div>
+  <ol style="padding-left:1.2rem;line-height:2;">
+    <li>A <strong>referee</strong> sends random bit X ∈ &#123;0,1&#125; to Alice and random bit Y ∈ &#123;0,1&#125; to Bob.</li>
+    <li>Alice outputs bit A ∈ &#123;0,1&#125;; Bob outputs bit B ∈ &#123;0,1&#125;.</li>
+    <li>Alice and Bob <strong>win</strong> if: <span class="math-inline">X · Y = A ⊕ B</span></li>
+    <li><strong>Rule:</strong> Alice and Bob may agree on a strategy beforehand, but <em>cannot communicate once the game starts</em>.</li>
+  </ol>
+</div>
+
+<div class="note-box">
+  <strong>Win condition decoded:</strong> X·Y = A⊕B means: "if both inputs are 1, output different bits; otherwise output the same bit." When X=Y=1, A⊕B must be 1 (A≠B). In all other cases, A⊕B must be 0 (A=B).
+</div>
+
+<h3>Classical Strategy: Maximum 75%</h3>
+<p>Alice and Bob preshare correlated bits (pulled from a shared box). The best simple strategy: always output A=B=0.</p>
+
+<table class="truth">
+  <tr><th>X</th><th>Y</th><th>X·Y</th><th>A</th><th>B</th><th>A⊕B</th><th>Win?</th></tr>
+  <tr class="win"><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>✓</td></tr>
+  <tr class="win"><td>0</td><td>1</td><td>0</td><td>0</td><td>0</td><td>0</td><td>✓</td></tr>
+  <tr class="win"><td>1</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>✓</td></tr>
+  <tr class="lose"><td>1</td><td>1</td><td>1</td><td>0</td><td>0</td><td>0</td><td>✗</td></tr>
+</table>
+
+<div class="note-box">
+  <strong>75% is optimal classically.</strong> No matter what classical strategy Alice and Bob use (even probabilistic, shared randomness), they cannot win more than 75% of the time. This is the <strong>CHSH inequality</strong>: any local hidden variable theory is bounded by 3/4.
+</div>
+
+<h3>Quantum Strategy: ~85.4%</h3>
+
+<p>The idea: Alice and Bob preshare one EPR pair |Φ⁺⟩ = (|00⟩+|11⟩)/√2. Instead of outputting a pre-agreed bit, they each <em>measure</em> their half of the pair — but the measurement basis they choose depends on their input X or Y. The outcome of that measurement becomes their output A or B.</p>
+
+<div class="note-box">
+  <strong>Key insight:</strong> In an EPR pair, Alice's and Bob's measurement outcomes are correlated in a way that depends on the <em>angle between their measurement bases</em>. By cleverly choosing which angle to use for each input, they can make their outputs satisfy the win condition A⊕B = X·Y more often than any classical strategy allows.
+</div>
+
+<h3>Step 1 — Agree on measurement bases before the game</h3>
+
+<p>Alice and Bob pre-agree on the following angles on the Bloch sphere equator (think of the qubit state as a direction in a 2D plane, parameterized by an angle θ):</p>
+
+<div class="math-block">
+  <div class="mstep">
+    <div class="mstep-label">Alice, X=0:</div>
+    <div class="mstep-body">
+      Measures at angle <strong>0</strong>: basis &#123;|0⟩, |1⟩&#125;<br>
+      <span class="eq-note">→ output A=0 if she gets |0⟩, output A=1 if she gets |1⟩</span>
+    </div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label">Alice, X=1:</div>
+    <div class="mstep-body">
+      Measures at angle <strong>π/4</strong> (45°): basis &#123;|+⟩, |−⟩&#125;<br>
+      <span class="eq-note">→ output A=0 if she gets |+⟩, output A=1 if she gets |−⟩</span>
+    </div>
+  </div>
+  <hr class="math-sep">
+  <div class="mstep">
+    <div class="mstep-label">Bob, Y=0:</div>
+    <div class="mstep-body">
+      Measures at angle <strong>π/8</strong> (22.5°): basis &#123;|v⟩, |v⊥⟩&#125; where |v⟩ = cos(π/8)|0⟩ + sin(π/8)|1⟩<br>
+      <span class="eq-note">→ output B=0 if he gets |v⟩, output B=1 if he gets |v⊥⟩</span>
+    </div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label">Bob, Y=1:</div>
+    <div class="mstep-body">
+      Measures at angle <strong>−π/8</strong> (−22.5°): basis &#123;|w⟩, |w⊥⟩&#125; where |w⟩ = cos(π/8)|0⟩ − sin(π/8)|1⟩<br>
+      <span class="eq-note">→ output B=0 if he gets |w⟩, output B=1 if he gets |w⊥⟩</span>
+    </div>
+  </div>
+</div>
+
+<p>Picture Alice's and Bob's bases as arrows on a compass. The angle <em>between</em> the two arrows determines how correlated their outcomes will be — closer together means more correlated.</p>
+
+<canvas id="cvAngles" width="620" height="200"></canvas>
+<div class="canvas-caption">The four measurement bases on the unit circle. The angle between Alice's and Bob's chosen bases determines P(same outcome).</div>
+<div class="controls" style="justify-content:center;gap:0.5rem;flex-wrap:wrap;">
+  <button class="btn sm" onclick="showAngleCase('00')">X=0, Y=0</button>
+  <button class="btn sm" onclick="showAngleCase('01')">X=0, Y=1</button>
+  <button class="btn sm" onclick="showAngleCase('10')">X=1, Y=0</button>
+  <button class="btn sm" onclick="showAngleCase('11')">X=1, Y=1</button>
+</div>
+<div id="angleMsg" style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem;color:var(--accent);text-align:center;margin-top:0.4rem;min-height:1.4rem;"></div>
+
+<h3>Step 2 — A crucial fact about EPR pairs</h3>
+
+<p>For an EPR pair |Φ⁺⟩, if Alice measures in some basis and Bob measures in a basis that is rotated by angle δ relative to Alice's, the probability that they get the <strong>same outcome</strong> is:</p>
+
+<div class="math-block">
+  <div class="eq">P(same outcome) = cos²(δ/2)</div>
+  <div class="eq-note" style="margin-top:0.3rem;">where δ = angle between the two measurement bases. When δ=0 (same basis) → P=1 (always agree). When δ=π/2 (orthogonal) → P=1/2 (random).</div>
+</div>
+
+<div class="note-box">
+  <strong>Translation to the game:</strong> "Same outcome" means A=B, so A⊕B=0. "Different outcome" means A≠B, so A⊕B=1.
+  <div class="math-block" style="margin-top:0.4rem;">
+    <div class="mstep"><div class="mstep-label">P(A⊕B=0)</div><div class="mstep-body">= P(same) = cos²(δ/2)</div></div>
+    <div class="mstep"><div class="mstep-label">P(A⊕B=1)</div><div class="mstep-body">= P(different) = sin²(δ/2)</div></div>
+  </div>
+</div>
+
+<h3>Step 3 — Work out the angle for each of the 4 input cases</h3>
+
+<p>The win condition is A⊕B = X·Y. Let's compute the angle δ between Alice's and Bob's bases in each case, and check whether the win condition is "same" (A⊕B=0) or "different" (A⊕B=1):</p>
+
+<div class="math-block">
+  <div class="mstep">
+    <div class="mstep-label">X=0, Y=0:</div>
+    <div class="mstep-body">
+      Alice at 0, Bob at π/8 → <strong>δ = π/8</strong><br>
+      Win condition: X·Y = 0·0 = <span style="color:var(--accent);">0</span> → need A⊕B = 0 (same outcome)<br>
+      P(win) = P(same) = cos²(π/16) … wait — let's be careful.<br>
+      <span class="eq-note">The angle between the bases is π/8, so δ = π/8. P(same) = cos²(π/8·½) = cos²(π/16)? No!</span>
+    </div>
+  </div>
+</div>
+
+<div class="warning">
+  <strong>Careful with the formula!</strong> The formula P(same) = cos²(δ/2) uses the angle δ between the two <em>basis vectors on the Bloch sphere</em>. An angle θ on the unit circle corresponds to a state rotated by θ from |0⟩, but <em>on the Bloch sphere</em> this is a rotation of 2θ. So the angle between two states at circle-angles θ_A and θ_B is δ<sub>Bloch</sub> = 2|θ_A − θ_B|, and P(same) = cos²(|θ_A − θ_B|).
+</div>
+
+<p>Using P(same outcome) = cos²(|θ_A − θ_B|) where θ is the circle angle:</p>
+
+<div class="math-block">
+  <div class="mstep">
+    <div class="mstep-label">X=0, Y=0:</div>
+    <div class="mstep-body">
+      θ<sub>A</sub>=0, θ<sub>B</sub>=π/8 → |θ<sub>A</sub>−θ<sub>B</sub>| = <strong>π/8</strong><br>
+      Need A⊕B = 0 (same) &nbsp;&nbsp; P(win) = cos²(π/8) ≈ <strong>0.854</strong> ✓
+    </div>
+  </div>
+  <hr class="math-sep">
+  <div class="mstep">
+    <div class="mstep-label">X=0, Y=1:</div>
+    <div class="mstep-body">
+      θ<sub>A</sub>=0, θ<sub>B</sub>=−π/8 → |θ<sub>A</sub>−θ<sub>B</sub>| = <strong>π/8</strong><br>
+      Need A⊕B = 0 (same) &nbsp;&nbsp; P(win) = cos²(π/8) ≈ <strong>0.854</strong> ✓
+    </div>
+  </div>
+  <hr class="math-sep">
+  <div class="mstep">
+    <div class="mstep-label">X=1, Y=0:</div>
+    <div class="mstep-body">
+      θ<sub>A</sub>=π/4, θ<sub>B</sub>=π/8 → |θ<sub>A</sub>−θ<sub>B</sub>| = <strong>π/8</strong><br>
+      Need A⊕B = 0 (same) &nbsp;&nbsp; P(win) = cos²(π/8) ≈ <strong>0.854</strong> ✓
+    </div>
+  </div>
+  <hr class="math-sep">
+  <div class="mstep">
+    <div class="mstep-label">X=1, Y=1:</div>
+    <div class="mstep-body">
+      θ<sub>A</sub>=π/4, θ<sub>B</sub>=−π/8 → |θ<sub>A</sub>−θ<sub>B</sub>| = <strong>3π/8</strong><br>
+      Need A⊕B = 1 (different) &nbsp;&nbsp; P(win) = sin²(3π/8) = cos²(π/8) ≈ <strong>0.854</strong> ✓
+    </div>
+  </div>
+</div>
+
+<div class="insight">
+  <strong>The magic of the angles:</strong> For cases (0,0), (0,1), (1,0), Alice and Bob need to agree (same outcome). Their bases are always π/8 apart, giving cos²(π/8) ≈ 85.4%. For the hard case (1,1), they need to disagree. Their bases are 3π/8 apart — and sin²(3π/8) = cos²(π/8) by the identity sin(x)=cos(π/2−x). All four cases give the same win probability!
+</div>
+
+<h3>Step 4 — Overall win probability</h3>
+
+<div class="math-block">
+  <div class="mstep">
+    <div class="mstep-label">P(win) =</div>
+    <div class="mstep-body">¼ · P(win|X=0,Y=0) + ¼ · P(win|X=0,Y=1) + ¼ · P(win|X=1,Y=0) + ¼ · P(win|X=1,Y=1)</div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label"></div>
+    <div class="mstep-body">= ¼ · cos²(π/8) + ¼ · cos²(π/8) + ¼ · cos²(π/8) + ¼ · cos²(π/8)</div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label"></div>
+    <div class="mstep-body" style="color:var(--green);font-weight:600;">= cos²(π/8) ≈ 0.854 &nbsp;&gt;&nbsp; 0.75 ✓</div>
+  </div>
+</div>
+
+<div class="note-box">
+  <strong>Aspect's Experiment (1982):</strong> This quantum advantage was confirmed experimentally by Alain Aspect, who measured violations of the CHSH inequality with entangled photons. This experimentally ruled out local hidden variable theories, confirming that quantum mechanics is genuinely non-local in this sense.
+</div>
+
+<!-- Interactive CHSH game -->
+<div style="border:1px solid var(--line);border-radius:6px;padding:1rem;margin:1rem 0;background:#fdfcf8;">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:0.6rem;">Interactive: Play the CHSH Game</div>
+  <div style="display:flex;gap:2rem;flex-wrap:wrap;align-items:flex-start;">
+    <div>
+      <div style="font-size:0.85rem;color:var(--ink2);margin-bottom:0.4rem;">Referee assigns:</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:1.2rem;margin-bottom:0.6rem;">X = <span id="chshX" style="color:var(--accent);">?</span> &nbsp;&nbsp; Y = <span id="chshY" style="color:var(--accent);">?</span></div>
+      <button class="btn sm" onclick="chshDeal()">Deal inputs</button>
+    </div>
+    <div>
+      <div style="font-size:0.85rem;color:var(--ink2);margin-bottom:0.4rem;">Alice outputs A:</div>
+      <div style="display:flex;gap:0.4rem;">
+        <button class="btn sm" id="btnA0" onclick="chshSetA(0)">A = 0</button>
+        <button class="btn sm" id="btnA1" onclick="chshSetA(1)">A = 1</button>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:0.85rem;color:var(--ink2);margin-bottom:0.4rem;">Bob outputs B:</div>
+      <div style="display:flex;gap:0.4rem;">
+        <button class="btn sm" id="btnB0" onclick="chshSetB(0)">B = 0</button>
+        <button class="btn sm" id="btnB1" onclick="chshSetB(1)">B = 1</button>
+      </div>
+    </div>
+  </div>
+  <div id="chshResult" style="font-family:'IBM Plex Mono',monospace;font-size:0.9rem;margin-top:0.8rem;min-height:1.5rem;"></div>
+  <div id="chshScore" style="font-size:0.8rem;color:var(--muted);margin-top:0.3rem;"></div>
+</div>
+
+<!-- EXERCISES S4 -->
+<div class="ex-block">
+  <div class="ex-header">
+    <span class="ex-tag">Exercise 4.1</span>
+    <span class="ex-title">Classical bound</span>
+  </div>
+  <div class="ex-body">
+    <p>Alice and Bob decide to use the strategy: Alice always outputs A=1, Bob always outputs B=1. How many of the 4 possible input combinations (X,Y) ∈ &#123;00,01,10,11&#125; do they win?</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">Number of wins:</span>
+      <input id="e7a" class="answer-input" type="number" placeholder="0–4">
+      <button class="btn sm" onclick="checkE7()">Check</button>
+    </div>
+    <div id="e7fb" class="feedback"></div>
+    <button class="hint-toggle" onclick="showHint('e7h')">Show hint</button>
+    <div id="e7h" class="feedback hint">With A=B=1, A⊕B=0 always. Win condition: X·Y=A⊕B=0. This fails when X=Y=1 (since X·Y=1≠0). So they win for (0,0),(0,1),(1,0) but lose for (1,1). That's 3 wins out of 4.</div>
+  </div>
+</div>
+
+<div class="ex-block">
+  <div class="ex-header">
+    <span class="ex-tag">Exercise 4.2</span>
+    <span class="ex-title">Quantum win probability</span>
+  </div>
+  <div class="ex-body">
+    <p>The quantum win probability is P(win) = cos²(π/8). Use the identity cos(π/8) = cos(22.5°) ≈ 0.9239 to compute P(win) to 3 decimal places.</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">P(win) ≈</span>
+      <input id="e8a" class="answer-input" type="text" placeholder="0.???">
+      <button class="btn sm" onclick="checkE8()">Check</button>
+    </div>
+    <div id="e8fb" class="feedback"></div>
+    <button class="hint-toggle" onclick="showHint('e8h')">Show hint</button>
+    <div id="e8h" class="feedback hint">P(win) = (0.9239)² ≈ 0.8536. Rounded to 3 decimals: 0.854.</div>
+  </div>
+</div>
+</section><!-- end section s4 -->
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 5 — MULTIPLE QUBIT TRANSFORMATIONS -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="section" id="s5">
+  <div class="section-num">Section 05</div>
+  <h2>Multi-Qubit Gates — Complete Catalogue</h2>
+
+<p>When we have multiple qubits, we need multi-qubit gates. Each gate is presented with its <strong>matrix</strong>, its <strong>action on basis states</strong>, and how it appears in <strong>circuits</strong>. Some gates act independently on each qubit; others create entanglement by coupling two qubits together.</p>
+
+<style>
+.gate-card {
+  border: 1px solid var(--line); border-radius: 6px;
+  margin: 1.4rem 0; overflow: hidden;
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+}
+.gate-card-col { padding: 0.75rem 1rem; border-right: 1px solid var(--line); }
+.gate-card-col:last-child { border-right: none; }
+.gate-card-header {
+  background: var(--ink); color: white;
+  padding: 0.4rem 1rem;
+  display: flex; align-items: center; gap: 0.8rem;
+  font-family: 'IBM Plex Mono', monospace;
+  grid-column: 1 / -1;
+}
+.gate-name { font-size: 1rem; font-weight: 700; letter-spacing: 0.05em; }
+.gate-nick { font-size: 0.72rem; color: #aaa; }
+.gate-col-title { font-family: 'IBM Plex Mono', monospace; font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
+.gate-effect { font-size: 0.83rem; color: var(--ink2); line-height: 1.65; }
+.gate-effect code { font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem; background: #f3f0e8; padding: 0.05rem 0.3rem; border-radius: 2px; }
+.gate-circuit-sym {
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 2px solid var(--ink); background: white;
+  min-width: 2rem; height: 2rem; padding: 0 0.3rem; border-radius: 3px;
+  font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 0.88rem;
+  vertical-align: middle;
+}
+.gate-circuit-row { display: flex; align-items: center; gap: 0; margin: 0.5rem 0; font-size: 0.8rem; flex-wrap: nowrap; }
+.wire  { height: 2px; background: var(--ink2); width: 1.2rem; flex-shrink:0; display:inline-block; }
+.wire-long { height: 2px; background: var(--ink2); width: 2rem; flex-shrink:0; display:inline-block; }
+.out-label { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--ink2); margin-left: 0.3rem; white-space:nowrap; }
+.in-label  { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--muted); margin-right: 0.3rem; white-space:nowrap; }
+/* two-wire circuits stacked */
+.gate-circuit-2wire { display:flex; flex-direction:column; gap:0.15rem; margin:0.4rem 0; position:relative; }
+.ctrl-dot  { width:10px; height:10px; background:var(--ink); border-radius:50%; display:inline-flex; flex-shrink:0; align-self:center; }
+.ctrl-vert { width:2px; height:14px; background:var(--ink); display:block; margin:0 auto; }
+.cx-oplus  { border:2px solid var(--red); border-radius:50%; width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center; font-weight:700; color:var(--red); font-size:1rem; flex-shrink:0; }
+.swap-x    { font-family:'IBM Plex Mono',monospace; font-weight:700; color:var(--orange); font-size:1.1rem; display:inline-flex; align-items:center; flex-shrink:0; }
+@media (max-width:580px) {
+  .gate-card { grid-template-columns:1fr; }
+  .gate-card-col { border-right:none; border-bottom:1px solid var(--line); }
+}
+</style>
+
+<!-- ── INDEPENDENT TRANSFORMATIONS ─────────────────── -->
+<h3>Independent Transformations (Tensor product of single-qubit gates)</h3>
+<p>If we apply gate U₁ on qubit 1 and U₀ on qubit 0 independently, the combined unitary is their tensor product U = U₁ ⊗ U₀. This gate <em>cannot</em> create entanglement.</p>
+
+<div class="gate-card">
+  <div class="gate-card-header">
+    <span class="gate-name">U₁ ⊗ U₀</span>
+    <span class="gate-nick">Independent gates — "each qubit on its own"</span>
+  </div>
+  <div class="gate-card-col">
+    <div class="gate-col-title">Matrix (example: X ⊗ Z)</div>
+    <div class="eq" style="flex-wrap:wrap;gap:0.3rem;align-items:center;">
+      <span class="mx"><table><tr><td class="c-0">0</td><td>1</td></tr><tr><td>1</td><td class="c-0">0</td></tr></table></span>
+      ⊗
+      <span class="mx"><table><tr><td>1</td><td class="c-0">0</td></tr><tr><td class="c-0">0</td><td class="c-n">−1</td></tr></table></span>
+      =
+      <span class="mx"><table>
+        <tr><td class="c-0">0</td><td class="c-0">0</td><td>1</td><td class="c-0">0</td></tr>
+        <tr><td class="c-0">0</td><td class="c-0">0</td><td class="c-0">0</td><td class="c-n">−1</td></tr>
+        <tr><td>1</td><td class="c-0">0</td><td class="c-0">0</td><td class="c-0">0</td></tr>
+        <tr><td class="c-0">0</td><td class="c-n">−1</td><td class="c-0">0</td><td class="c-0">0</td></tr>
+      </table></span>
+    </div>
+    <div style="margin-top:0.5rem;" class="gate-effect"><code>(U₁⊗U₀)|ab⟩ = U₁|a⟩ ⊗ U₀|b⟩</code></div>
+  </div>
+  <div class="gate-card-col">
+    <div class="gate-col-title">Effect on qubits</div>
+    <div class="gate-effect">
+      Each qubit is transformed <strong>independently</strong>.<br>
+      • No information passes between the two wires<br>
+      • Cannot create or destroy entanglement<br>
+      • Probabilities on each qubit change as if the other doesn't exist<br>
+      <span style="color:var(--green);font-size:0.78rem;">Think of two parallel single-qubit operations happening simultaneously.</span>
+    </div>
+  </div>
+  <div class="gate-card-col">
+    <div class="gate-col-title">In circuits</div>
+    <div class="gate-circuit-2wire">
+      <div class="gate-circuit-row">
+        <span class="in-label">|a⟩</span><div class="wire"></div>
+        <span class="gate-circuit-sym" style="border-color:var(--green);color:var(--green);">Z</span>
+        <div class="wire"></div><span class="out-label">Z|a⟩</span>
+      </div>
+      <div class="gate-circuit-row">
+        <span class="in-label">|b⟩</span><div class="wire"></div>
+        <span class="gate-circuit-sym" style="border-color:var(--red);color:var(--red);">X</span>
+        <div class="wire"></div><span class="out-label">X|b⟩</span>
+      </div>
+    </div>
+    <div class="gate-effect" style="margin-top:0.4rem;">Two separate boxes on separate wires — the dashed box around them indicates they form a single 4×4 unitary U = Z ⊗ X.</div>
+  </div>
+</div>
+
+<!-- ── CNOT ─────────────────────────────────────────── -->
+<h3>Entangling Gates (genuinely two-qubit)</h3>
+
+<div class="gate-card">
+  <div class="gate-card-header" style="background:#1a3a5c;">
+    <span class="gate-name">CNOT &nbsp;/&nbsp; CX</span>
+    <span class="gate-nick">Controlled-NOT — "the entanglement machine"</span>
+  </div>
+  <div class="gate-card-col">
+    <div class="gate-col-title">Matrix</div>
+    <div class="eq">
+      <span class="mx"><table>
+        <tr><td class="c-l">1</td><td class="c-0">0</td><td class="c-0">0</td><td class="c-0">0</td></tr>
+        <tr><td class="c-0">0</td><td class="c-0">0</td><td class="c-0">0</td><td class="c-l">1</td></tr>
+        <tr><td class="c-0">0</td><td class="c-0">0</td><td class="c-l">1</td><td class="c-0">0</td></tr>
+        <tr><td class="c-0">0</td><td class="c-l">1</td><td class="c-0">0</td><td class="c-0">0</td></tr>
+      </table></span>
+    </div>
+    <div style="margin-top:0.5rem;" class="gate-effect">
+      <code>CX = I⊗|0⟩⟨0| + X⊗|1⟩⟨1|</code><br>
+      <code>CX² = I</code> &nbsp; (self-inverse)
+    </div>
+  </div>
+  <div class="gate-card-col">
+    <div class="gate-col-title">Action on basis states</div>
+    <div class="gate-effect">
+      <strong>Control q₀, Target q₁.</strong> If control is |1⟩, flip the target:<br>
+      <div class="math-block" style="margin-top:0.4rem;padding:0.5rem 0.7rem;">
+        <div class="mstep"><div class="mstep-label">|00⟩ →</div><div class="mstep-body">|00⟩ &nbsp;<span class="eq-note">(ctrl=0, no flip)</span></div></div>
+        <div class="mstep"><div class="mstep-label">|01⟩ →</div><div class="mstep-body">|11⟩ &nbsp;<span class="eq-note">(ctrl=1, flip)</span></div></div>
+        <div class="mstep"><div class="mstep-label">|10⟩ →</div><div class="mstep-body">|10⟩</div></div>
+        <div class="mstep"><div class="mstep-label">|11⟩ →</div><div class="mstep-body">|01⟩</div></div>
+      </div>
+      <span style="color:var(--red);font-size:0.78rem;">Cannot be written as U₁⊗U₀ — genuinely 2-qubit.</span>
+    </div>
+  </div>
+  <div class="gate-card-col">
+    <div class="gate-col-title">In circuits &amp; key use</div>
+    <div class="gate-circuit-2wire" style="margin:0.5rem 0;">
+      <div class="gate-circuit-row">
+        <span class="in-label">q₀</span><div class="wire-long"></div>
+        <span class="ctrl-dot"></span>
+        <div class="wire-long"></div><span class="out-label">q₀</span>
+      </div>
+      <div style="height:14px;display:flex;align-items:center;padding-left:calc(0.9rem + 2rem + 1px);">
+        <span class="ctrl-vert"></span>
+      </div>
+      <div class="gate-circuit-row">
+        <span class="in-label">q₁</span><div class="wire-long"></div>
+        <span class="cx-oplus">⊕</span>
+        <div class="wire-long"></div><span class="out-label">q₀⊕q₁</span>
+      </div>
+    </div>
+    <div class="gate-effect">
+      Used to <strong>generate Bell states</strong> (H then CNOT), implement quantum teleportation, and build any multi-qubit circuit. Together with single-qubit gates, CNOT is <em>universal</em>.
+    </div>
+  </div>
+</div>
+
+<!-- Bell state generation inset -->
+<div class="insight">
+  <strong>Bell state factory — H + CNOT:</strong> Starting from |00⟩, apply H on q₀, then CNOT:
+  <div class="math-block" style="margin-top:0.5rem;">
+    <div class="mstep"><div class="mstep-label">|Ψ₀⟩ =</div><div class="mstep-body">|00⟩ &nbsp;&nbsp; <span class="eq-note">(product state)</span></div></div>
+    <div class="mstep"><div class="mstep-label">after H:</div><div class="mstep-body">|0⟩ ⊗ H|0⟩ = (|00⟩+|01⟩)/√2</div></div>
+    <div class="mstep"><div class="mstep-label">after CNOT:</div><div class="mstep-body" style="color:var(--green);font-weight:600;">(|00⟩+|11⟩)/√2 = |Φ⁺⟩ ← entangled!</div></div>
+  </div>
+</div>
+
+<!-- ── CZ ─────────────────────────────────────────── -->
+<div class="gate-card">
+  <div class="gate-card-header" style="background:#2d4a2d;">
+    <span class="gate-name">CZ</span>
+    <span class="gate-nick">Controlled-Z — "sign flipper for |11⟩"</span>
+  </div>
+  <div class="gate-card-col">
+    <div class="gate-col-title">Matrix</div>
+    <div class="eq">
+      <span class="mx"><table>
+        <tr><td class="c-l">1</td><td class="c-0">0</td><td class="c-0">0</td><td class="c-0">0</td></tr>
+        <tr><td class="c-0">0</td><td class="c-l">1</td><td class="c-0">0</td><td class="c-0">0</td></tr>
+        <tr><td class="c-0">0</td><td class="c-0">0</td><td class="c-l">1</td><td class="c-0">0</td></tr>
+        <tr><td class="c-0">0</td><td class="c-0">0</td><td class="c-0">0</td><td class="c-n">−1</td></tr>
+      </table></span>
+    </div>
+    <div style="margin-top:0.5rem;" class="gate-effect">
+      <code>CZ² = I</code><br>
+      <code>CZ = I⊗|0⟩⟨0| + Z⊗|1⟩⟨1|</code>
+    </div>
+  </div>
+  <div class="gate-card-col">
+    <div class="gate-col-title">Action on basis states</div>
+    <div class="gate-effect">
+      Multiplies by (−1) only when <strong>both</strong> qubits are |1⟩:
+      <div class="math-block" style="margin-top:0.4rem;padding:0.5rem 0.7rem;">
+        <div class="mstep"><div class="mstep-label">|q₁q₀⟩ →</div><div class="mstep-body">(−1)^(q₁·q₀)|q₁q₀⟩</div></div>
+        <hr class="math-sep">
+        <div class="mstep"><div class="mstep-label">|00⟩ →</div><div class="mstep-body">|00⟩</div></div>
+        <div class="mstep"><div class="mstep-label">|01⟩ →</div><div class="mstep-body">|01⟩</div></div>
+        <div class="mstep"><div class="mstep-label">|10⟩ →</div><div class="mstep-body">|10⟩</div></div>
+        <div class="mstep"><div class="mstep-label">|11⟩ →</div><div class="mstep-body" style="color:var(--red);">−|11⟩</div></div>
+      </div>
+      Unlike CNOT, CZ is <strong>symmetric</strong>: either qubit can be the "control."
+    </div>
+  </div>
+  <div class="gate-card-col">
+    <div class="gate-col-title">In circuits &amp; key use</div>
+    <div class="gate-circuit-2wire" style="margin:0.5rem 0;">
+      <div class="gate-circuit-row">
+        <span class="in-label">q₀</span><div class="wire-long"></div>
+        <span class="ctrl-dot"></span>
+        <div class="wire-long"></div><span class="out-label"></span>
+      </div>
+      <div style="height:14px;display:flex;align-items:center;padding-left:calc(0.9rem + 2rem + 1px);">
+        <span class="ctrl-vert"></span>
+      </div>
+      <div class="gate-circuit-row">
+        <span class="in-label">q₁</span><div class="wire-long"></div>
+        <span class="ctrl-dot"></span>
+        <div class="wire-long"></div>
+      </div>
+    </div>
+    <div class="gate-effect">
+      Both endpoints shown as dots (symmetric). Naturally related to CNOT via Hadamard: <code>CZ = (I⊗H)·CNOT·(I⊗H)</code>. Common in superconducting quantum processors.
+    </div>
+  </div>
+</div>
+
+<!-- ── SWAP ─────────────────────────────────────────── -->
+<div class="gate-card">
+  <div class="gate-card-header" style="background:#4a2828;">
+    <span class="gate-name">SWAP</span>
+    <span class="gate-nick">Swap gate — "exchange two qubits"</span>
+  </div>
+  <div class="gate-card-col">
+    <div class="gate-col-title">Matrix</div>
+    <div class="eq">
+      <span class="mx"><table>
+        <tr><td class="c-l">1</td><td class="c-0">0</td><td class="c-0">0</td><td class="c-0">0</td></tr>
+        <tr><td class="c-0">0</td><td class="c-0">0</td><td class="c-l">1</td><td class="c-0">0</td></tr>
+        <tr><td class="c-0">0</td><td class="c-l">1</td><td class="c-0">0</td><td class="c-0">0</td></tr>
+        <tr><td class="c-0">0</td><td class="c-0">0</td><td class="c-0">0</td><td class="c-l">1</td></tr>
+      </table></span>
+    </div>
+    <div style="margin-top:0.5rem;" class="gate-effect">
+      <code>SWAP² = I</code><br>
+      <code>SWAP = 3× CNOT</code>
+    </div>
+  </div>
+  <div class="gate-card-col">
+    <div class="gate-col-title">Action on basis states</div>
+    <div class="gate-effect">
+      Swaps the <strong>entire quantum states</strong> of the two qubits:
+      <div class="math-block" style="margin-top:0.4rem;padding:0.5rem 0.7rem;">
+        <div class="mstep"><div class="mstep-label">|Ψ⟩⊗|Φ⟩ →</div><div class="mstep-body">|Φ⟩⊗|Ψ⟩</div></div>
+        <hr class="math-sep">
+        <div class="mstep"><div class="mstep-label">|00⟩ →</div><div class="mstep-body">|00⟩</div></div>
+        <div class="mstep"><div class="mstep-label">|01⟩ →</div><div class="mstep-body" style="color:var(--orange);">|10⟩</div></div>
+        <div class="mstep"><div class="mstep-label">|10⟩ →</div><div class="mstep-body" style="color:var(--orange);">|01⟩</div></div>
+        <div class="mstep"><div class="mstep-label">|11⟩ →</div><div class="mstep-body">|11⟩</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="gate-card-col">
+    <div class="gate-col-title">In circuits &amp; key use</div>
+    <div class="gate-circuit-2wire" style="margin:0.5rem 0;">
+      <div class="gate-circuit-row">
+        <span class="in-label">|Ψ⟩</span><div class="wire-long"></div>
+        <span class="swap-x">✕</span>
+        <div class="wire-long"></div><span class="out-label">|Φ⟩</span>
+      </div>
+      <div style="height:14px;display:flex;align-items:center;padding-left:calc(1.2rem + 2rem + 1px);">
+        <span class="ctrl-vert"></span>
+      </div>
+      <div class="gate-circuit-row">
+        <span class="in-label">|Φ⟩</span><div class="wire-long"></div>
+        <span class="swap-x">✕</span>
+        <div class="wire-long"></div><span class="out-label">|Ψ⟩</span>
+      </div>
+    </div>
+    <div class="gate-effect">
+      Used when qubit connectivity is limited (physical qubits can't always interact directly). Decomposable into <strong>3 CNOT gates</strong>: CNOT·CNOT(reversed)·CNOT.
+    </div>
+  </div>
+</div>
+
+<!-- ── CONTROLLED-U ─────────────────────────────────── -->
+<div class="gate-card">
+  <div class="gate-card-header" style="background:#3d3428;">
+    <span class="gate-name">C-U</span>
+    <span class="gate-nick">Controlled-U — "any gate, conditionally"</span>
+  </div>
+
+  <!-- col 1: block structure -->
+  <div class="gate-card-col">
+    <div class="gate-col-title">Block matrix structure</div>
+    <div class="gate-effect" style="margin-bottom:0.5rem;">The 4×4 matrix is built from four 2×2 blocks:</div>
+    <div class="eq" style="align-items:center;gap:0.4rem;margin-bottom:0.6rem;">
+      <span>C-U =</span>
+      <span class="mx"><table>
+        <tr>
+          <td style="border-right:1px dashed var(--muted);border-bottom:1px dashed var(--muted);padding:0.28rem 0.65rem;">I</td>
+          <td style="border-bottom:1px dashed var(--muted);padding:0.28rem 0.65rem;" class="c-0">0</td>
+        </tr>
+        <tr>
+          <td style="border-right:1px dashed var(--muted);padding:0.28rem 0.65rem;" class="c-0">0</td>
+          <td style="padding:0.28rem 0.65rem;" class="c-l">U</td>
+        </tr>
+      </table></span>
+    </div>
+    <div class="gate-effect" style="font-size:0.82rem;line-height:1.9;">
+      ▪ top-left = <strong>I</strong> (2×2 identity)<br>
+      <span style="color:var(--muted);">&nbsp;&nbsp;ctrl=|0⟩: target unchanged</span><br>
+      ▪ off-diagonal = <strong>0</strong> (2×2 zero)<br>
+      <span style="color:var(--muted);">&nbsp;&nbsp;ctrl=0 and ctrl=1 never mix</span><br>
+      <span style="color:var(--accent);">▪ bottom-right = <strong>U</strong> (any unitary)</span><br>
+      <span style="color:var(--muted);">&nbsp;&nbsp;ctrl=|1⟩: U applied to target</span>
+    </div>
+  </div>
+
+  <!-- col 2: C-X with ctrl=q1 (MSB) -->
+  <div class="gate-card-col">
+    <div class="gate-col-title">C-X: ctrl = q₁ (MSB, 1st letter)</div>
+    <div class="gate-effect" style="margin-bottom:0.4rem;">
+      When <strong>q₁ is the control</strong>, the ctrl=0 subspace is &#123;|00⟩,|01⟩&#125; (rows 0–1) and ctrl=1 is &#123;|10⟩,|11⟩&#125; (rows 2–3). Plug X into the bottom-right:
+    </div>
+    <div class="math-block" style="padding:0.55rem 0.7rem;">
+      <div class="eq" style="font-size:0.84rem;margin-bottom:0.3rem;">
+        <span class="mx"><table>
+          <tr>
+            <td style="border-right:1px dashed var(--muted);border-bottom:1px dashed var(--muted);">1</td>
+            <td style="border-right:1px dashed var(--muted);border-bottom:1px dashed var(--muted);" class="c-0">0</td>
+            <td style="border-bottom:1px dashed var(--muted);" class="c-0">0</td>
+            <td style="border-bottom:1px dashed var(--muted);" class="c-0">0</td>
+          </tr>
+          <tr>
+            <td style="border-right:1px dashed var(--muted);border-bottom:1px dashed var(--muted);" class="c-0">0</td>
+            <td style="border-right:1px dashed var(--muted);border-bottom:1px dashed var(--muted);">1</td>
+            <td style="border-bottom:1px dashed var(--muted);" class="c-0">0</td>
+            <td style="border-bottom:1px dashed var(--muted);" class="c-0">0</td>
+          </tr>
+          <tr>
+            <td style="border-right:1px dashed var(--muted);" class="c-0">0</td>
+            <td style="border-right:1px dashed var(--muted);" class="c-0">0</td>
+            <td class="c-l">0</td>
+            <td class="c-l">1</td>
+          </tr>
+          <tr>
+            <td style="border-right:1px dashed var(--muted);" class="c-0">0</td>
+            <td style="border-right:1px dashed var(--muted);" class="c-0">0</td>
+            <td class="c-l">1</td>
+            <td class="c-l">0</td>
+          </tr>
+        </table></span>
+      </div>
+      <div class="eq-note">|00⟩→|00⟩, |01⟩→|01⟩, |10⟩→|11⟩, |11⟩→|10⟩</div>
+    </div>
+    <div class="gate-effect" style="font-size:0.82rem;color:var(--green);margin-top:0.3rem;">✓ CNOT with ctrl=q₁ (MSB)</div>
+  </div>
+
+  <!-- col 3: C-X with ctrl=q0 (LSB) — what the notes use -->
+  <div class="gate-card-col">
+    <div class="gate-col-title">C-X: ctrl = q₀ (LSB, 2nd letter)</div>
+    <div class="gate-effect" style="margin-bottom:0.4rem;">
+      When <strong>q₀ is the control</strong> (as in these notes), the ctrl=0 subspace is &#123;|00⟩,|10⟩&#125; and ctrl=1 is &#123;|01⟩,|11⟩&#125; — <em>interleaved</em> in the standard basis order. The matrix is <strong>not</strong> in clean block form, but the logic is the same:
+    </div>
+    <div class="math-block" style="padding:0.55rem 0.7rem;">
+      <div class="eq" style="font-size:0.84rem;margin-bottom:0.3rem;">
+        <span class="mx"><table>
+          <tr><td>1</td><td class="c-0">0</td><td class="c-0">0</td><td class="c-0">0</td></tr>
+          <tr><td class="c-0">0</td><td class="c-l">0</td><td class="c-0">0</td><td class="c-l">1</td></tr>
+          <tr><td class="c-0">0</td><td class="c-0">0</td><td>1</td><td class="c-0">0</td></tr>
+          <tr><td class="c-0">0</td><td class="c-l">1</td><td class="c-0">0</td><td class="c-l">0</td></tr>
+        </table></span>
+      </div>
+      <div class="eq-note">|00⟩→|00⟩, |01⟩→|11⟩, |10⟩→|10⟩, |11⟩→|01⟩</div>
+    </div>
+    <div class="gate-effect" style="font-size:0.82rem;color:var(--orange);margin-top:0.3rem;">← This is the CNOT used in these notes (ctrl=q₀)</div>
+  </div>
+</div>
+
+<div class="warning">
+  <strong>Convention matters!</strong> The I/0/0/U block form produces a clean matrix only when the <strong>MSB (first letter, q₁) is the control</strong>. When the LSB (q₀) is the control — as used in these notes — the ctrl=0 and ctrl=1 rows are interleaved in the standard basis order, so the matrix looks different even though the gate does the same thing. Both are valid CNOTs; they just label which qubit is "in charge."
+</div>
+
+<div class="insight">
+  <strong>The general recipe:</strong> C-H? Put H in the bottom-right block (ctrl=q₁). C-Rz(θ)? Put Rz(θ) there. The block form always works cleanly when the MSB is the control. Together with single-qubit gates, any C-U is sufficient for <em>universal quantum computation</em>.
+</div>
+
+<!-- EXERCISES S5 -->
+<div class="ex-block">
+  <div class="ex-header">
+    <span class="ex-tag">Exercise 5.1</span>
+    <span class="ex-title">CNOT action</span>
+  </div>
+  <div class="ex-body">
+    <p>Apply CNOT (control = q₀, target = q₁) to the state |Ψ⟩ = (|00⟩ + |10⟩)/√2. What is the output state?</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">Output state:</span>
+      <select id="e9a" class="answer-input" style="width:160px;">
+        <option value="">—</option>
+        <option value="A">(|00⟩+|11⟩)/√2</option>
+        <option value="B">(|00⟩+|10⟩)/√2</option>
+        <option value="C">(|01⟩+|10⟩)/√2</option>
+        <option value="D">(|00⟩−|11⟩)/√2</option>
+      </select>
+      <button class="btn sm" onclick="checkE9()">Check</button>
+    </div>
+    <div id="e9fb" class="feedback"></div>
+    <button class="hint-toggle" onclick="showHint('e9h')">Show hint</button>
+    <div id="e9h" class="feedback hint">CNOT maps: |00⟩→|00⟩ (control=0, no flip), |10⟩→|11⟩ (control=1, flip target). So (|00⟩+|10⟩)/√2 → (|00⟩+|11⟩)/√2. This is |Φ⁺⟩!</div>
+  </div>
+</div>
+
+<div class="ex-block">
+  <div class="ex-header">
+    <span class="ex-tag">Exercise 5.2</span>
+    <span class="ex-title">CZ gate</span>
+  </div>
+  <div class="ex-body">
+    <p>Apply the CZ gate to the Bell state |Φ⁺⟩ = (|00⟩ + |11⟩)/√2. What is the output state?</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">Output state:</span>
+      <select id="e10a" class="answer-input" style="width:160px;">
+        <option value="">—</option>
+        <option value="A">|Φ⁺⟩ unchanged</option>
+        <option value="B">|Φ⁻⟩ = (|00⟩−|11⟩)/√2</option>
+        <option value="C">|Ψ⁺⟩ = (|01⟩+|10⟩)/√2</option>
+        <option value="D">|00⟩</option>
+      </select>
+      <button class="btn sm" onclick="checkE10()">Check</button>
+    </div>
+    <div id="e10fb" class="feedback"></div>
+    <button class="hint-toggle" onclick="showHint('e10h')">Show hint</button>
+    <div id="e10h" class="feedback hint">CZ flips the sign of |11⟩ only. So (|00⟩+|11⟩)/√2 → (|00⟩−|11⟩)/√2 = |Φ⁻⟩.</div>
+  </div>
+</div>
+
+<div class="ex-block">
+  <div class="ex-header">
+    <span class="ex-tag">Exercise 5.3</span>
+    <span class="ex-title">SWAP verification</span>
+  </div>
+  <div class="ex-body">
+    <p>Apply SWAP to the state |01⟩. What is the result?</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">Result:</span>
+      <select id="e11a" class="answer-input" style="width:80px;">
+        <option value="">—</option>
+        <option value="|00⟩">|00⟩</option>
+        <option value="|01⟩">|01⟩</option>
+        <option value="|10⟩">|10⟩</option>
+        <option value="|11⟩">|11⟩</option>
+      </select>
+      <button class="btn sm" onclick="checkE11()">Check</button>
+    </div>
+    <div id="e11fb" class="feedback"></div>
+    <button class="hint-toggle" onclick="showHint('e11h')">Show hint</button>
+    <div id="e11h" class="feedback hint">SWAP exchanges the two qubits: |01⟩ = |0⟩_A|1⟩_B → |1⟩_A|0⟩_B = |10⟩.</div>
+  </div>
+</div>
+</section>
+
+<!-- ── Q.js Exercise S5 ─────────────────────────────────── -->
+<section class="qjs-section" id="qjsEx5">
+  <div class="qjs-header">
+    <span class="qjs-tag">⚛ Circuit Lab 5.1</span>
+    <span class="qjs-title">Gate Sandbox — Explore CNOT, CZ and SWAP</span>
+  </div>
+  <div class="qjs-body">
+    <p>A free 2-qubit, 4-moment sandbox. Use the palette to drag any gates and see the outcomes live. Try the challenges below one at a time.</p>
+    <div class="qjs-editor-wrap">
+      <div class="qjs-palette" id="qjs5-palette"></div>
+      <div class="qjs-circuit-wrap" id="qjs5-circuit"></div>
+    </div>
+    <div class="qjs-live-wrap">
+      <div class="qjs-live-label">Live outcomes</div>
+      <div class="qjs-results show" id="qjs5-results">Build a circuit to see outcomes…</div>
+    </div>
+    <div class="qjs-controls">
+      <button class="qjs-btn run" onclick="qjsEval('qjs5')">▶ Evaluate</button>
+      <button class="qjs-btn" onclick="qjsReset('qjs5', 2, 4)">↺ Reset (2q 4m)</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem 1rem;margin-top:0.8rem;">
+      <div class="qjs-task" style="font-size:0.83rem;">
+        <strong>Challenge A — CNOT:</strong> Place X on r1,m1 (preparing |10⟩). Then CNOT (control r1, target r2) at m2. Expected output: |11⟩.
+      </div>
+      <div class="qjs-task" style="font-size:0.83rem;">
+        <strong>Challenge B — Superposition + CNOT:</strong> H on r1,m1. CNOT at m2. Expected: 50% |00⟩ + 50% |11⟩ (Bell state!).
+      </div>
+      <div class="qjs-task" style="font-size:0.83rem;">
+        <strong>Challenge C — SWAP via 3×CNOT:</strong> Prepare |10⟩ (X on r1). Then place CNOT-CNOT-CNOT alternating directions to swap. Expected: |01⟩.
+      </div>
+      <div class="qjs-task" style="font-size:0.83rem;">
+        <strong>Challenge D — CZ via H·CNOT·H:</strong> Prepare |11⟩ (X on both). Apply H on r2, CNOT, H on r2 again. This is a CZ gate — it flips the sign of |11⟩.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 6 — MIXED STATES -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="section" id="s6">
+  <div class="section-num">Section 06</div>
+  <h2>Mixed States &amp; the Density Matrix</h2>
+
+<p>So far we have dealt with <strong>pure states</strong> — states that are described by a single known state vector |ψ⟩. But in practice, we often have <em>classical uncertainty</em> about which quantum state a system is in. This requires a more general description.</p>
+
+<div class="def">
+  <div class="def-title">Definition — Mixed State</div>
+  A <strong>mixed state</strong> is a statistical ensemble of pure states &#123;(pᵢ, |ψᵢ⟩)&#125;, meaning: with probability pᵢ the system is in pure state |ψᵢ⟩. Here pᵢ ≥ 0 and Σᵢ pᵢ = 1.
+</div>
+
+<div class="note-box">
+  <strong>Two kinds of uncertainty:</strong> In a pure state like |+⟩ = (|0⟩+|1⟩)/√2, the uncertainty in measurement is <em>quantum</em> — it is an intrinsic feature of the state. In a mixed state, there is an <em>additional classical uncertainty</em> about which quantum state the system is actually in. These are fundamentally different!
+</div>
+
+<h3>The Density Matrix</h3>
+<p>Instead of tracking &#123;(pᵢ, |ψᵢ⟩)&#125; as a list, we encode everything in a single matrix called the <strong>density matrix</strong> ρ:</p>
+
+<div class="def">
+  <div class="def-title">Density Matrix</div>
+  <div class="math-block">
+    <div class="eq">ρ = Σᵢ pᵢ |ψᵢ⟩⟨ψᵢ|</div>
+  </div>
+  For a single pure state |ψ⟩, the density matrix is simply ρ = |ψ⟩⟨ψ|.
+</div>
+
+<h3>Examples</h3>
+
+<div class="math-block">
+  <div class="mx-label">Pure state |0⟩ → ρ = |0⟩⟨0|</div>
+  <div class="mstep">
+    <div class="mstep-label">ρ =</div>
+    <div class="mstep-body">
+      <span class="vec"><table><tr><td>1</td></tr><tr><td>0</td></tr></table></span>
+      <span class="vec"><table><tr><td>1</td><td>0</td></tr></table></span>
+      =
+      <span class="mx"><table>
+        <tr><td class="c-l">1</td><td class="c-0">0</td></tr>
+        <tr><td class="c-0">0</td><td class="c-0">0</td></tr>
+      </table></span>
+    </div>
+  </div>
+  <hr class="math-sep">
+  <div class="mx-label">Pure state |+⟩ = (|0⟩+|1⟩)/√2 → ρ = |+⟩⟨+|</div>
+  <div class="mstep">
+    <div class="mstep-label">ρ =</div>
+    <div class="mstep-body">
+      <span class="mx"><table>
+        <tr><td>½</td><td>½</td></tr>
+        <tr><td>½</td><td>½</td></tr>
+      </table></span>
+    </div>
+  </div>
+  <hr class="math-sep">
+  <div class="mx-label">Mixed state: 50% |0⟩, 50% |1⟩</div>
+  <div class="mstep">
+    <div class="mstep-label">ρ =</div>
+    <div class="mstep-body">
+      ½|0⟩⟨0| + ½|1⟩⟨1| =
+      <span class="mx"><table>
+        <tr><td>½</td><td class="c-0">0</td></tr>
+        <tr><td class="c-0">0</td><td>½</td></tr>
+      </table></span>
+      <span style="color:var(--red);font-size:0.9rem;"> ≠ |+⟩⟨+|</span>
+    </div>
+  </div>
+</div>
+
+<div class="insight">
+  <strong>Pure vs mixed — key distinction:</strong> The state |+⟩ and the 50/50 mixture of &#123;|0⟩, |1⟩&#125; both give 50% probability for 0 or 1 when measured in the computational basis. But they are completely different: |+⟩ gives definite 0 when measured in the Hadamard basis, while the mixture gives 50/50 in any basis. The density matrix captures this difference.
+</div>
+
+<h3>Properties of the Density Matrix</h3>
+<div class="def">
+  <div class="def-title">Properties of ρ</div>
+  <ul style="padding-left:1.2rem;line-height:2.2;font-size:0.9rem;">
+    <li><strong>Hermitian:</strong> ρ = ρ† (ρ equals its conjugate transpose)</li>
+    <li><strong>Trace 1:</strong> tr(ρ) = Σₑ ρₑₑ = 1 (probabilities sum to 1)</li>
+    <li><strong>Positive semi-definite:</strong> ⟨ψ|ρ|ψ⟩ ≥ 0 for all |ψ⟩ (probabilities non-negative)</li>
+    <li><strong>Pure state test:</strong> ρ² = ρ iff the state is pure; tr(ρ²) ≤ 1, with equality iff pure</li>
+  </ul>
+</div>
+
+<!-- Interactive density matrix visualizer -->
+<p>The density matrix works for <strong>any</strong> quantum system, not just single qubits. For an n-qubit system the state space has dimension 2ⁿ, so ρ is a 2ⁿ×2ⁿ matrix. A 2-qubit system has a <strong>4×4</strong> density matrix; 3 qubits give 8×8; and so on. The diagonal entry ρ<sub>ii</sub> is always the probability of measuring basis state |i⟩.</p>
+
+<div style="border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:1rem 0;">
+  <!-- tab bar -->
+  <div style="display:flex;background:var(--accent-soft);border-bottom:1px solid var(--line);flex-wrap:wrap;">
+    <div style="padding:0.4rem 0.8rem;font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);align-self:center;white-space:nowrap;">1 qubit (2×2):</div>
+    <button class="btn sm dmBtn active" id="dm0"   onclick="showDensity('0')"   style="margin:0.3rem 0.2rem;">|0⟩</button>
+    <button class="btn sm dmBtn"        id="dm1"   onclick="showDensity('1')"   style="margin:0.3rem 0.2rem;">|1⟩</button>
+    <button class="btn sm dmBtn"        id="dmP"   onclick="showDensity('+')"   style="margin:0.3rem 0.2rem;">|+⟩</button>
+    <button class="btn sm dmBtn"        id="dmMix" onclick="showDensity('mix')" style="margin:0.3rem 0.2rem;">½|0⟩+½|1⟩ mixed</button>
+    <div style="width:1px;background:var(--line);margin:0.3rem 0.5rem;"></div>
+    <div style="padding:0.4rem 0.8rem;font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);align-self:center;white-space:nowrap;">2 qubits (4×4):</div>
+    <button class="btn sm dmBtn" id="dm00"    onclick="showDensity('00')"    style="margin:0.3rem 0.2rem;">|00⟩</button>
+    <button class="btn sm dmBtn" id="dmPhi"   onclick="showDensity('phi')"   style="margin:0.3rem 0.2rem;">Bell |Φ⁺⟩</button>
+    <button class="btn sm dmBtn" id="dmMix2"  onclick="showDensity('mix2')"  style="margin:0.3rem 0.2rem;">¼ each mixed</button>
+    <button class="btn sm dmBtn" id="dmProd"  onclick="showDensity('prod')"  style="margin:0.3rem 0.2rem;">|+⟩⊗|+⟩ product</button>
+    <button class="btn sm dmBtn" id="dmPsi"   onclick="showDensity('psi')"   style="margin:0.3rem 0.2rem;">Bell |Ψ⁺⟩</button>
+  </div>
+  <canvas id="cvDensity" width="620" height="300" style="display:block;border:none;border-radius:0;"></canvas>
+  <div id="dmCaption" style="font-size:0.72rem;color:var(--muted);font-style:italic;text-align:center;padding:0.3rem 0 0.5rem;">Diagonal = measurement probabilities · Off-diagonal = quantum coherences</div>
+</div>
+
+<!-- EXERCISES S6 -->
+<div class="ex-block">
+  <div class="ex-header">
+    <span class="ex-tag">Exercise 6.1</span>
+    <span class="ex-title">Compute a density matrix</span>
+  </div>
+  <div class="ex-body">
+    <p>A qubit is in state |−⟩ = (|0⟩ − |1⟩)/√2 with probability 1/3, and in state |1⟩ with probability 2/3. Compute the off-diagonal element ρ₀₁ of the density matrix.</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">ρ₀₁ =</span>
+      <input id="e12a" class="answer-input" type="text" placeholder="e.g. -1/6">
+      <button class="btn sm" onclick="checkE12()">Check</button>
+    </div>
+    <div id="e12fb" class="feedback"></div>
+    <button class="hint-toggle" onclick="showHint('e12h')">Show hint</button>
+    <div id="e12h" class="feedback hint">|−⟩ = (|0⟩−|1⟩)/√2, so |−⟩⟨−| has off-diagonal (0,1) entry = (1/√2)(−1/√2) = −1/2. ρ₀₁ = (1/3)(−1/2) + (2/3)(0) = −1/6.</div>
+  </div>
+</div>
+
+<div class="ex-block">
+  <div class="ex-header">
+    <span class="ex-tag">Exercise 6.2</span>
+    <span class="ex-title">Pure or mixed?</span>
+  </div>
+  <div class="ex-body">
+    <p>A density matrix is given as ρ = <span class="mx"><table><tr><td>¾</td><td>0</td></tr><tr><td>0</td><td>¼</td></tr></table></span>. Is this a pure state or a mixed state?</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">State type:</span>
+      <select id="e13a" class="answer-input" style="width:100px;">
+        <option value="">—</option>
+        <option value="pure">Pure</option>
+        <option value="mixed">Mixed</option>
+      </select>
+      <button class="btn sm" onclick="checkE13()">Check</button>
+    </div>
+    <div id="e13fb" class="feedback"></div>
+    <button class="hint-toggle" onclick="showHint('e13h')">Show hint</button>
+    <div id="e13h" class="feedback hint">Compute tr(ρ²): ρ² has diagonal entries (3/4)²=9/16 and (1/4)²=1/16. tr(ρ²) = 9/16+1/16 = 10/16 = 5/8 &lt; 1. Since tr(ρ²) &lt; 1, it is a mixed state.</div>
+  </div>
+</div>
+</div><!-- end section s6 -->
+
+<!-- End of page -->
+
+<!-- ── Q.js Exercise S6 ─────────────────────────────────── -->
+<div class="qjs-section" id="qjsEx6">
+  <div class="qjs-header">
+    <span class="qjs-tag">⚛ Circuit Lab 6.1</span>
+    <span class="qjs-title">Pure vs Mixed — What measurements can and cannot tell you</span>
+  </div>
+  <div class="qjs-body">
+    <p>Both a pure superposition and an entangled state can give identical measurement probabilities. Build both circuits and compare the outcomes — then read why they are physically different.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+      <div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--accent);text-transform:uppercase;margin-bottom:0.3rem;font-weight:600;">Circuit A — Product State |+⟩⊗|0⟩</div>
+        <div class="qjs-task" style="font-size:0.82rem;">Drag <strong>H</strong> onto register 1. Expected: 50% |00⟩, 50% |10⟩. Qubit r1 is pure |+⟩.</div>
+        <div class="qjs-editor-wrap" style="flex-direction:column;">
+          <div class="qjs-palette" id="qjs6a-palette"></div>
+          <div class="qjs-circuit-wrap" id="qjs6a-circuit"></div>
+        </div>
+        <div class="qjs-results show" id="qjs6a-results" style="font-size:0.75rem;">—</div>
+        <button class="qjs-btn run" style="margin-top:0.4rem;width:100%;" onclick="qjsEval('qjs6a')">▶ Evaluate A</button>
+        <button class="qjs-btn" style="margin-top:0.3rem;width:100%;" onclick="qjsReset('qjs6a',2,2)">↺ Reset</button>
+      </div>
+      <div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--red);text-transform:uppercase;margin-bottom:0.3rem;font-weight:600;">Circuit B — Bell State |Φ⁺⟩</div>
+        <div class="qjs-task" style="font-size:0.82rem;">Build H + CNOT. Expected: 50% |00⟩, 50% |11⟩. Qubit r1 is mixed ρ=I/2.</div>
+        <div class="qjs-editor-wrap" style="flex-direction:column;">
+          <div class="qjs-palette" id="qjs6b-palette"></div>
+          <div class="qjs-circuit-wrap" id="qjs6b-circuit"></div>
+        </div>
+        <div class="qjs-results show" id="qjs6b-results" style="font-size:0.75rem;">—</div>
+        <button class="qjs-btn run" style="margin-top:0.4rem;width:100%;" onclick="qjsEval('qjs6b')">▶ Evaluate B</button>
+        <button class="qjs-btn" style="margin-top:0.3rem;width:100%;" onclick="qjsReset('qjs6b',2,2)">↺ Reset</button>
+      </div>
+    </div>
+    <div class="insight" style="margin-top:1rem;">
+      <strong>The key paradox:</strong> Circuit A gives 50% |00⟩ / 50% |10⟩ and circuit B gives 50% |00⟩ / 50% |11⟩ — different joint outcomes, but if you only look at register 1 alone, <em>both give exactly 50% |0⟩ and 50% |1⟩</em>. You cannot tell pure from mixed by measuring one qubit in one basis. You need quantum tomography (Section 5 of Quantum Circuits notes) or entanglement witnesses.
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:3rem;padding-top:1rem;border-top:1px solid var(--line);font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--muted);text-align:center;">
+  Composite Quantum Systems · Interactive Notes 2026
+  <span style="margin-left:1rem;color:#7c3aed;">⚛ Q.js circuits powered by quantumjavascript.app</span>
+</div>
+
+</section><!-- end .page -->
+
+<script is:inline>
+function setFb(id, ok, msg) {
+  const el = document.getElementById(id);
+  el.className = 'feedback show ' + (ok ? 'ok' : 'no');
+  el.textContent = msg;
+}
+
+/* ─── Navigation ─── */
+function goTo(id) {
+  const el = document.getElementById(id);
+  if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+}
+
+/* ─── Hint toggle ─── */
+function showHint(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('show');
+}
+
+/* ─── Feedback helper ─── */
+
+
+/* ─── Exercises ─── */
+function checkE1() {
+  const v = document.getElementById('e1a').value;
+  if (v === 'yes') { setFb('e1fb', true, '✓ Correct! A[0][0]=0, so the top-left block is 0·I = zero matrix.');
+  }
+  else { setFb('e1fb', false, '✗ Try again. A[0][0]=0 means the top-left 2×2 block is 0·I.'); }
+}
+function checkE2() {
+  const v = parseInt(document.getElementById('e2a').value);
+  if (v === 6) { setFb('e2fb', true, '✓ Correct! dim = 3×2 = 6.');
+  }
+  else { setFb('e2fb', false, '✗ Not quite. dim(S_A ⊗ S_B) = dim(S_A) × dim(S_B) = 3×2 = 6.'); }
+}
+function checkE3() {
+  const v = parseFloat(document.getElementById('e3a').value);
+  if (Math.abs(v - 0.5) < 0.01) { setFb('e3fb', true, '✓ Correct! P = |1/2|²+|1/2|² = 1/4+1/4 = 1/2.');
+  }
+  else { setFb('e3fb', false, '✗ Not quite. Sum |α_00|²+|α_01|² for terms where Alice = 0.'); }
+}
+function checkE4() {
+  const v = document.getElementById('e4a').value;
+  if (v === 'yes') { setFb('e4fb', true, '✓ Correct! (|00⟩+|10⟩)/√2 = (|0⟩+|1⟩)/√2 ⊗ |0⟩ = |+⟩⊗|0⟩.');
+  }
+  else { setFb('e4fb', false, '✗ It is a product state. Factor: (|0⟩_A+|1⟩_A)/√2 ⊗ |0⟩_B.'); }
+}
+function checkE5() {
+  const v = document.getElementById('e5a').value;
+  if (v === 'B') { setFb('e5fb', true, '✓ Correct! B = (|00⟩+|11⟩)/√2 = |Φ⁺⟩ is the Bell state and cannot be factored.');
+  }
+  else { setFb('e5fb', false, '✗ Try again. Check each: can you factor it as |φ⟩⊗|χ⟩?'); }
+}
+function checkE6() {
+  const v = document.getElementById('e6a').value;
+  if (v === '|0⟩') { setFb('e6fb', true, "✓ Correct! |Ψ⁻⟩ = (|01⟩−|10⟩)/√2. Alice=|1⟩ selects −|10⟩, so Bob has |0⟩.");
+  }
+  else { setFb('e6fb', false, "✗ In |Ψ⁻⟩, the term with Alice=|1⟩ is −|10⟩. Bob's qubit there is |0⟩."); }
+}
+function checkE7() {
+  const v = parseInt(document.getElementById('e7a').value);
+  if (v === 3) { setFb('e7fb', true, '✓ Correct! They win 3/4 = 75% — the classical maximum.');
+  }
+  else { setFb('e7fb', false, '✗ Fill in the truth table: with A=B=1, A⊕B=0. Win iff X·Y=0.'); }
+}
+function checkE8() {
+  const v = parseFloat(document.getElementById('e8a').value);
+  if (Math.abs(v - 0.854) < 0.005) { setFb('e8fb', true, '✓ Correct! cos²(π/8) = (0.9239)² ≈ 0.854.');
+  }
+  else { setFb('e8fb', false, '✗ P(win) = cos²(π/8). cos(22.5°) ≈ 0.9239, so P ≈ 0.854.'); }
+}
+function checkE9() {
+  const v = document.getElementById('e9a').value;
+  if (v === 'A') { setFb('e9fb', true, '✓ Correct! CNOT: |00⟩→|00⟩, |10⟩→|11⟩. Result = |Φ⁺⟩.');
+  }
+  else { setFb('e9fb', false, '✗ Apply CNOT to each term: |00⟩→|00⟩, |10⟩→|11⟩ (control=1, flip target).'); }
+}
+function checkE10() {
+  const v = document.getElementById('e10a').value;
+  if (v === 'B') { setFb('e10fb', true, '✓ Correct! CZ flips sign of |11⟩: (|00⟩+|11⟩)/√2 → (|00⟩−|11⟩)/√2 = |Φ⁻⟩.');
+  }
+  else { setFb('e10fb', false, '✗ CZ only affects |11⟩. Apply it to each term of |Φ⁺⟩.'); }
+}
+function checkE11() {
+  const v = document.getElementById('e11a').value;
+  if (v === '|10⟩') { setFb('e11fb', true, '✓ Correct! SWAP(|01⟩) = |10⟩.');
+  }
+  else { setFb('e11fb', false, '✗ SWAP exchanges qubit positions: qubit 0 and qubit 1 trade places.'); }
+}
+function checkE12() {
+  const raw = document.getElementById('e12a').value.trim();
+  const v = eval(raw.replace('−','-').replace('–','-'));
+  if (Math.abs(v - (-1/6)) < 0.01) { setFb('e12fb', true, '✓ Correct! ρ₀₁ = (1/3)(−1/2) = −1/6.');
+  }
+  else { setFb('e12fb', false, '✗ ρ₀₁ = p₁·(⟨−|)₀₁ + p₂·(|1⟩⟨1|)₀₁. Hint: (|−⟩⟨−|)₀₁ = −1/2.'); }
+}
+function checkE13() {
+  const v = document.getElementById('e13a').value;
+  if (v === 'mixed') { setFb('e13fb', true, '✓ Correct! tr(ρ²) = (3/4)²+(1/4)² = 9/16+1/16 = 10/16 < 1. Mixed state.');
+  }
+  else { setFb('e13fb', false, '✗ Check tr(ρ²). For a pure state, tr(ρ²)=1. For mixed, tr(ρ²)<1.'); }
+}
+
+/* ─── Canvas: tensor product visualizer ─── */
+function showBasis(code) { drawTensor(code); }
+
+function drawTensor(code) {
+  const cv = document.getElementById('cvTensor');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#fafaf8';
+  ctx.fillRect(0, 0, W, H);
+
+  const labels = ['|00⟩', '|01⟩', '|10⟩', '|11⟩'];
+  const vecs = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];
+  const idx = ['00','01','10','11'].indexOf(code);
+  const v = vecs[idx] || vecs[0];
+
+  const accent = '#2c5282';
+  const muted = '#888877';
+
+  // Draw title
+  ctx.font = "600 13px 'IBM Plex Mono', monospace";
+  ctx.fillStyle = '#3a3a2e';
+  ctx.fillText(labels[idx] + ' in ℂ⁴:', 24, 28);
+
+  // Draw the vector
+  const cellH = 30;
+  const startY = 50;
+  const cx = 180;
+
+  for (let i = 0; i < 4; i++) {
+    const y = startY + i * cellH;
+    const isOne = v[i] === 1;
+    ctx.fillStyle = isOne ? accent : '#e8e4d8';
+    ctx.fillRect(cx - 28, y, 56, cellH - 4);
+    ctx.fillStyle = isOne ? 'white' : muted;
+    ctx.font = "600 15px 'IBM Plex Mono', monospace";
+    ctx.textAlign = 'center';
+    ctx.fillText(v[i], cx, y + 19);
+  }
+
+  // Brackets
+  ctx.strokeStyle = '#1a1a14';
+  ctx.lineWidth = 2;
+  // Left
+  ctx.beginPath(); ctx.moveTo(cx-34, startY-4); ctx.lineTo(cx-38, startY-4);
+  ctx.lineTo(cx-38, startY + 4*cellH - 8); ctx.lineTo(cx-34, startY + 4*cellH - 8);
+  ctx.stroke();
+  // Right
+  ctx.beginPath(); ctx.moveTo(cx+28, startY-4); ctx.lineTo(cx+32, startY-4);
+  ctx.lineTo(cx+32, startY + 4*cellH - 8); ctx.lineTo(cx+28, startY + 4*cellH - 8);
+  ctx.stroke();
+
+  // Labels for rows
+  const rowLabels = ['|00⟩', '|01⟩', '|10⟩', '|11⟩'];
+  ctx.font = "13px 'IBM Plex Mono', monospace";
+  ctx.textAlign = 'left';
+  for (let i = 0; i < 4; i++) {
+    const y = startY + i * cellH;
+    ctx.fillStyle = v[i] === 1 ? accent : muted;
+    ctx.fillText('← ' + rowLabels[i], cx + 40, y + 19);
+  }
+
+  // Explanation
+  ctx.font = "italic 13px 'Lora', serif";
+  ctx.fillStyle = '#888877';
+  ctx.textAlign = 'left';
+  ctx.fillText('The "1" sits at position ' + idx + ' (binary: ' + code + ')', 340, 75);
+  ctx.fillText('All other entries are 0', 340, 95);
+  ctx.fillText('This encodes: Alice = ' + code[0] + ', Bob = ' + code[1], 340, 115);
+}
+
+/* ─── Canvas: entanglement demo ─── */
+let entangleState = 'superposition'; // 'superposition' | '0' | '1'
+
+function drawEntangle(outcome) {
+  const cv = document.getElementById('cvEntangle');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#fafaf8';
+  ctx.fillRect(0, 0, W, H);
+
+  const accent = '#2c5282';
+  const green = '#1a6b3a';
+  const red = '#c0392b';
+  const muted = '#888877';
+
+  // Draw Alice's qubit
+  const drawQubit = (x, y, label, stateLabel, color) => {
+    ctx.beginPath();
+    ctx.arc(x, y, 28, 0, 2*Math.PI);
+    ctx.fillStyle = color + '22';
+    ctx.fill();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = color;
+    ctx.font = "600 13px 'IBM Plex Mono', monospace";
+    ctx.textAlign = 'center';
+    ctx.fillText(label, x, y - 38);
+    ctx.font = "700 15px 'IBM Plex Mono', monospace";
+    ctx.fillText(stateLabel, x, y + 5);
+  };
+
+  if (outcome === null) {
+    // Superposition state
+    ctx.font = "13px 'Lora', serif";
+    ctx.fillStyle = '#3a3a2e';
+    ctx.textAlign = 'center';
+    ctx.fillText('|Φ⁺⟩ = (|00⟩ + |11⟩) / √2', W/2, 24);
+
+    drawQubit(160, 100, 'Alice', '?', accent);
+    drawQubit(460, 100, 'Bob', '?', accent);
+
+    // Entanglement line
+    ctx.setLineDash([6,4]);
+    ctx.strokeStyle = '#fde68a';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(192, 100); ctx.lineTo(428, 100); ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.font = "italic 12px 'Lora', serif";
+    ctx.fillStyle = muted;
+    ctx.textAlign = 'center';
+    ctx.fillText('entangled — correlated but undetermined', W/2, 100);
+
+    ctx.font = "12px 'IBM Plex Mono', monospace";
+    ctx.fillStyle = muted;
+    ctx.fillText('50% |0⟩, 50% |1⟩', 160, 148);
+    ctx.fillText('50% |0⟩, 50% |1⟩', 460, 148);
+
+  } else {
+    const aliceColor = outcome === 0 ? green : red;
+    const bobLabel = outcome === 0 ? '|0⟩' : '|1⟩';
+    const bobColor = outcome === 0 ? green : red;
+    const stateStr = outcome === 0 ? '|00⟩' : '|11⟩';
+
+    ctx.font = "13px 'Lora', serif";
+    ctx.fillStyle = '#3a3a2e';
+    ctx.textAlign = 'center';
+    ctx.fillText('Collapsed to: ' + stateStr + ' (product state)', W/2, 24);
+
+    drawQubit(160, 100, 'Alice', outcome === 0 ? '|0⟩' : '|1⟩', aliceColor);
+    drawQubit(460, 100, 'Bob', bobLabel, bobColor);
+
+    // Solid line after collapse
+    ctx.strokeStyle = bobColor;
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(192, 100); ctx.lineTo(428, 100); ctx.stroke();
+
+    ctx.font = "italic 12px 'Lora', serif";
+    ctx.fillStyle = bobColor;
+    ctx.textAlign = 'center';
+    ctx.fillText("Bob's state is now certain!", W/2, 100);
+
+    ctx.font = "12px 'IBM Plex Mono', monospace";
+    ctx.fillStyle = bobColor;
+    ctx.fillText('measured: ' + (outcome===0?'|0⟩':'|1⟩'), 160, 148);
+    ctx.fillText('determined: ' + bobLabel, 460, 148);
+  }
+}
+
+function resetEntangle() {
+  entangleState = 'superposition';
+  drawEntangle(null);
+  document.getElementById('entangleMsg').textContent = 'State reset to |Φ⁺⟩.';
+}
+function measureAlice() {
+  const outcome = Math.random() < 0.5 ? 0 : 1;
+  drawEntangle(outcome);
+  document.getElementById('entangleMsg').textContent =
+    'Alice measured |' + outcome + '⟩ — Bob instantly has |' + outcome + '⟩.';
+}
+
+/* ─── Canvas: density matrix ─── */
+const dmStates = {
+  // ── 1-qubit (2×2) ────────────────────────────────────────────────────────
+  '0':    { rho: [[1,0],[0,0]],         title: '1-qubit pure state |0⟩',                   desc: 'ρ = |0⟩⟨0|  —  certain to measure |0⟩. All probability on diagonal[0,0].' },
+  '1':    { rho: [[0,0],[0,1]],         title: '1-qubit pure state |1⟩',                   desc: 'ρ = |1⟩⟨1|  —  certain to measure |1⟩. All probability on diagonal[1,1].' },
+  '+':    { rho: [[0.5,0.5],[0.5,0.5]], title: '1-qubit pure state |+⟩ = (|0⟩+|1⟩)/√2',   desc: 'ρ = |+⟩⟨+|  —  50/50 in the Z basis. The off-diagonal ½ entries are quantum coherences: they encode the superposition phase.' },
+  'mix':  { rho: [[0.5,0],[0,0.5]],     title: '1-qubit mixed state: ½|0⟩⟨0| + ½|1⟩⟨1|', desc: 'Same diagonal as |+⟩, but zero off-diagonals! This is the maximally mixed state — no quantum coherence. Cannot be distinguished from classical coin-flip noise.' },
+  // ── 2-qubit (4×4) ────────────────────────────────────────────────────────
+  '00':   { rho: [[1,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]],
+            title: '2-qubit pure state |00⟩',
+            desc: 'ρ = |00⟩⟨00|  —  4×4 matrix with a single 1 at position (0,0). Certain to measure |00⟩. A product state |0⟩⊗|0⟩.' },
+  'phi':  { rho: [[0.5,0,0,0.5],[0,0,0,0],[0,0,0,0],[0.5,0,0,0.5]],
+            title: '2-qubit pure Bell state |Φ⁺⟩ = (|00⟩+|11⟩)/√2',
+            desc: 'ρ = |Φ⁺⟩⟨Φ⁺|  —  Diagonal entries ½ at (0,0) and (3,3): 50% chance of |00⟩ or |11⟩. Off-diagonal entries ½ at corners (0,3) and (3,0) encode the entanglement. tr(ρ²)=1 → pure state despite the mixed-looking diagonal.' },
+  'mix2': { rho: [[0.25,0,0,0],[0,0.25,0,0],[0,0,0.25,0],[0,0,0,0.25]],
+            title: '2-qubit maximally mixed state: ¼ each basis state',
+            desc: 'ρ = ¼ I₄  —  Uniform mixture of all four basis states. Diagonal = ¼ everywhere, no off-diagonal entries. tr(ρ²) = 4·(¼)² = ¼ — maximally mixed, minimum purity.' },
+  'prod': { rho: [[0.25,0.25,0.25,0.25],[0.25,0.25,0.25,0.25],[0.25,0.25,0.25,0.25],[0.25,0.25,0.25,0.25]],
+            title: '2-qubit product pure state |+⟩⊗|+⟩',
+            desc: 'ρ = |+⟩⟨+| ⊗ |+⟩⟨+|  —  All 16 entries equal ¼. tr(ρ²)=1 → pure. Compare to the maximally mixed state above: same diagonal but completely different off-diagonals! The coherences here encode that both qubits are in superposition.' },
+  'psi':  { rho: [[0,0,0,0],[0,0.5,0.5,0],[0,0.5,0.5,0],[0,0,0,0]],
+            title: '2-qubit pure Bell state |Ψ⁺⟩ = (|01⟩+|10⟩)/√2',
+            desc: 'ρ = |Ψ⁺⟩⟨Ψ⁺|  —  Diagonal entries ½ at (1,1) and (2,2): 50% chance of |01⟩ or |10⟩. Off-diagonal entries ½ at (1,2) and (2,1) encode this entanglement. Compare to |Φ⁺⟩: the "active" corner has moved!' },
+};
+
+function showDensity(type) {
+  // update button styles
+  document.querySelectorAll('.dmBtn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('dm' + type.replace('+','P').replace('mix2','Mix2').replace('mix','Mix').replace('prod','Prod').replace('psi','Psi').replace('phi','Phi').replace('00','00'));
+  if (btn) btn.classList.add('active');
+  drawDensityN(type);
+}
+
+function drawDensityN(type) {
+  const cv = document.getElementById('cvDensity');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#fafaf8';
+  ctx.fillRect(0, 0, W, H);
+
+  const state = dmStates[type];
+  if (!state) return;
+  const rho = state.rho;
+  const N = rho.length; // 2 or 4
+
+  // update caption
+  const cap = document.getElementById('dmCaption');
+  if (cap) cap.textContent = state.desc;
+
+  // ── layout ────────────────────────────────────────────────────────────────
+  const isQuad = N === 4;
+  const cellSize = isQuad ? 44 : 58;
+  const gap = isQuad ? 3 : 6;
+  const step = cellSize + gap;
+  const gridW = N * step - gap;
+  const labelPad = 38;
+  const startX = labelPad + 10;
+  const startY = 42;
+  const gridH = N * step - gap;
+
+  // basis labels
+  const labels1 = ['|0⟩','|1⟩'];
+  const labels2 = ['|00⟩','|01⟩','|10⟩','|11⟩'];
+  const labels = isQuad ? labels2 : labels1;
+
+  const accent = '#2c5282', orange = '#b7530a', green = '#1a6b3a', muted = '#888877';
+
+  // ── title ────────────────────────────────────────────────────────────────
+  ctx.font = "600 12px 'IBM Plex Mono', monospace";
+  ctx.fillStyle = '#3a3a2e'; ctx.textAlign = 'left';
+  ctx.fillText(state.title, 8, 20);
+
+  // ── col labels ────────────────────────────────────────────────────────────
+  ctx.fillStyle = muted; ctx.textAlign = 'center';
+  ctx.font = isQuad ? "10px 'IBM Plex Mono',monospace" : "11px 'IBM Plex Mono',monospace";
+  for (let i = 0; i < N; i++) {
+    ctx.fillText(labels[i], startX + i*step + cellSize/2, startY - 6);
+  }
+
+  // ── row labels ────────────────────────────────────────────────────────────
+  ctx.textAlign = 'right';
+  for (let i = 0; i < N; i++) {
+    ctx.fillText(labels[i], startX - 4, startY + i*step + cellSize/2 + 4);
+  }
+
+  // ── cells ────────────────────────────────────────────────────────────────
+  for (let r = 0; r < N; r++) {
+    for (let c = 0; c < N; c++) {
+      const x = startX + c * step;
+      const y = startY + r * step;
+      const val = rho[r][c];
+      const absVal = Math.abs(val);
+      const isDiag = r === c;
+
+      // fill colour: diagonal = blue tint, off-diagonal = orange tint
+      const alpha = 0.1 + absVal * 0.75;
+      ctx.fillStyle = isDiag ? `rgba(44,82,130,${alpha})` : `rgba(183,83,10,${alpha})`;
+      ctx.fillRect(x, y, cellSize, cellSize);
+
+      // border
+      ctx.strokeStyle = isDiag ? accent : orange;
+      ctx.lineWidth = isDiag ? 1.5 : 1;
+      ctx.strokeRect(x, y, cellSize, cellSize);
+
+      // value text
+      if (absVal > 0.001) {
+        ctx.fillStyle = absVal > 0.35 ? 'white' : '#1a1a14';
+        const fs = isQuad ? 11 : 13;
+        ctx.font = `600 ${fs}px 'IBM Plex Mono', monospace`;
+        ctx.textAlign = 'center';
+        let disp;
+        if (val === 1) disp = '1';
+        else if (val === 0.5) disp = '½';
+        else if (val === 0.25) disp = '¼';
+        else disp = val.toFixed(2);
+        ctx.fillText(disp, x + cellSize/2, y + cellSize/2 + 4);
+      } else {
+        ctx.fillStyle = '#ccc8ba';
+        ctx.font = `${isQuad?10:12}px 'IBM Plex Mono', monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText('0', x + cellSize/2, y + cellSize/2 + 4);
+      }
+    }
+  }
+
+  // ── bracket lines around grid ─────────────────────────────────────────────
+  const bx = startX - 2, by = startY - 2, bw = gridW + 4, bh = gridH + 4;
+  const bs = 6; // bracket stub length
+  ctx.strokeStyle = '#1a1a14'; ctx.lineWidth = 2;
+  // left bracket
+  ctx.beginPath(); ctx.moveTo(bx-bs, by); ctx.lineTo(bx, by); ctx.lineTo(bx, by+bh); ctx.lineTo(bx-bs, by+bh); ctx.stroke();
+  // right bracket
+  ctx.beginPath(); ctx.moveTo(bx+bw+bs, by); ctx.lineTo(bx+bw, by); ctx.lineTo(bx+bw, by+bh); ctx.lineTo(bx+bw+bs, by+bh); ctx.stroke();
+
+  // ── bar chart (measurement probabilities) ────────────────────────────────
+  const barAreaX = startX + gridW + 30;
+  const barAreaY = startY;
+  const barAreaH = gridH;
+  const barAreaW = Math.min(160, W - barAreaX - 10);
+  const barTotalH = barAreaH - 20;
+
+  ctx.font = "10px 'IBM Plex Mono', monospace";
+  ctx.fillStyle = muted; ctx.textAlign = 'center';
+  ctx.fillText('P(measure)', barAreaX + barAreaW/2, barAreaY - 4);
+
+  const barColors = [accent, '#c0392b', '#1a6b3a', orange, '#6b21a8', '#0e7490'];
+  const barW2 = Math.max(10, (barAreaW - (N-1)*3) / N);
+
+  for (let i = 0; i < N; i++) {
+    const prob = rho[i][i];
+    const bh2 = prob * barTotalH;
+    const bx2 = barAreaX + i * (barW2 + 3);
+    const by2 = barAreaY + 10 + barTotalH - bh2;
+
+    // background slot
+    ctx.fillStyle = '#e8e4d8';
+    ctx.fillRect(bx2, barAreaY+10, barW2, barTotalH);
+
+    // bar
+    if (bh2 > 0) {
+      ctx.fillStyle = barColors[i % barColors.length];
+      ctx.fillRect(bx2, by2, barW2, bh2);
+      // percentage inside bar if space
+      if (bh2 > 14) {
+        ctx.fillStyle = 'white';
+        ctx.font = "9px 'IBM Plex Mono', monospace";
+        ctx.textAlign = 'center';
+        const pct = Math.round(prob * 100);
+        ctx.fillText(pct + '%', bx2 + barW2/2, by2 + bh2/2 + 3);
+      }
+    }
+
+    // label below
+    ctx.fillStyle = muted;
+    ctx.font = isQuad ? "8px 'IBM Plex Mono', monospace" : "9px 'IBM Plex Mono', monospace";
+    ctx.textAlign = 'center';
+    ctx.fillText(labels[i], bx2 + barW2/2, barAreaY + 10 + barTotalH + 12);
+  }
+
+  // ── purity & stats panel ─────────────────────────────────────────────────
+  let purity = 0;
+  for (let r = 0; r < N; r++)
+    for (let c = 0; c < N; c++)
+      purity += rho[r][c] * rho[c][r]; // tr(ρ²) = Σ_rc ρ_rc * ρ_cr
+
+  const statsX = barAreaX;
+  const statsY = barAreaY + barTotalH + 28;
+  const isPure = Math.abs(purity - 1) < 0.001;
+
+  ctx.font = "600 11px 'IBM Plex Mono', monospace";
+  ctx.textAlign = 'left';
+  ctx.fillStyle = isPure ? green : '#b7530a';
+  ctx.fillText('tr(ρ²) = ' + purity.toFixed(3), statsX, statsY);
+  ctx.fillStyle = isPure ? green : '#b7530a';
+  ctx.fillText(isPure ? '→ PURE STATE' : '→ MIXED STATE', statsX, statsY + 16);
+  ctx.fillStyle = '#888877';
+  ctx.font = "11px 'IBM Plex Mono', monospace";
+  ctx.fillText('tr(ρ) = 1 ✓', statsX, statsY + 32);
+  ctx.fillText('dim = ' + N + '×' + N + ' (' + Math.log2(N) + ' qubit' + (N>2?'s':'') + ')', statsX, statsY + 48);
+}
+
+/* ─── Angle visualizer ─── */
+const angleConfigs = {
+  '00': { alice: 0,        bob: Math.PI/8,  winType: 'same',  label: 'X=0, Y=0' },
+  '01': { alice: 0,        bob: -Math.PI/8, winType: 'same',  label: 'X=0, Y=1' },
+  '10': { alice: Math.PI/4, bob: Math.PI/8, winType: 'same',  label: 'X=1, Y=0' },
+  '11': { alice: Math.PI/4, bob: -Math.PI/8,winType: 'diff',  label: 'X=1, Y=1' },
+};
+let currentAngleCase = '00';
+
+function showAngleCase(c) { currentAngleCase = c; drawAngles(c); }
+
+function drawAngles(c) {
+  const cv = document.getElementById('cvAngles');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = '#fafaf8'; ctx.fillRect(0,0,W,H);
+
+  const cfg = angleConfigs[c];
+  const cx = 110, cy = H/2, r = 80;
+  const accent = '#2c5282', red = '#c0392b', green = '#1a6b3a', muted = '#888877', orange = '#b7530a';
+
+  // Draw circle
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2*Math.PI);
+  ctx.strokeStyle = '#dedad0'; ctx.lineWidth = 1.5; ctx.stroke();
+
+  // Axis labels
+  ctx.fillStyle = muted; ctx.font = "11px 'IBM Plex Mono', monospace"; ctx.textAlign='center';
+  ctx.fillText('|0⟩', cx, cy - r - 8);
+  ctx.fillText('|1⟩', cx, cy + r + 14);
+  ctx.fillText('|+⟩', cx + r + 14, cy + 4);
+  ctx.fillText('|−⟩', cx - r - 14, cy + 4);
+
+  // Axis lines (dashed)
+  ctx.setLineDash([3,3]); ctx.strokeStyle = '#dedad0'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(cx, cy-r-4); ctx.lineTo(cx, cy+r+4); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx-r-4, cy); ctx.lineTo(cx+r+4, cy); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Draw all basis angles faintly
+  const allAngles = [
+    { angle: 0,           color: accent+'55', name: "Alice X=0 (0°)" },
+    { angle: Math.PI/4,   color: accent+'55', name: "Alice X=1 (45°)" },
+    { angle: Math.PI/8,   color: red+'55',    name: "Bob Y=0 (22.5°)" },
+    { angle: -Math.PI/8,  color: red+'55',    name: "Bob Y=1 (−22.5°)" },
+  ];
+  allAngles.forEach(a => {
+    const x = cx + r * Math.sin(a.angle);
+    const y = cy - r * Math.cos(a.angle);
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(x, y);
+    ctx.strokeStyle = a.color; ctx.lineWidth = 1.5; ctx.stroke();
+  });
+
+  // Draw active Alice angle (bright)
+  const ax = cx + r * Math.sin(cfg.alice);
+  const ay = cy - r * Math.cos(cfg.alice);
+  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(ax, ay);
+  ctx.strokeStyle = accent; ctx.lineWidth = 3; ctx.stroke();
+  ctx.beginPath(); ctx.arc(ax, ay, 5, 0, 2*Math.PI);
+  ctx.fillStyle = accent; ctx.fill();
+
+  // Draw active Bob angle (bright)
+  const bx = cx + r * Math.sin(cfg.bob);
+  const by = cy - r * Math.cos(cfg.bob);
+  ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(bx, by);
+  ctx.strokeStyle = red; ctx.lineWidth = 3; ctx.stroke();
+  ctx.beginPath(); ctx.arc(bx, by, 5, 0, 2*Math.PI);
+  ctx.fillStyle = red; ctx.fill();
+
+  // Arc showing angle between them
+  const startA = Math.PI/2 - cfg.alice;
+  const startB = Math.PI/2 - cfg.bob;
+  ctx.beginPath(); ctx.arc(cx, cy, 28, Math.min(startA,startB)-Math.PI, Math.max(startA,startB)-Math.PI);
+  ctx.strokeStyle = green; ctx.lineWidth = 2; ctx.stroke();
+
+  // Legend text on right
+  const tx = cx + r + 30, lh = 22;
+  ctx.font = "600 13px 'IBM Plex Mono', monospace"; ctx.textAlign = 'left';
+
+  ctx.fillStyle = accent;
+  const aliceDeg = Math.round(cfg.alice * 180 / Math.PI);
+  ctx.fillText('Alice (X=' + c[0] + '): θ = ' + aliceDeg + '°', tx, cy - 52);
+
+  ctx.fillStyle = red;
+  const bobDeg = Math.round(cfg.bob * 180 / Math.PI);
+  ctx.fillText('Bob   (Y=' + c[1] + '): θ = ' + bobDeg + '°', tx, cy - 30);
+
+  const diff = Math.abs(cfg.alice - cfg.bob);
+  const diffDeg = Math.round(diff * 180 / Math.PI);
+  ctx.fillStyle = green;
+  ctx.fillText('|Δθ| = ' + diffDeg + '°', tx, cy - 4);
+
+  ctx.fillStyle = '#1a1a14'; ctx.font = "13px 'IBM Plex Sans', sans-serif";
+  const pwin = Math.cos(diff) * Math.cos(diff);
+  ctx.fillText('P(same) = cos²(' + diffDeg + '°) = ' + pwin.toFixed(3), tx, cy + 22);
+
+  const xval = parseInt(c[0]), yval = parseInt(c[1]);
+  const need = xval * yval; // 0 or 1
+  ctx.fillStyle = need === 0 ? green : orange;
+  ctx.font = "600 13px 'IBM Plex Sans', sans-serif";
+  ctx.fillText('X·Y = ' + need + ' → need A⊕B = ' + need + ' (' + (need===0?'same':'different') + ')', tx, cy + 46);
+
+  const pwinFinal = need === 0 ? pwin : (1 - pwin);
+  ctx.fillStyle = pwinFinal > 0.75 ? green : red;
+  ctx.font = "700 13px 'IBM Plex Mono', monospace";
+  ctx.fillText('P(win) = ' + pwinFinal.toFixed(3) + (pwinFinal > 0.75 ? ' ✓' : ' ✗'), tx, cy + 70);
+
+  // Update message
+  const msg = document.getElementById('angleMsg');
+  if (msg) {
+    msg.textContent = cfg.label + ': bases are ' + diffDeg + '° apart → P(win) = cos²(' + diffDeg + '°) ≈ ' + pwinFinal.toFixed(3);
+    msg.style.color = pwinFinal > 0.75 ? green : red;
+  }
+}
+
+/* ─── CHSH interactive game ─── */
+let chshX = null, chshY = null, chshA = null, chshB = null;
+let chshWins = 0, chshTotal = 0;
+
+function chshDeal() {
+  chshX = Math.random() < 0.5 ? 0 : 1;
+  chshY = Math.random() < 0.5 ? 0 : 1;
+  chshA = null; chshB = null;
+  document.getElementById('chshX').textContent = chshX;
+  document.getElementById('chshY').textContent = chshY;
+  document.getElementById('chshResult').textContent = 'Now choose A and B...';
+  document.getElementById('chshScore').textContent = chshTotal > 0 ? `Record: ${chshWins}/${chshTotal} wins (${(chshWins/chshTotal*100).toFixed(0)}%)` : '';
+  ['btnA0','btnA1','btnB0','btnB1'].forEach(id => document.getElementById(id).classList.remove('active'));
+}
+function chshSetA(a) {
+  chshA = a;
+  document.getElementById('btnA0').classList.toggle('active', a===0);
+  document.getElementById('btnA1').classList.toggle('active', a===1);
+  chshEval();
+}
+function chshSetB(b) {
+  chshB = b;
+  document.getElementById('btnB0').classList.toggle('active', b===0);
+  document.getElementById('btnB1').classList.toggle('active', b===1);
+  chshEval();
+}
+function chshEval() {
+  if (chshX === null || chshA === null || chshB === null) return;
+  const xor = chshA ^ chshB;
+  const prod = chshX * chshY;
+  const win = xor === prod;
+  chshTotal++;
+  if (win) chshWins++;
+  document.getElementById('chshResult').textContent =
+    (win ? '🎉 WIN! ' : '❌ LOSE. ') + `X·Y=${prod}, A⊕B=${xor}. ${win ? 'They match!' : 'They differ.'}`;
+  document.getElementById('chshScore').textContent =
+    `Record: ${chshWins}/${chshTotal} wins (${(chshWins/chshTotal*100).toFixed(0)}%) — Classical best: 75%`;
+}
+
+/* ─── Q.js Circuit Labs — drag-and-drop editor system ─── */
+//  Uses Q.Circuit.Editor for interactive drag-and-drop circuit building.
+//  Each lab has: a gate palette + an editable circuit board + live outcome display.
+//
+//  Key Q.js APIs used:
+//    Q.Circuit.fromText(text)          → create a circuit from text
+//    Q.Circuit.Editor.createPalette(el)→ render a draggable gate palette into el
+//    circuit.toDom(el)                 → render editable circuit board into el
+//    window event 'Q.Circuit.set$'     → fires when user drops a gate
+//    window event 'Q.Circuit.clear$'   → fires when user removes a gate
+//    circuit.evaluate$()               → simulate the circuit
+//    circuit.results                   → [{state:'|00⟩', probability:0.5}, ...]
+
+// ── Registry of active circuit objects (keyed by lab id) ─────────
+const qjsCircuits = {};
+
+// ── Core: create a lab editor ────────────────────────────────────
+function qjsCreateLab(id, nQubits, nMoments, initText) {
+  const paletteEl = document.getElementById(id + '-palette');
+  const circuitEl = document.getElementById(id + '-circuit');
+  if (!paletteEl || !circuitEl) return;
+
+  // Create starting circuit
+  const circuit = initText
+    ? Q.Circuit.fromText(initText)
+    : new Q.Circuit(nQubits, nMoments);
+
+  qjsCircuits[id] = circuit;
+
+  // Render draggable palette
+  paletteEl.innerHTML = '';
+  Q.Circuit.Editor.createPalette(paletteEl);
+
+  // Render editable circuit board
+  circuitEl.innerHTML = '';
+  circuit.toDom(circuitEl);
+
+  // Auto-evaluate on every gate drop or removal
+  window.addEventListener('Q.Circuit.set$',   e => { if (e.detail.circuit === circuit) qjsEval(id); });
+  window.addEventListener('Q.Circuit.clear$', e => { if (e.detail.circuit === circuit) qjsEval(id); });
+
+  // Initial evaluation
+  qjsEval(id);
+}
+
+// ── Evaluate a circuit and display results ───────────────────────
+function qjsEval(id, checkFn) {
+  const circuit   = qjsCircuits[id];
+  const resultsEl = document.getElementById(id + '-results');
+  if (!circuit || !resultsEl) return;
+
+  try {
+    circuit.evaluate$();
+    let txt = '';
+    circuit.results.forEach(outcome => {
+      const pct  = Math.round(outcome.probability * 100);
+      const fill = Math.round(outcome.probability * 20);
+      const bar  = '█'.repeat(fill) + '░'.repeat(20 - fill);
+      txt += outcome.state + '  ' + bar + '  ' + pct + '%\n';
+    });
+    resultsEl.textContent = txt || '(empty circuit — all |00…0⟩)';
+    resultsEl.classList.add('show');
+
+    // Run optional answer-checker
+    if (checkFn) checkFn(id, circuit);
+  } catch(e) {
+    resultsEl.textContent = 'Error: ' + e.message;
+    resultsEl.classList.add('show');
+  }
+}
+
+// ── Reset a lab to a blank or initial circuit ────────────────────
+function qjsReset(id, nQubits, nMoments, initText) {
+  const circuitEl = document.getElementById(id + '-circuit');
+  const resultsEl = document.getElementById(id + '-results');
+  if (!circuitEl) return;
+
+  const circuit = initText
+    ? Q.Circuit.fromText(initText)
+    : new Q.Circuit(nQubits, nMoments);
+
+  qjsCircuits[id] = circuit;
+  circuitEl.innerHTML = '';
+  circuit.toDom(circuitEl);
+
+  // Re-attach auto-eval listeners
+  window.addEventListener('Q.Circuit.set$',   e => { if (e.detail.circuit === circuit) qjsEval(id); });
+  window.addEventListener('Q.Circuit.clear$', e => { if (e.detail.circuit === circuit) qjsEval(id); });
+
+  if (resultsEl) { resultsEl.textContent = 'Reset — build your circuit…'; }
+}
+
+// ── Answer checker for Bell state (Lab 3.1) ──────────────────────
+function checkBell(id, circuit) {
+  const checkEl = document.getElementById(id + '-check');
+  if (!checkEl) return;
+  const results = circuit.results;
+  // Bell |Φ+⟩: ~50% |00⟩ and ~50% |11⟩, nothing else
+  const r00 = results.find(r => r.state === '|00⟩');
+  const r11 = results.find(r => r.state === '|11⟩');
+  const total00 = r00 ? r00.probability : 0;
+  const total11 = r11 ? r11.probability : 0;
+  const isbell  = Math.abs(total00 - 0.5) < 0.01 && Math.abs(total11 - 0.5) < 0.01;
+  if (isbell) {
+    checkEl.textContent = '✓ Bell state |Φ⁺⟩ achieved!';
+    checkEl.style.color = 'var(--green)';
+  } else {
+    checkEl.textContent = '';
+  }
+}
+
+// ── Initialize all labs on page load ─────────────────────────────
+window.addEventListener('load', function () {
+  setTimeout(function () {
+    if (typeof Q === 'undefined' || typeof Q.Circuit === 'undefined') {
+      ['qjs1','qjs3','qjs5','qjs6a','qjs6b'].forEach(function(id) {
+        const el = document.getElementById(id + '-circuit');
+        if (el) el.innerHTML =
+          '<div style="color:var(--red);font-family:IBM Plex Mono,monospace;' +
+          'font-size:0.82rem;padding:0.5rem;">⚠️ Q.js not loaded. ' +
+          'Make sure <strong>q.js</strong> and <strong>q.css</strong> are ' +
+          'in the same folder as this HTML file.</div>';
+      });
+      return;
+    }
+
+    // Lab 1.1 — 2 qubits, 2 moments, start blank
+    qjsCreateLab('qjs1',  2, 2);
+
+    // Lab 3.1 — 2 qubits, 2 moments, start blank (goal: build Bell state)
+    qjsCreateLab('qjs3',  2, 2);
+
+    // Lab 5.1 — 2 qubits, 4 moments, free sandbox
+    qjsCreateLab('qjs5',  2, 4);
+
+    // Lab 6.1 — two side-by-side editors
+    qjsCreateLab('qjs6a', 2, 2);
+    qjsCreateLab('qjs6b', 2, 2);
+
+  }, 300);
+});
+</script>
