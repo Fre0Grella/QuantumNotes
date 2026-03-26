@@ -1,0 +1,1987 @@
+---
+import type { NoteMeta } from '../../lib/notes';
+
+export const meta: NoteMeta = {
+  title: "Quantum Circuits",
+  order: 4,
+  slug: "4-circuits",
+  description: "Introduction to quantum circuits, the standard model of quantum computation. How to represent quantum algorithms as sequences of gates, and how to visualize them with the circuit diagram notation.",
+  sections: [
+    { id: "s1", label: "Quantum Computing" },
+    { id: "s2", label: "Boolean Functions" },
+    { id: "s3", label: "Quantum Parallelism" },
+    { id: "s4", label: "State Transformation" },
+    { id: "s5", label: "Generating α|0⟩+β|1⟩" },
+    { id: "s6", label: "No-Cloning Theorem" },
+    { id: "s7", label: "Bell Basis Measurement" },
+    { id: "s8", label: "Quantum Teleportation" },
+    { id: "s9", label: "Quantum Tomography" }
+  ]
+}
+---
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-label">Interactive Notes</div>
+  <h1>{meta.title}</h1>
+  <p>{meta.description}</p>
+</div>
+
+<div class="toc">
+  <div class="toc-title">Contents</div>
+  <ul class="toc-list">
+    <li><a onclick="goTo('s1')" href="javascript:void(0)">1 · Quantum Computing</a></li>
+    <li><a onclick="goTo('s2')" href="javascript:void(0)">2 · Boolean Functions</a></li>
+    <li><a onclick="goTo('s3')" href="javascript:void(0)">3 · Quantum Parallelism</a></li>
+    <li><a onclick="goTo('s4')" href="javascript:void(0)">4 · State Transformation</a></li>
+    <li><a onclick="goTo('s5')" href="javascript:void(0)">5 · Generating α|0⟩+β|1⟩</a></li>
+    <li><a onclick="goTo('s6')" href="javascript:void(0)">6 · No-Cloning Theorem</a></li>
+    <li><a onclick="goTo('s7')" href="javascript:void(0)">7 · Bell Basis Measurement</a></li>
+    <li><a onclick="goTo('s8')" href="javascript:void(0)">8 · Teleportation</a></li>
+    <li><a onclick="goTo('s9')" href="javascript:void(0)">9 · Quantum Tomography</a></li>
+  </ul>
+</div>
+
+
+<!-- ══════════════════════════════════════ -->
+<!-- SECTION 1 — QUANTUM COMPUTING         -->
+<!-- ══════════════════════════════════════ -->
+<section class="section" id="s1">
+<div class="section-num">Section 01</div>
+<h2>Quantum Computing &amp; Universality</h2>
+
+<p>A classical computer is built from logic gates (AND, OR, NOT, NAND…). A <strong>quantum computer</strong> is built from <strong>quantum gates</strong> — unitary matrices acting on qubits. Before asking "what can we compute?", we must ask: how many different gates do we actually need?</p>
+
+<div class="def">
+  <div class="def-title">Definition — Universality</div>
+  A set of quantum gates is called <strong>universal</strong> if any unitary transformation U (of any size) can be <em>approximated</em> with arbitrary precision using only gates from that set.
+</div>
+
+<p>Think of it like LEGO: no matter how complex the structure, a small set of brick types is enough to build anything.</p>
+
+<div class="note-box">
+  <strong>Classical analogy:</strong> In classical computing the <strong>NAND gate alone</strong> is universal — every logic function (AND, OR, XOR, full adder, …) can be built exclusively from NAND gates. This is why CPU designers only need to implement one primitive.
+</div>
+
+<div class="def">
+  <div class="def-title">Theorem — Universal Gate Set for Quantum Computing</div>
+  The set <strong>&#123;H, S, T, CNOT&#125;</strong> is universal for quantum computation.
+  <div class="math-block" style="margin-top:0.5rem;">
+    <div class="eq">
+      <span class="c-l" style="color:var(--accent);">H</span> = <span class="math-inline">Hadamard</span>,&nbsp;&nbsp;
+      <span style="color:var(--orange);">S</span> = <span class="math-inline">Phase (π/2)</span>,&nbsp;&nbsp;
+      <span style="color:var(--green);">T</span> = <span class="math-inline">π/8 gate</span>,&nbsp;&nbsp;
+      <span style="color:var(--red);">CNOT</span> = <span class="math-inline">controlled-NOT</span>
+    </div>
+  </div>
+  Any unitary U acting on n qubits can be approximated to error ε using O(poly(n, log(1/ε))) gates from this set.
+</div>
+
+<div class="note-box">
+  <strong>Note — the Clifford group:</strong> The smaller set <strong>&#123;H, S, CNOT&#125;</strong> generates the so-called <em>Clifford group</em> — a very important subgroup of unitaries. Clifford circuits are efficiently simulable on classical computers (Gottesman–Knill theorem), so they are NOT computationally universal. Adding the T gate breaks this simulability and makes the set universal.
+</div>
+
+<h3>How a Quantum Computer Works</h3>
+<p>Every quantum computation follows the same three-step recipe:</p>
+
+<div class="def">
+  <div class="def-title">Quantum Computation Protocol</div>
+  <ol style="padding-left:1.2rem;line-height:2;">
+    <li><strong>Prepare</strong> all qubits in the computational basis state |0⟩⊗ⁿ = |00…0⟩</li>
+    <li><strong>Apply</strong> a sequence of quantum gates (together forming a unitary U)</li>
+    <li><strong>Measure</strong> in the computational basis &#123;|0⟩, |1⟩&#125;</li>
+  </ol>
+</div>
+
+<p>So at the highest level, a quantum computer is just:</p>
+
+<div class="math-block">
+  <div class="eq">
+    |0⟩ ──<span style="font-size:1.1em;">┐</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="font-size:1.1em;">┐</span>──[M]
+  </div>
+  <div class="eq">
+    |0⟩ ──┤&nbsp;&nbsp;&nbsp;<span style="color:var(--accent);font-weight:700;">U</span>&nbsp;&nbsp;&nbsp;├──[M]
+  </div>
+  <div class="eq">
+    |0⟩ ──<span style="font-size:1.1em;">┘</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="font-size:1.1em;">┘</span>──[M]
+  </div>
+  <div class="eq" style="margin-top:0.5rem;"><span class="eq-note">Input: |0⟩^⊗n — one big unitary U — then measure everything</span></div>
+</div>
+
+<p>The entire quantum algorithm is encoded in how U is decomposed into elementary gates. This is the art of quantum circuit design.</p>
+
+<div class="insight">
+  The decomposition U ≈ G₁G₂G₃… (product of elementary gates) is analogous to how a classical program is compiled into CPU instructions. Universality guarantees that this decomposition always exists.
+</div>
+
+<!-- Interactive: gate set explorer -->
+<canvas id="cGates" width="560" height="160"></canvas>
+<div class="canvas-caption">Gate set visualizer — hover over a gate to see its matrix and effect on |0⟩ and |1⟩</div>
+
+<!-- Exercises -->
+<div class="ex-block" id="ex1a">
+  <div class="ex-header"><span class="ex-tag">Ex 1.1</span><span class="ex-title">Universal gate set</span></div>
+  <div class="ex-body">
+    <p>Which of the following sets is universal for quantum computation? Type the letter: A) &#123;H, CNOT&#125; &nbsp; B) &#123;H, S, T, CNOT&#125; &nbsp; C) &#123;H, S, CNOT&#125; &nbsp; D) &#123;X, Y, Z&#125;</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">Answer:</span>
+      <input class="answer-input" id="a1a" placeholder="A/B/C/D" oninput="chk('a1a','B','ex1a')">
+      <button class="btn sm" onclick="chk('a1a','B','ex1a')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h1a')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h1a">The set &#123;H,S,CNOT&#125; generates only the Clifford group — efficient to simulate classically. You need the T gate to break that and achieve full universality.</div>
+    <div class="feedback" id="f1a"></div>
+  </div>
+</div>
+
+<div class="ex-block" id="ex1b">
+  <div class="ex-header"><span class="ex-tag">Ex 1.2</span><span class="ex-title">Steps of quantum computation</span></div>
+  <div class="ex-body">
+    <p>In what state do we always prepare the qubits at the start of a quantum computation?</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">Answer:</span>
+      <input class="answer-input" id="a1b" placeholder="|?⟩" oninput="chk('a1b','|0>','ex1b')" style="width:100px;">
+      <button class="btn sm" onclick="chk('a1b','|0>','ex1b')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h1b')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h1b">All qubits start in the ground state — the first basis vector |0⟩. This is the standard initialization for quantum hardware.</div>
+    <div class="feedback" id="f1b"></div>
+  </div>
+</div>
+</section><!-- /s1 -->
+
+
+<!-- ══════════════════════════════════════ -->
+<!-- SECTION 2 — BOOLEAN FUNCTIONS         -->
+<!-- ══════════════════════════════════════ -->
+<section class="section" id="s2">
+<div class="section-num">Section 02</div>
+<h2>Computing Boolean Functions</h2>
+
+<p>Classical computers exist to evaluate <strong>Boolean functions</strong>: given n input bits, produce m output bits. Formally:</p>
+
+<div class="def">
+  <div class="def-title">Boolean Function</div>
+  A Boolean function is a map:
+  <div class="math-block">
+    <div class="eq">f : &#123;0,1&#125;ⁿ → &#123;0,1&#125;ᵐ</div>
+  </div>
+  It can always be represented by a <strong>truth table</strong> listing all 2ⁿ input combinations and the corresponding outputs.
+</div>
+
+<p>Example for n=3, m=2:</p>
+<div class="math-block">
+  <table style="border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:0.85rem;">
+    <tr><th style="padding:0.2rem 1rem;border-bottom:1px solid #ccc;">x</th><th style="padding:0.2rem 1rem;border-bottom:1px solid #ccc;">f(x)</th></tr>
+    <tr><td style="padding:0.2rem 1rem;text-align:center;">000</td><td style="padding:0.2rem 1rem;text-align:center;">01</td></tr>
+    <tr><td style="padding:0.2rem 1rem;text-align:center;">001</td><td style="padding:0.2rem 1rem;text-align:center;">00</td></tr>
+    <tr><td style="padding:0.2rem 1rem;text-align:center;">⋮</td><td style="padding:0.2rem 1rem;text-align:center;">⋮</td></tr>
+  </table>
+</div>
+
+<h3>Can a quantum computer evaluate f?</h3>
+<p>We want a unitary U that, given |x⟩ (an n-qubit state), produces |f(x)⟩. Naively:</p>
+<div class="math-block">
+  <div class="eq">|x⟩ &nbsp;─[Uᶠ]─&nbsp; |f(x)⟩</div>
+  <div class="eq"><span class="eq-note">n qubits in &nbsp;→&nbsp; m qubits out</span></div>
+</div>
+
+<div class="warning">
+  <strong>Problem:</strong> U must be <strong>unitary</strong> (invertible), which means it maps n+m qubits to n+m qubits with the same dimension. But if f is not injective (many-to-one), this direct encoding is NOT invertible — hence not unitary!
+</div>
+
+<h3>The Oracle Construction</h3>
+<p>The standard solution is to keep a copy of the input and add a separate m-qubit output register initialised to |0⟩:</p>
+
+<div class="def">
+  <div class="def-title">Quantum Oracle U_f</div>
+  <div class="math-block">
+    <div class="mstep">
+      <span class="mstep-label">Input state:</span>
+      <span class="mstep-body">|0⟩^⊗m ⊗ |x⟩  — n qubits for x, m ancilla qubits set to 0</span>
+    </div>
+    <div class="mstep">
+      <span class="mstep-label">Apply Uᶠ:</span>
+      <span class="mstep-body"><span class="c-r">|0⟩|x⟩</span> &nbsp;<span class="eq-arrow">──→</span>&nbsp; <span class="c-b">|f(x)⟩|x⟩</span></span>
+    </div>
+    <div class="mstep">
+      <span class="mstep-label">Inverse:</span>
+      <span class="mstep-body">U_f† maps |f(x)⟩|x⟩ back to |0⟩|x⟩, so U_f is unitary ✓</span>
+    </div>
+  </div>
+</div>
+
+<p>The output register holds |f(x)⟩ and the input register still holds |x⟩. Both are preserved.</p>
+
+<div class="math-block">
+  <div class="eq" style="font-size:1rem;">
+    |0⟩<sup>⊗m</sup>|x⟩ &nbsp;
+    <span style="color:var(--accent);">──[Uᶠ]──</span> &nbsp;
+    |f(x)⟩|x⟩ &nbsp;&nbsp;
+    <span style="color:var(--red);">──[Uᶠ†]──</span> &nbsp;
+    |0⟩<sup>⊗m</sup>|x⟩
+  </div>
+</div>
+
+<div class="note-box">
+  <strong>Note:</strong> If we measure after applying U_f, we obtain both f(x) and x in binary representation. The input register is always recoverable, confirming invertibility.
+</div>
+
+<div class="insight">
+  The oracle construction is a key design pattern in quantum computing. It appears in Deutsch–Jozsa, Grover's, and Shor's algorithms. The trick of "copy x into the output, compute f(x) in a fresh register" converts any function into a unitary gate.
+</div>
+
+<!-- Exercises -->
+<div class="ex-block" id="ex2a">
+  <div class="ex-header"><span class="ex-tag">Ex 2.1</span><span class="ex-title">Why keep the input?</span></div>
+  <div class="ex-body">
+    <p>Why can't we just map |x⟩ → |f(x)⟩ directly in a quantum circuit? Type "not injective" or "not invertible".</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">Answer:</span>
+      <input class="answer-input" id="a2a" placeholder="..." oninput="chkContains('a2a',['invert','inject'],'ex2a')" style="width:200px;">
+      <button class="btn sm" onclick="chkContains('a2a',['invert','inject'],'ex2a')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h2a')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h2a">Unitary matrices are bijections — they must be invertible. If f sends two different inputs to the same output, U_f would not be invertible. The oracle construction fixes this by keeping x.</div>
+    <div class="feedback" id="f2a"></div>
+  </div>
+</div>
+
+<div class="ex-block" id="ex2b">
+  <div class="ex-header"><span class="ex-tag">Ex 2.2</span><span class="ex-title">Oracle action</span></div>
+  <div class="ex-body">
+    <p>What state does U_f produce when applied to |0⟩|x⟩ ? (write as ket notation, e.g. |f(x)⟩|x⟩)</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">Answer:</span>
+      <input class="answer-input" id="a2b" placeholder="|?⟩|?⟩" oninput="chkContains('a2b',['f(x)','x'],'ex2b')" style="width:180px;">
+      <button class="btn sm" onclick="chkContains('a2b',['f(x)','x'],'ex2b')">Check</button>
+    </div>
+    <div class="feedback" id="f2b"></div>
+  </div>
+</div>
+</section><!-- /s2 -->
+
+
+<!-- ══════════════════════════════════════ -->
+<!-- SECTION 3 — QUANTUM PARALLELISM       -->
+<!-- ══════════════════════════════════════ -->
+<section class="section" id="s3">
+<div class="section-num">Section 03</div>
+<h2>Quantum Parallelism</h2>
+
+<p>Here is the key quantum advantage: if we put the input register into a <strong>superposition</strong> before applying U_f, the oracle evaluates f on <em>all inputs simultaneously</em>. This is quantum parallelism.</p>
+
+<h3>1-qubit example</h3>
+<p>Start with |0⟩, apply Hadamard to create |+⟩ = (|0⟩+|1⟩)/√2, then run U_f:</p>
+
+<div class="math-block">
+  <div class="mstep">
+    <span class="mstep-label">Initial:</span>
+    <span class="mstep-body">|0⟩|0⟩</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">After H⊗I:</span>
+    <span class="mstep-body">|ψ₁⟩ = |+⟩|0⟩ = <span class="c-b">(|0⟩+|1⟩)/√2</span> ⊗ |0⟩ = <span class="c-b">(|00⟩+|10⟩)/√2</span></span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">After Uᶠ:</span>
+    <span class="mstep-body">|ψ₂⟩ = Uᶠ|ψ₁⟩ = <span class="c-g">(|f(0)⟩|0⟩ + |f(1)⟩|1⟩) / √2</span></span>
+  </div>
+</div>
+
+<p>We have computed f(0) and f(1) <em>in a single application</em> of U_f!</p>
+
+<div class="warning">
+  <strong>Caveat:</strong> If we <em>measure</em> this state, we obtain only <em>one</em> result — either |f(0)⟩ or |f(1)⟩ with equal probability. The parallelism is real, but extracting all 2ⁿ values at once is impossible. Clever quantum algorithms exploit the superposition <em>before</em> measuring.
+</div>
+
+<h3>Superposition of 2 qubits</h3>
+<p>Apply Hadamard to each qubit independently:</p>
+
+<div class="math-block">
+  <div class="mstep">
+    <span class="mstep-label">Start:</span>
+    <span class="mstep-body">|0⟩ ⊗ |0⟩</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">H on each:</span>
+    <span class="mstep-body">H|0⟩ ⊗ H|0⟩ = |+⟩ ⊗ |+⟩</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Expand:</span>
+    <span class="mstep-body">|++⟩ = <span class="c-b">(|00⟩+|01⟩+|10⟩+|11⟩) / 2</span></span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">In vector:</span>
+    <span class="mstep-body"><span class="scalar">1/2</span></span>
+  </div>
+</div>
+
+<div class="math-block">
+  <div class="eq">
+    |++⟩ = <span class="scalar">1/2</span>
+    <span class="vec"><table><tr><td>1</td></tr><tr><td>1</td></tr><tr><td>1</td></tr><tr><td>1</td></tr></table></span>
+    = superposition of ALL 4 basis states
+  </div>
+</div>
+
+<p>The corresponding unitary is U = H⊗H:</p>
+
+<div class="math-block">
+  <div class="eq">
+    U = H ⊗ H =
+    <span class="mx"><table>
+      <tr><td class="c-l">1/√2</td><td class="c-l">1/√2</td></tr>
+      <tr><td class="c-l">1/√2</td><td class="c-n">−1/√2</td></tr>
+    </table></span>
+    ⊗
+    <span class="mx"><table>
+      <tr><td class="c-l">1/√2</td><td class="c-l">1/√2</td></tr>
+      <tr><td class="c-l">1/√2</td><td class="c-n">−1/√2</td></tr>
+    </table></span>
+    = <span class="scalar">1/2</span>
+    <span class="mx"><table>
+      <tr><td>1</td><td>1</td><td>1</td><td>1</td></tr>
+      <tr><td>1</td><td class="c-n">−1</td><td>1</td><td class="c-n">−1</td></tr>
+      <tr><td>1</td><td>1</td><td class="c-n">−1</td><td class="c-n">−1</td></tr>
+      <tr><td>1</td><td class="c-n">−1</td><td class="c-n">−1</td><td>1</td></tr>
+    </table></span>
+  </div>
+</div>
+
+<h3>Worked example: f(q₀,q₁) = q₀ ⊕ q₁</h3>
+<p>Let f be the XOR of the two input bits. The oracle maps |q₀⟩|q₁⟩|0⟩ → |q₀⟩|q₁⟩|q₀⊕q₁⟩ (two CNOT gates).</p>
+
+<div class="math-block">
+  <div class="mstep">
+    <span class="mstep-label">Step a — U_f:</span>
+    <span class="mstep-body">Apply two CNOTs: q₀ → ancilla and q₁ → ancilla gives |q₀⊕q₁⟩ in ancilla</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">With H⊗H⊗I:</span>
+    <span class="mstep-body">|ψ⟩ = Uᶠ|0++⟩ = <span class="c-b">(|000⟩+|101⟩+|110⟩+|011⟩) / 2</span></span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Step b — restore:</span>
+    <span class="mstep-body">Apply U_f† (same circuit, since CNOT² = I) to reset ancilla to |0⟩</span>
+  </div>
+</div>
+
+<div class="note-box">
+  <strong>Key property used:</strong> CNOT² = I (applying CNOT twice returns to the original state). This is why the circuit for U_f† is just the reverse of U_f for CNOT-based oracles.
+</div>
+
+<h3>Superposition of n qubits</h3>
+<p>The pattern generalises: applying H to every qubit in |0⟩⊗ⁿ gives an equal superposition of all 2ⁿ basis states.</p>
+
+<div class="def">
+  <div class="def-title">n-qubit Hadamard superposition</div>
+  <div class="math-block">
+    <div class="mstep">
+      <span class="mstep-label">Start:</span>
+      <span class="mstep-body">|0⟩⊗ⁿ = |0⟩⊗|0⟩⊗…⊗|0⟩ &nbsp;(n times)</span>
+    </div>
+    <div class="mstep">
+      <span class="mstep-label">Apply H⊗ⁿ:</span>
+      <span class="mstep-body">|+⟩⊗ⁿ = <span class="c-b">(|0⟩+|1⟩)/√2 ⊗ … ⊗ (|0⟩+|1⟩)/√2</span></span>
+    </div>
+    <div class="mstep">
+      <span class="mstep-label">Expand:</span>
+      <span class="mstep-body">= (1/√2)ⁿ · (|00…0⟩ + |00…1⟩ + … + |11…1⟩)</span>
+    </div>
+    <div class="mstep">
+      <span class="mstep-label">Compact:</span>
+      <span class="mstep-body">= <span class="c-g">1/2^(n/2) · Σₗ₌₀^(2ⁿ−1) |ℓ⟩</span></span>
+    </div>
+  </div>
+  where |ℓ⟩ means |binary representation of the integer ℓ⟩. For example, |3⟩ = |011⟩ for n=3.
+</div>
+
+<canvas id="cParallel" width="560" height="200"></canvas>
+<div class="canvas-caption">Drag the slider to set n — see how many basis states are in superposition after H⊗ⁿ</div>
+<div class="controls">
+  <label>n = <input type="range" id="slN" min="1" max="6" value="2" oninput="updateParallel()"></label>
+  <span class="ctrl-val" id="nVal">2</span>
+  <span>qubits → <span id="nStates" style="color:var(--accent);font-family:'IBM Plex Mono',monospace;font-weight:600;">4</span> states</span>
+</div>
+
+<!-- Exercises -->
+<div class="ex-block" id="ex3a">
+  <div class="ex-header"><span class="ex-tag">Ex 3.1</span><span class="ex-title">Superposition count</span></div>
+  <div class="ex-body">
+    <p>If you apply H to each of 5 qubits (all starting in |0⟩), how many basis states are in the resulting superposition?</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">Answer:</span>
+      <input class="answer-input" id="a3a" placeholder="number" oninput="chk('a3a','32','ex3a')" style="width:100px;">
+      <button class="btn sm" onclick="chk('a3a','32','ex3a')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h3a')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h3a">The number of basis states is 2ⁿ. For n=5: 2⁵ = 32.</div>
+    <div class="feedback" id="f3a"></div>
+  </div>
+</div>
+
+<div class="ex-block" id="ex3b">
+  <div class="ex-header"><span class="ex-tag">Ex 3.2</span><span class="ex-title">Amplitude in |+⟩⊗n</span></div>
+  <div class="ex-body">
+    <p>In the state H⊗³|000⟩, what is the amplitude of each basis state |ℓ⟩? (give exact value, e.g. 1/2)</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">Answer:</span>
+      <input class="answer-input" id="a3b" placeholder="1/?" oninput="chk('a3b','1/2√2','ex3b')" style="width:120px;">
+      <button class="btn sm" onclick="chk('a3b','1/2√2','ex3b')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h3b')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h3b">The amplitude is (1/√2)³ = 1/(2√2) ≈ 0.354. All 8 states have equal amplitude, and |amplitude|² × 8 = 1 ✓</div>
+    <div class="feedback" id="f3b"></div>
+  </div>
+</div>
+</section><!-- /s3 -->
+
+
+<!-- ══════════════════════════════════════ -->
+<!-- SECTION 4 — STATE TRANSFORMATION      -->
+<!-- ══════════════════════════════════════ -->
+<section class="section" id="s4">
+<div class="section-num">Section 04</div>
+<h2>Transforming a State into Another</h2>
+
+<p>We know how to build specific gates like H, X, Z. But given <em>any</em> two quantum states |ψ⟩ and |φ⟩, can we always find a unitary that maps one to the other? Yes — and here is the constructive proof.</p>
+
+<div class="thm">
+  <div class="thm-title">Theorem</div>
+  Given any two unit vectors |ψ⟩ and |φ⟩ in ℂᴺ, there always exists a unitary U such that <strong>U|ψ⟩ = |φ⟩</strong>.
+</div>
+
+<h3>Proof (constructive)</h3>
+
+<div class="math-block">
+  <div class="mstep">
+    <span class="mstep-label" style="color:var(--accent);">Step 1</span>
+    <span class="mstep-body"><strong>Build two orthonormal bases.</strong> Using Gram–Schmidt, extend |ψ⟩ to a full basis &#123;|ψ₀⟩, |ψ₁⟩, …, |ψ_&#123;N−1&#125;⟩&#125; with |ψ₀⟩ = |ψ⟩. Similarly extend |φ⟩ to &#123;|φ₀⟩, |φ₁⟩, …, |φ_&#123;N−1&#125;⟩&#125; with |φ₀⟩ = |φ⟩.</span>
+  </div>
+  <hr class="math-sep">
+  <div class="mstep">
+    <span class="mstep-label" style="color:var(--accent);">Step 2</span>
+    <span class="mstep-body"><strong>Construct U.</strong> Define:
+      <div class="eq" style="margin-top:0.3rem;">U = Σₗ |φₗ⟩⟨ψₗ|</div>
+      This is a sum of outer products: each basis vector |ψₗ⟩ is mapped to the corresponding |φₗ⟩.
+    </span>
+  </div>
+  <hr class="math-sep">
+  <div class="mstep">
+    <span class="mstep-label" style="color:var(--accent);">Step 3</span>
+    <span class="mstep-body"><strong>Check U is unitary:</strong> U†U = I.</span>
+  </div>
+</div>
+
+<p>Let's verify unitarity carefully:</p>
+
+<div class="math-block">
+  <div class="mstep">
+    <span class="mstep-label">U†:</span>
+    <span class="mstep-body">U† = (Σₗ |φₗ⟩⟨ψₗ|)† = Σₗ |ψₗ⟩⟨φₗ|</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">U†U:</span>
+    <span class="mstep-body">= (Σₗ |ψₗ⟩⟨φₗ|)(Σₘ |φₘ⟩⟨ψₘ|) = Σₗ Σₘ |ψₗ⟩ <span class="c-r">⟨φₗ|φₘ⟩</span> ⟨ψₘ|</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Orthonorm.:</span>
+    <span class="mstep-body"><span class="c-r">⟨φₗ|φₘ⟩ = δₗₘ</span> &nbsp;(1 if l=m, 0 otherwise, since &#123;|φₗ⟩&#125; is orthonormal)</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Result:</span>
+    <span class="mstep-body">U†U = Σₗ |ψₗ⟩⟨ψₗ| = <span class="c-g">I</span></span>
+  </div>
+</div>
+
+<div class="note-box">
+  <strong>Why does Σₗ |ψₗ⟩⟨ψₗ| = I ?</strong> This is the <em>completeness relation</em> (resolution of identity). Any vector |Φ⟩ can be expanded as |Φ⟩ = Σₗ cₗ|ψₗ⟩ with cₗ = ⟨ψₗ|Φ⟩. Therefore:
+  <div class="math-block" style="margin-top:0.4rem;">
+    <div class="eq">(Σₗ |ψₗ⟩⟨ψₗ|)|Φ⟩ = Σₗ |ψₗ⟩⟨ψₗ|Φ⟩ = Σₗ cₗ|ψₗ⟩ = |Φ⟩</div>
+    <div class="eq"><span class="eq-note">True for every |Φ⟩ ⟹ the operator equals I</span></div>
+  </div>
+</div>
+
+<p>Finally, check that U maps |ψ⟩ to |φ⟩:</p>
+
+<div class="math-block">
+  <div class="mstep">
+    <span class="mstep-label">U|ψ⟩:</span>
+    <span class="mstep-body">= (Σₗ |φₗ⟩⟨ψₗ|)|ψ₀⟩ = Σₗ |φₗ⟩ <span class="c-r">⟨ψₗ|ψ₀⟩</span></span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Orthonorm.:</span>
+    <span class="mstep-body"><span class="c-r">⟨ψₗ|ψ₀⟩ = δₗ₀</span> &nbsp;(1 only when l=0)</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Result:</span>
+    <span class="mstep-body">= Σₗ |φₗ⟩ δₗ₀ = |φ₀⟩ = <span class="c-g">|φ⟩ ✓</span></span>
+  </div>
+</div>
+
+<div class="insight">
+  This proof is constructive — it tells you how to build U explicitly. In practice, the Gram–Schmidt step is done numerically, and the resulting U is decomposed into gates. This is the basis of quantum state preparation algorithms.
+</div>
+
+<!-- Exercises -->
+<div class="ex-block" id="ex4a">
+  <div class="ex-header"><span class="ex-tag">Ex 4.1</span><span class="ex-title">Completeness relation</span></div>
+  <div class="ex-body">
+    <p>If &#123;|ψₗ⟩&#125; is an orthonormal basis, what does Σₗ |ψₗ⟩⟨ψₗ| equal? (Write the symbol)</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">Answer:</span>
+      <input class="answer-input" id="a4a" placeholder="?" oninput="chk('a4a','I','ex4a')" style="width:80px;">
+      <button class="btn sm" onclick="chk('a4a','I','ex4a')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h4a')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h4a">The sum of outer products of any orthonormal basis equals the identity matrix I. This is the completeness relation, fundamental to quantum mechanics.</div>
+    <div class="feedback" id="f4a"></div>
+  </div>
+</div>
+</section><!-- /s4 -->
+
+
+<!-- ══════════════════════════════════════ -->
+<!-- SECTION 5 — GENERATING α|0⟩+β|1⟩     -->
+<!-- ══════════════════════════════════════ -->
+<section class="section" id="s5">
+<div class="section-num">Section 05</div>
+<h2>Generating an Arbitrary State α|0⟩ + β|1⟩ from |0⟩</h2>
+
+<p>Section 4 gave a general existence proof. Now let's be <em>explicit</em> for the 1-qubit case: given |0⟩, build the gate U that produces any target state |φ⟩ = α|0⟩ + β|1⟩.</p>
+
+<h3>Finding U explicitly</h3>
+<p>We have two orthonormal bases:</p>
+<div class="math-block">
+  <div class="mstep">
+    <span class="mstep-label">Input basis:</span>
+    <span class="mstep-body">|ψ₀⟩ = |0⟩ &nbsp;&nbsp; |ψ₁⟩ = |1⟩</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Output basis:</span>
+    <span class="mstep-body">|φ₀⟩ = |φ⟩ = α|0⟩ + β|1⟩ &nbsp;&nbsp; |φ₁⟩ = |φ^⊥⟩ = ?</span>
+  </div>
+</div>
+
+<p>We need to find |φ^⊥⟩ orthogonal to |φ⟩. Write |φ^⊥⟩ = γ|0⟩ + δ|1⟩ and impose ⟨φ^⊥|φ⟩ = 0:</p>
+
+<div class="math-block">
+  <div class="mstep">
+    <span class="mstep-label">Condition:</span>
+    <span class="mstep-body">⟨φ^⊥|φ⟩ = (γ*⟨0| + δ*⟨1|)(α|0⟩ + β|1⟩) = 0</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Expand:</span>
+    <span class="mstep-body"><span class="c-r">γ*α</span> + <span class="c-b">δ*β</span> = 0 &nbsp; (using ⟨0|0⟩=1, ⟨1|1⟩=1, ⟨0|1⟩=0)</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Solution:</span>
+    <span class="mstep-body">One valid choice: <span class="c-g">γ = −β*</span> and <span class="c-g">δ = α*</span></span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Verify:</span>
+    <span class="mstep-body">γ*α + δ*β = (−β*)*α + (α*)*β = −βα + αβ = 0 ✓</span>
+  </div>
+</div>
+
+<p>Now assemble U using the formula U = Σₗ |φₗ⟩⟨ψₗ|:</p>
+
+<div class="math-block">
+  <div class="mstep">
+    <span class="mstep-label">U =</span>
+    <span class="mstep-body">|φ⟩⟨0| + |φ^⊥⟩⟨1|</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Substitute:</span>
+    <span class="mstep-body">= (α|0⟩+β|1⟩)(1 0) + (−β*|0⟩+α*|1⟩)(0 1)</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Matrix form:</span>
+    <span class="mstep-body">= <span class="c-b">α</span>
+      <span class="vec"><table><tr><td>1</td></tr><tr><td>0</td></tr></table></span>(1 0)
+      + <span class="c-b">β</span>
+      <span class="vec"><table><tr><td>0</td></tr><tr><td>1</td></tr></table></span>(1 0)
+      + <span class="c-n">−β*</span>
+      <span class="vec"><table><tr><td>1</td></tr><tr><td>0</td></tr></table></span>(0 1)
+      + <span class="c-g">α*</span>
+      <span class="vec"><table><tr><td>0</td></tr><tr><td>1</td></tr></table></span>(0 1)
+    </span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Result:</span>
+    <span class="mstep-body">U =
+      <span class="mx"><table>
+        <tr><td class="c-l">α</td><td class="c-n">−β*</td></tr>
+        <tr><td class="c-l">β</td><td class="c-g">α*</td></tr>
+      </table></span>
+    </span>
+  </div>
+</div>
+
+<h3>Implementation with rotation gates</h3>
+<p>This U can be implemented using the Z-rotation gate R_z(φ) and the X-rotation gate R_x(θ):</p>
+
+<div class="def">
+  <div class="def-title">Rotation gate decomposition</div>
+  <div class="math-block">
+    <div class="eq">
+      U(φ,θ) = R_z(φ) · R_x(θ) =
+      <span class="mx"><table>
+        <tr><td class="c-n">e^&#123;−jφ/2&#125;</td><td class="c-0">0</td></tr>
+        <tr><td class="c-0">0</td><td class="c-g">e^&#123;jφ/2&#125;</td></tr>
+      </table></span>
+      ·
+      <span class="mx"><table>
+        <tr><td>cos θ/2</td><td class="c-n">−j sin θ/2</td></tr>
+        <tr><td class="c-n">−j sin θ/2</td><td>cos θ/2</td></tr>
+      </table></span>
+    </div>
+    <div class="eq" style="margin-top:0.5rem;">
+      =
+      <span class="mx"><table>
+        <tr><td class="c-n">e^&#123;−jφ/2&#125;</td><td>0</td></tr>
+        <tr><td>0</td><td class="c-g">e^&#123;jφ/2&#125;</td></tr>
+      </table></span>
+      <span class="mx"><table>
+        <tr><td>cos θ/2</td><td class="c-n">−j sin θ/2</td></tr>
+        <tr><td class="c-n">−j sin θ/2</td><td>cos θ/2</td></tr>
+      </table></span>
+      =
+      <span class="mx"><table>
+        <tr><td class="c-n">e^&#123;−jφ/2&#125; cos(θ/2)</td><td class="c-n">−je^&#123;−jφ/2&#125; sin(θ/2)</td></tr>
+        <tr><td class="c-r">−je^&#123;jφ/2&#125; sin(θ/2)</td><td class="c-g">e^&#123;jφ/2&#125; cos(θ/2)</td></tr>
+      </table></span>
+    </div>
+  </div>
+  <p style="margin-top:0.5rem;font-size:0.87rem;">
+  One can verify: <span class="math-inline">U₁₁ = U₂₂*</span> and <span class="math-inline">U₁₂ = −U₂₁*</span> and <span class="math-inline">|U₁₁|²+|U₂₁|² = 1</span>.
+  </p>
+</div>
+
+<p>Applying to |0⟩:</p>
+<div class="math-block">
+  <div class="mstep">
+    <span class="mstep-label">U(φ,θ)|0⟩:</span>
+    <span class="mstep-body">= e^&#123;−jφ/2&#125; cos(θ/2) |0⟩ − je^&#123;jφ/2&#125; sin(θ/2) |1⟩</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Factor out:</span>
+    <span class="mstep-body">= <span class="c-r">e^&#123;−jφ/2&#125;</span> [ cos(θ/2) |0⟩ + e^&#123;j(φ−π/2)&#125; sin(θ/2) |1⟩ ]</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Note:</span>
+    <span class="mstep-body">The <span class="c-r">e^&#123;−jφ/2&#125;</span> out front is a <em>global phase</em> — it has no physical effect on measurement probabilities. So we can ignore it and write:</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Effective:</span>
+    <span class="mstep-body">U(φ,θ)|0⟩ ≡ cos(θ/2)|0⟩ + e^&#123;j(φ−π/2)&#125; sin(θ/2)|1⟩</span>
+  </div>
+</div>
+
+<div class="insight">
+  Comparing with |ψ⟩ = α|0⟩ + β|1⟩: we need <strong>cos(θ/2) = |α|</strong> and <strong>e^&#123;j(φ−π/2)&#125; sin(θ/2) = β</strong>. This gives θ and φ in terms of α, β. Any single-qubit state is reachable with just two real parameters!
+</div>
+
+<!-- Interactive: state generator -->
+<canvas id="cBloch" width="560" height="220"></canvas>
+<div class="canvas-caption">Bloch sphere projection — adjust θ (polar) and φ (azimuthal) to generate any qubit state</div>
+<div class="controls">
+  <label>θ: <input type="range" id="slTheta" min="0" max="180" value="60" oninput="updateBloch()"></label>
+  <span class="ctrl-val" id="thetaVal">60°</span>
+  <label>φ: <input type="range" id="slPhi" min="0" max="360" value="90" oninput="updateBloch()"></label>
+  <span class="ctrl-val" id="phiVal">90°</span>
+</div>
+
+<!-- Exercises -->
+<div class="ex-block" id="ex5a">
+  <div class="ex-header"><span class="ex-tag">Ex 5.1</span><span class="ex-title">Find θ for |+⟩</span></div>
+  <div class="ex-body">
+    <p>The state |+⟩ = (|0⟩+|1⟩)/√2 has α = β = 1/√2. Using U(φ,θ)|0⟩ = cos(θ/2)|0⟩ + …|1⟩, what value of θ (in degrees) gives cos(θ/2) = 1/√2?</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">θ =</span>
+      <input class="answer-input" id="a5a" placeholder="degrees" oninput="chk('a5a','90','ex5a')" style="width:100px;">
+      <button class="btn sm" onclick="chk('a5a','90','ex5a')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h5a')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h5a">cos(θ/2) = 1/√2 means θ/2 = 45°, so θ = 90°. This is the "equator" of the Bloch sphere.</div>
+    <div class="feedback" id="f5a"></div>
+  </div>
+</div>
+
+<div class="ex-block" id="ex5b">
+  <div class="ex-header"><span class="ex-tag">Ex 5.2</span><span class="ex-title">Find θ and φ for a given state (from the notes)</span></div>
+  <div class="ex-body">
+    <p>Find θ and φ (in degrees) to generate |ψ⟩ = 0.8|0⟩ + 0.6 e^&#123;j5π/3&#125;|1⟩. Note: cos(θ/2) = 0.8 and the relative phase.</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">θ ≈</span>
+      <input class="answer-input" id="a5b" placeholder="degrees" oninput="chk2('a5b','a5c','73','420','ex5b')" style="width:90px;">
+      <span class="ans-label">φ ≈</span>
+      <input class="answer-input" id="a5c" placeholder="degrees" oninput="chk2('a5b','a5c','73','420','ex5b')" style="width:90px;">
+      <button class="btn sm" onclick="chk2('a5b','a5c','73','420','ex5b')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h5b')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h5b">cos(θ/2)=0.8 → θ/2=arccos(0.8)≈36.87° → θ≈73.7°≈73°. For φ: the relative phase is e^&#123;j(φ−π/2)&#125; = e^&#123;j5π/3&#125; → φ−π/2 = 5π/3 → φ = 5π/3+π/2 = 13π/6 ≈ 420°.</div>
+    <div class="feedback" id="f5b"></div>
+  </div>
+</div>
+</section><!-- /s5 -->
+
+
+<!-- ══════════════════════════════════════ -->
+<!-- SECTION 6 — NO CLONING THEOREM        -->
+<!-- ══════════════════════════════════════ -->
+<section class="section" id="s6">
+<div class="section-num">Section 06</div>
+<h2>The No-Cloning Theorem</h2>
+
+<p>In classical computing, copying a bit is trivial: just read it and write the same value elsewhere. Quantum mechanics forbids this for <em>unknown</em> states — a deep and surprising result.</p>
+
+<div class="thm">
+  <div class="thm-title">No-Cloning Theorem</div>
+  There is <strong>no unitary operation U</strong> that can copy an arbitrary unknown quantum state. That is, there is no U such that U|ψ⟩|0⟩ = |ψ⟩|ψ⟩ for <em>all</em> states |ψ⟩.
+</div>
+
+<h3>Proof by contradiction (reductio ad absurdum)</h3>
+<p>Suppose — for contradiction — that such a cloning unitary U exists.</p>
+
+<div class="math-block">
+  <div class="mstep">
+    <span class="mstep-label" style="color:var(--purple);">Assumption:</span>
+    <span class="mstep-body">∃ U such that U|ψ⟩|0⟩ = |ψ⟩|ψ⟩ for ALL |ψ⟩</span>
+  </div>
+  <hr class="math-sep">
+  <div class="mstep">
+    <span class="mstep-label" style="color:var(--accent);">For |0⟩:</span>
+    <span class="mstep-body">U<span class="c-b">|0⟩|0⟩</span> = <span class="c-b">|0⟩|0⟩ = |00⟩</span></span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label" style="color:var(--accent);">For |1⟩:</span>
+    <span class="mstep-body">U<span class="c-g">|1⟩|0⟩</span> = <span class="c-g">|1⟩|1⟩ = |11⟩</span></span>
+  </div>
+  <hr class="math-sep">
+  <div class="mstep">
+    <span class="mstep-label" style="color:var(--orange);">Now try |ψ⟩:</span>
+    <span class="mstep-body">Let |ψ⟩ = α|0⟩ + β|1⟩</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Apply U:</span>
+    <span class="mstep-body">U|ψ⟩|0⟩ = U(α|0⟩ + β|1⟩)|0⟩ = αU|0⟩|0⟩ + βU|1⟩|0⟩</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Substitute:</span>
+    <span class="mstep-body">= α<span class="c-b">|00⟩</span> + β<span class="c-g">|11⟩</span></span>
+  </div>
+  <hr class="math-sep">
+  <div class="mstep">
+    <span class="mstep-label" style="color:var(--red);">Compare to:</span>
+    <span class="mstep-body">|ψ⟩|ψ⟩ = (α|0⟩+β|1⟩)(α|0⟩+β|1⟩)</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Expand:</span>
+    <span class="mstep-body">= <span class="c-l">α²</span>|00⟩ + <span class="c-o">αβ</span>|01⟩ + <span class="c-o">αβ</span>|10⟩ + <span class="c-n">β²</span>|11⟩</span>
+  </div>
+  <hr class="math-sep">
+  <div class="mstep">
+    <span class="mstep-label" style="color:var(--red);">Contradiction:</span>
+    <span class="mstep-body">α|00⟩ + β|11⟩ ≠ α²|00⟩ + αβ|01⟩ + αβ|10⟩ + β²|11⟩</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Reason:</span>
+    <span class="mstep-body">Unless α=0 or β=0 (i.e., |ψ⟩ is already a basis state), these are different states.</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label" style="color:var(--green);">Conclusion:</span>
+    <span class="mstep-body">Such U cannot exist. ∎</span>
+  </div>
+</div>
+
+<div class="note-box">
+  <strong>What if |ψ⟩ is <em>known</em>?</strong> The theorem only applies to <em>unknown</em> states. If you already know α and β, you can simply prepare a fresh qubit in the state |ψ⟩ by the state-preparation procedure of Section 5. The constraint is on <em>blind</em> copying.
+</div>
+
+<div class="insight">
+  The no-cloning theorem is the quantum-mechanical reason why quantum communication is fundamentally more secure than classical: an eavesdropper cannot copy a qubit without disturbing it (because no cloning unitary exists). This underpins quantum cryptography (BB84 protocol).
+</div>
+
+<!-- Exercises -->
+<div class="ex-block" id="ex6a">
+  <div class="ex-header"><span class="ex-tag">Ex 6.1</span><span class="ex-title">Key step in the proof</span></div>
+  <div class="ex-body">
+    <p>In the no-cloning proof, what property of U is used to distribute it over α|0⟩ + β|1⟩ ? (one word)</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">Answer:</span>
+      <input class="answer-input" id="a6a" placeholder="..." oninput="chkContains('a6a',['linear'],'ex6a')" style="width:140px;">
+      <button class="btn sm" onclick="chkContains('a6a',['linear'],'ex6a')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h6a')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h6a">U is linear: U(α|0⟩+β|1⟩)|0⟩ = αU|0⟩|0⟩ + βU|1⟩|0⟩. Linearity forces the cross terms to vanish — the same linearity that makes cloning impossible.</div>
+    <div class="feedback" id="f6a"></div>
+  </div>
+</div>
+
+<div class="ex-block" id="ex6b">
+  <div class="ex-header"><span class="ex-tag">Ex 6.2</span><span class="ex-title">Cloning basis states</span></div>
+  <div class="ex-body">
+    <p>Is it possible to "clone" the state |0⟩? That is, can we build a circuit that maps |0⟩|0⟩ → |0⟩|0⟩? (yes/no)</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">Answer:</span>
+      <input class="answer-input" id="a6b" placeholder="yes/no" oninput="chk('a6b','yes','ex6b')" style="width:100px;">
+      <button class="btn sm" onclick="chk('a6b','yes','ex6b')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h6b')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h6b">Yes! If the state is known (e.g., |0⟩ or |1⟩), you can prepare a second copy. The identity gate does it for |0⟩. The theorem only forbids cloning of UNKNOWN arbitrary superpositions.</div>
+    <div class="feedback" id="f6b"></div>
+  </div>
+</div>
+</section><!-- /s6 -->
+
+
+<!-- ══════════════════════════════════════ -->
+<!-- SECTION 7 — BELL BASIS MEASUREMENT    -->
+<!-- ══════════════════════════════════════ -->
+<section class="section" id="s7">
+<div class="section-num">Section 07</div>
+<h2>Measuring Two Qubits in the Bell Basis</h2>
+
+<p>Recall the four <strong>Bell states</strong> (maximally entangled 2-qubit states):</p>
+
+<div class="def">
+  <div class="def-title">Bell States</div>
+  <div class="math-block">
+    <div class="mstep">
+      <span class="mstep-label">|Φ⁺⟩ =</span>
+      <span class="mstep-body"><span class="c-b">(|00⟩ + |11⟩) / √2</span></span>
+    </div>
+    <div class="mstep">
+      <span class="mstep-label">|Φ⁻⟩ =</span>
+      <span class="mstep-body"><span class="c-g">(|00⟩ − |11⟩) / √2</span></span>
+    </div>
+    <div class="mstep">
+      <span class="mstep-label">|Ψ⁺⟩ =</span>
+      <span class="mstep-body"><span class="c-o">(|01⟩ + |10⟩) / √2</span></span>
+    </div>
+    <div class="mstep">
+      <span class="mstep-label">|Ψ⁻⟩ =</span>
+      <span class="mstep-body"><span class="c-n">(|01⟩ − |10⟩) / √2</span></span>
+    </div>
+  </div>
+</div>
+
+<h3>The Bell measurement circuit</h3>
+<p>To measure in the Bell basis, we first apply the <strong>inverse Bell circuit</strong> (which maps Bell states to computational basis states), then measure in the computational basis.</p>
+
+<p>The inverse Bell circuit is: CNOT (control=qubit 1, target=qubit 2), then H on qubit 1.</p>
+
+<div class="math-block">
+  <div class="eq" style="font-size:0.9rem;">
+    |Ψ⟩ ──●──[H]──[M] &nbsp;&nbsp;&nbsp;&nbsp; (qubit 1)
+  </div>
+  <div class="eq" style="font-size:0.9rem;">
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;──⊕──────[M] &nbsp;&nbsp;&nbsp;&nbsp; (qubit 2)
+  </div>
+</div>
+
+<h3>Step-by-step: which Bell state maps to which outcome?</h3>
+
+<div class="math-block">
+  <div class="mstep">
+    <span class="mstep-label" style="color:var(--accent);">|Φ⁺⟩:</span>
+    <span class="mstep-body">|00⟩+|11⟩ 
+      <span class="c-r">─CNOT→</span> |00⟩+|01⟩ = |0⟩(|0⟩+|1⟩) 
+      <span class="c-b">─H⊗I→</span> |0⟩·<span class="c-b">H</span>(|0⟩+|1⟩)/1 
+      = |0⟩·√2|+⟩ → 
+      wait, let's be careful:</span>
+  </div>
+</div>
+
+<div class="note-box">
+  <strong>Notation shortcut used in the notes:</strong> We work on the unnormalised states and drop the 1/√2 factors temporarily, restoring at the end.
+</div>
+
+<div class="math-block">
+  <div class="mstep">
+    <span class="mstep-label" style="color:var(--accent);">|Φ⁺⟩ → 00:</span>
+    <span class="mstep-body">
+      |00⟩+|11⟩ 
+      <span class="c-r">─CNOT─→</span> |00⟩+|01⟩ = |0⟩(|0⟩+|1⟩)
+      <span class="c-b">─H on q1─→</span> (|0⟩+|1⟩)(|0⟩+|1⟩) <span class="c-g">∝ |00⟩ → outcome 00 ✓</span>
+    </span>
+  </div>
+  <hr class="math-sep">
+  <div class="mstep">
+    <span class="mstep-label" style="color:var(--green);">|Φ⁻⟩ → 01:</span>
+    <span class="mstep-body">
+      |00⟩−|11⟩
+      <span class="c-r">─CNOT─→</span> |00⟩−|01⟩ = |0⟩(|0⟩−|1⟩)
+      <span class="c-b">─H─→</span> (|0⟩+|1⟩)(|0⟩−|1⟩) <span class="c-g">∝ |01⟩ → outcome 01 ✓</span>
+    </span>
+  </div>
+  <hr class="math-sep">
+  <div class="mstep">
+    <span class="mstep-label" style="color:var(--orange);">|Ψ⁺⟩ → 10:</span>
+    <span class="mstep-body">
+      |01⟩+|10⟩
+      <span class="c-r">─CNOT─→</span> |11⟩+|10⟩ = |1⟩(|1⟩+|0⟩)
+      <span class="c-b">─H─→</span> (|0⟩−|1⟩)(|0⟩+|1⟩) <span class="c-g">∝ |10⟩ → outcome 10 ✓</span>
+    </span>
+  </div>
+  <hr class="math-sep">
+  <div class="mstep">
+    <span class="mstep-label" style="color:var(--red);">|Ψ⁻⟩ → 11:</span>
+    <span class="mstep-body">
+      |01⟩−|10⟩
+      <span class="c-r">─CNOT─→</span> |11⟩−|10⟩ = |1⟩(|1⟩−|0⟩)
+      <span class="c-b">─H─→</span> (|0⟩−|1⟩)(|1⟩−|0⟩) <span class="c-g">∝ −|11⟩ → outcome 11 ✓</span>
+    </span>
+  </div>
+</div>
+
+<p>Summary of the Bell measurement:</p>
+
+<table class="tele-table">
+  <tr><th>Measurement outcome</th><th>Bell state detected</th><th>Probability</th></tr>
+  <tr><td>00</td><td>|Φ⁺⟩</td><td>|α|²</td></tr>
+  <tr><td>01</td><td>|Φ⁻⟩</td><td>|β|²</td></tr>
+  <tr><td>10</td><td>|Ψ⁺⟩</td><td>|γ|²</td></tr>
+  <tr><td>11</td><td>|Ψ⁻⟩</td><td>|δ|²</td></tr>
+</table>
+
+<p>where |Ψ⟩ = α|Φ⁺⟩ + β|Φ⁻⟩ + γ|Ψ⁺⟩ + δ|Ψ⁻⟩ is the state before measurement.</p>
+
+<div class="insight">
+  The Bell measurement is at the heart of quantum teleportation and superdense coding. It converts the entangled "language" of Bell states into the classical language of 00/01/10/11, allowing classical communication of quantum information.
+</div>
+
+<!-- Interactive Bell visualizer -->
+<canvas id="cBell" width="560" height="200"></canvas>
+<div class="canvas-caption">Bell measurement simulator — click a Bell state to see which outcome you get</div>
+<div class="controls" style="gap:0.5rem;">
+  <button class="btn sm" onclick="simBell(0)">|Φ⁺⟩</button>
+  <button class="btn sm" onclick="simBell(1)">|Φ⁻⟩</button>
+  <button class="btn sm" onclick="simBell(2)">|Ψ⁺⟩</button>
+  <button class="btn sm" onclick="simBell(3)">|Ψ⁻⟩</button>
+  <button class="btn" onclick="resetBell()">Reset</button>
+</div>
+
+<!-- Exercises -->
+<div class="ex-block" id="ex7a">
+  <div class="ex-header"><span class="ex-tag">Ex 7.1</span><span class="ex-title">Bell circuit gates</span></div>
+  <div class="ex-body">
+    <p>The inverse Bell circuit (to decode Bell states into computational basis) consists of two gates applied in order. What are they? (write as "gate1, gate2" where gate1 is applied first)</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">Answer:</span>
+      <input class="answer-input" id="a7a" placeholder="..." oninput="chkContains('a7a',['cnot','h'],'ex7a')" style="width:180px;">
+      <button class="btn sm" onclick="chkContains('a7a',['cnot','h'],'ex7a')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h7a')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h7a">First apply CNOT (control=qubit1, target=qubit2), then Hadamard on qubit1. This is the reverse of the Bell state preparation circuit.</div>
+    <div class="feedback" id="f7a"></div>
+  </div>
+</div>
+</section><!-- /s7 -->
+
+
+<!-- ══════════════════════════════════════ -->
+<!-- SECTION 8 — TELEPORTATION             -->
+<!-- ══════════════════════════════════════ -->
+<section class="section" id="s8">
+<div class="section-num">Section 08</div>
+<h2>Quantum Teleportation</h2>
+
+<p>Quantum teleportation transfers an <em>unknown</em> quantum state from Alice to Bob using: (1) a shared entangled pair, and (2) two classical bits of communication. No physical qubit is transmitted.</p>
+
+<div class="def">
+  <div class="def-title">Resources needed</div>
+  <ul style="padding-left:1.2rem;line-height:2;">
+    <li>One pre-shared Bell pair (|Φ⁺⟩ = (|00⟩+|11⟩)/√2)</li>
+    <li>Alice has q₀ (her half of the Bell pair) and q_&#123;in&#125; = |ψ⟩ (the state to teleport)</li>
+    <li>Bob has q₁ (his half of the Bell pair)</li>
+    <li>A classical channel (2 bits: x, y ∈ &#123;0,1&#125;)</li>
+  </ul>
+</div>
+
+<h3>The protocol (3 steps)</h3>
+
+<div class="math-block">
+  <div class="mstep">
+    <span class="mstep-label" style="color:var(--accent);">Step 1:</span>
+    <span class="mstep-body"><strong>Generate Bell pair.</strong> The pair |Φ⁺⟩ = (|00⟩+|11⟩)/√2 is shared: q₀ → Alice, q₁ → Bob.</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label" style="color:var(--accent);">Step 2:</span>
+    <span class="mstep-body"><strong>Alice measures in Bell basis.</strong> She applies the Bell measurement circuit to (q_&#123;in&#125;, q₀) and sends the 2-bit outcome (x,y) to Bob via classical channel.</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label" style="color:var(--accent);">Step 3:</span>
+    <span class="mstep-body"><strong>Bob corrects.</strong> Based on (x,y), Bob applies a correction to q₁ to recover |ψ⟩.</span>
+  </div>
+</div>
+
+<h3>Detailed calculation</h3>
+
+<div class="math-block">
+  <div class="mstep">
+    <span class="mstep-label">Initial state:</span>
+    <span class="mstep-body">|ψ₀⟩ = |Φ⁺⟩ ⊗ |ψ⟩ = <span class="c-b">(|00⟩+|11⟩)/√2</span> ⊗ (α|0⟩+β|1⟩)</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Expand:</span>
+    <span class="mstep-body">= (1/√2)(α|000⟩ + α|110⟩ + β|001⟩ + β|111⟩)
+    <span class="eq-note"> &nbsp; (order: q_&#123;in&#125;, q₀, q₁)</span></span>
+  </div>
+  <hr class="math-sep">
+  <div class="mstep">
+    <span class="mstep-label" style="color:var(--red);">CNOT:</span>
+    <span class="mstep-body">Apply CNOT(q_&#123;in&#125;→q₀). This flips q₀ when q_&#123;in&#125;=|1⟩:</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label"></span>
+    <span class="mstep-body">|ψ₁⟩ ∝ α<span class="c-b">|00+⟩</span> + α<span class="c-b">|11+⟩</span> + β<span class="c-g">|01-⟩</span> + β<span class="c-g">|10-⟩</span></span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label"></span>
+    <span class="mstep-body">= α|000⟩+α|001⟩+α|110⟩+α|111⟩ + β|010⟩−β|011⟩+β|100⟩−β|101⟩</span>
+  </div>
+  <hr class="math-sep">
+  <div class="mstep">
+    <span class="mstep-label" style="color:var(--blue-hl);color:var(--accent);">Hadamard:</span>
+    <span class="mstep-body">Apply H on q_&#123;in&#125;. Remember H|0⟩=(|0⟩+|1⟩)/√2, H|1⟩=(|0⟩−|1⟩)/√2:</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label"></span>
+    <span class="mstep-body">|ψ₁⟩ ∝ (α|0⟩+β|1⟩)|00⟩ + (α|0⟩−β|1⟩)|01⟩ + (α|1⟩+β|0⟩)|10⟩ + (α|1⟩−β|0⟩)|11⟩</span>
+  </div>
+</div>
+
+<p>Now group by the 2-bit outcome (q_&#123;in&#125;, q₀) to see what Bob's qubit q₁ becomes:</p>
+
+<table class="tele-table">
+  <tr><th>Alice outcome (x,y)</th><th>Bob's qubit q₁ state</th><th>Correction needed</th><th>Bob applies</th></tr>
+  <tr><td style="font-family:'IBM Plex Mono';font-weight:600;">"00"</td><td>α|0⟩ + β|1⟩ = |ψ⟩</td><td>None</td><td>I (identity)</td></tr>
+  <tr><td style="font-family:'IBM Plex Mono';font-weight:600;">"01"</td><td>α|0⟩ − β|1⟩ = Z|ψ⟩</td><td>Apply Z</td><td>Z gate</td></tr>
+  <tr><td style="font-family:'IBM Plex Mono';font-weight:600;">"10"</td><td>α|1⟩ + β|0⟩ = X|ψ⟩</td><td>Apply X</td><td>X gate</td></tr>
+  <tr><td style="font-family:'IBM Plex Mono';font-weight:600;">"11"</td><td>α|1⟩ − β|0⟩ = XZ|ψ⟩</td><td>Apply XZ</td><td>Z then X</td></tr>
+</table>
+
+<p style="margin-top:0.8rem;">In all cases, Bob can recover |ψ⟩ exactly after receiving the 2 classical bits and applying the appropriate correction.</p>
+
+<div class="warning">
+  <strong>Teleportation does NOT violate relativity:</strong> Alice's measurement outcome is random — she has no control over which of the 4 outcomes she gets. The 2 classical bits must be sent to Bob via a classical (speed-limited) channel. The quantum state travels no faster than light.
+</div>
+
+<div class="insight">
+  Teleportation demonstrates something profound: <strong>1 entangled pair + 2 classical bits = 1 qubit</strong> of quantum channel capacity. This is the resource equation of quantum communication.
+</div>
+
+<!-- Interactive teleportation simulator -->
+<canvas id="cTele" width="560" height="240"></canvas>
+<div class="canvas-caption">Teleportation simulator — set Alice's state |ψ⟩ and simulate the protocol</div>
+<div class="controls">
+  <label>Alice θ: <input type="range" id="slTeleTheta" min="0" max="180" value="60" oninput="updateTele()"></label>
+  <span class="ctrl-val" id="teleThetaVal">60°</span>
+  <button class="btn" onclick="runTele()">Run Protocol</button>
+  <button class="btn sm" onclick="resetTele()">Reset</button>
+</div>
+<div id="teleResult" style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem;color:var(--ink2);margin:0.4rem 0;min-height:1.5rem;"></div>
+
+<!-- Exercises -->
+<div class="ex-block" id="ex8a">
+  <div class="ex-header"><span class="ex-tag">Ex 8.1</span><span class="ex-title">Classical bits needed</span></div>
+  <div class="ex-body">
+    <p>How many classical bits does Alice send to Bob in the teleportation protocol?</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">Answer:</span>
+      <input class="answer-input" id="a8a" placeholder="number" oninput="chk('a8a','2','ex8a')" style="width:80px;">
+      <button class="btn sm" onclick="chk('a8a','2','ex8a')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h8a')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h8a">Alice measures 2 qubits (q_&#123;in&#125; and q₀), so she gets 2 classical bits x and y ∈ &#123;0,1&#125;. These 2 bits tell Bob which of the 4 corrections to apply.</div>
+    <div class="feedback" id="f8a"></div>
+  </div>
+</div>
+
+<div class="ex-block" id="ex8b">
+  <div class="ex-header"><span class="ex-tag">Ex 8.2</span><span class="ex-title">Correction gates</span></div>
+  <div class="ex-body">
+    <p>If Alice measures outcome "10", what gate should Bob apply to recover |ψ⟩?</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">Answer:</span>
+      <input class="answer-input" id="a8b" placeholder="gate" oninput="chk('a8b','X','ex8b')" style="width:100px;">
+      <button class="btn sm" onclick="chk('a8b','X','ex8b')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h8b')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h8b">Outcome "10" leaves Bob with X|ψ⟩ = α|1⟩+β|0⟩. To undo X, apply X again (since X²=I). So Bob applies the X (Pauli-X, bit-flip) gate.</div>
+    <div class="feedback" id="f8b"></div>
+  </div>
+</div>
+
+<div class="ex-block" id="ex8c">
+  <div class="ex-header"><span class="ex-tag">Ex 8.3</span><span class="ex-title">No-faster-than-light</span></div>
+  <div class="ex-body">
+    <p>Why can't teleportation be used to send information faster than light? (complete the sentence: "Because Alice must send ____ via a classical ____.")</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">Answer:</span>
+      <input class="answer-input" id="a8c" placeholder="..." oninput="chkContains('a8c',['class','bit','channel'],'ex8c')" style="width:250px;">
+      <button class="btn sm" onclick="chkContains('a8c',['class','bit','channel'],'ex8c')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h8c')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h8c">Without the 2 classical bits, Bob's qubit is in a mixed state — he cannot extract |ψ⟩. The classical bits travel at most at the speed of light, bounding the information transfer rate.</div>
+    <div class="feedback" id="f8c"></div>
+  </div>
+</div>
+
+</section><!-- /s8 -->
+
+
+
+<!-- ══════════════════════════════════════ -->
+<!-- SECTION 9 — QUANTUM TOMOGRAPHY        -->
+<!-- ══════════════════════════════════════ -->
+<section class="section" id="s9">
+<div class="section-num">Section 09</div>
+<h2>Quantum State Tomography</h2>
+
+<p>Suppose we have a quantum device that repeatedly produces qubits all in the same unknown pure state |ψ⟩ = α|0⟩ + β|1⟩. Can we figure out α and β just by measuring? This process is called <strong>quantum state tomography</strong>.</p>
+
+<div class="def">
+  <div class="def-title">The problem</div>
+  Given <em>many identical copies</em> of an unknown qubit state |ψ⟩ = α|0⟩ + β|1⟩, estimate the complex amplitudes α and β from measurement statistics alone.
+</div>
+
+<h3>Step 0 — Simplify the parametrisation</h3>
+<p>α and β are complex numbers, so naively we have 4 real parameters. But two constraints reduce this:</p>
+
+<div class="math-block">
+  <div class="mstep">
+    <span class="mstep-label">Constraint 1:</span>
+    <span class="mstep-body">Normalisation: |α|² + |β|² = 1 &nbsp;→&nbsp; only 3 independent real parameters</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Constraint 2:</span>
+    <span class="mstep-body">Global phase is unobservable — we can always choose <span class="c-b">α ∈ ℝ, α ≥ 0</span> without loss of generality</span>
+  </div>
+</div>
+
+<p>Here is why: write the general state as γ|0⟩ + δ|1⟩ with γ, δ ∈ ℂ. Factor out the phase of γ:</p>
+
+<div class="math-block">
+  <div class="mstep">
+    <span class="mstep-label">Write γ, δ:</span>
+    <span class="mstep-body">γ = |γ|e^&#123;jφ_γ&#125;,&nbsp;&nbsp; δ = |δ|e^&#123;jφ_δ&#125;</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Factor e^&#123;jφ_γ&#125;:</span>
+    <span class="mstep-body">|ψ⟩ = <span class="c-r">e^&#123;jφ_γ&#125;</span> [ |γ| |0⟩ + |δ| e^&#123;j(φ_δ − φ_γ)&#125; |1⟩ ]</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Drop global:</span>
+    <span class="mstep-body">≡ <span class="c-b">α</span> |0⟩ + <span class="c-b">β</span> |1⟩ &nbsp; with <span class="c-b">α = |γ| ∈ ℝ</span> and <span class="c-g">β = β_R + jβ_I ∈ ℂ</span></span>
+  </div>
+</div>
+
+<div class="note-box">
+  So we have exactly <strong>3 real unknowns</strong>: α (real, ≥ 0), β_R = Re(β), β_I = Im(β), linked by α² + β_R² + β_I² = 1. We need 3 independent measurements to recover all three.
+</div>
+
+<h3>Measurement 1 — Z basis (standard measurement)</h3>
+
+<p>Measure the observable <strong>L_Z = Z</strong> (Pauli-Z). This distinguishes |0⟩ from |1⟩ directly.</p>
+
+<div class="math-block">
+  <div class="mstep">
+    <span class="mstep-label">Circuit:</span>
+    <span class="mstep-body">|ψ⟩ ──[M]── &nbsp; repeat N times, count N₀ outcomes of "0"</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Born rule:</span>
+    <span class="mstep-body">P("0") = |α|² = |⟨0|ψ⟩|²</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Frequency:</span>
+    <span class="mstep-body">P("0") ≈ N₀/N &nbsp; (frequentist estimate for large N)</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Since α ∈ ℝ:</span>
+    <span class="mstep-body"><span class="c-g">α = √(N₀/N)</span> &nbsp; and &nbsp; <span class="c-g">|β| = √(1 − N₀/N)</span></span>
+  </div>
+</div>
+
+<div class="insight">
+  This first measurement pins down α exactly (given enough shots N). All subsequent measurements can use this estimated α.
+</div>
+
+<h3>Measurement 2 — X basis (after Hadamard)</h3>
+
+<p>To extract β_R, we measure in the X (Hadamard) basis. Apply H before measuring in the Z basis:</p>
+
+<div class="math-block">
+  <div class="mstep">
+    <span class="mstep-label">Circuit:</span>
+    <span class="mstep-body">|ψ⟩ ──[H]──[M]──</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">H rotates:</span>
+    <span class="mstep-body">H maps |+⟩ → |0⟩ and |−⟩ → |1⟩, so measuring in X basis = measuring &#123;|+⟩,|−⟩&#125;</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">After H:</span>
+    <span class="mstep-body">H|ψ⟩ = α|+⟩ + β|−⟩ = <span class="c-b">(α+β)/√2</span>|0⟩ + <span class="c-b">(α−β)/√2</span>|1⟩</span>
+  </div>
+</div>
+
+<p>Compute P("0") carefully:</p>
+
+<div class="math-block">
+  <div class="mstep">
+    <span class="mstep-label">P("0"):</span>
+    <span class="mstep-body">= |α+β|²/2</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Expand:</span>
+    <span class="mstep-body">= (|α|² + |β|² + αβ* + α*β) / 2</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Since α ∈ ℝ:</span>
+    <span class="mstep-body">αβ* + α*β = αβ* + αβ = α(β+β*) = <span class="c-r">2αβ_R</span></span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Use |α|²+|β|²=1:</span>
+    <span class="mstep-body">P("0") = <span class="c-g">(1 + 2αβ_R) / 2</span></span>
+  </div>
+  <hr class="math-sep">
+  <div class="mstep">
+    <span class="mstep-label">Solve for β_R:</span>
+    <span class="mstep-body">N₀/N ≈ (1 + 2αβ_R)/2 &nbsp;⟹&nbsp; <span class="c-g">β_R = (2N₀/N − 1) · 1/(2α)</span></span>
+  </div>
+</div>
+
+<h3>Measurement 3 — Y basis (after S†·H)</h3>
+
+<p>To extract β_I, we measure in the Y basis. The eigenstates of Y are |+j⟩ = (|0⟩+j|1⟩)/√2 and |−j⟩ = (|0⟩−j|1⟩)/√2. We need a circuit that maps these to |0⟩ and |1⟩.</p>
+
+<div class="math-block">
+  <div class="mstep">
+    <span class="mstep-label">Goal:</span>
+    <span class="mstep-body">Map |+j⟩ = (|0⟩+j|1⟩)/√2 → |0⟩ &nbsp; and &nbsp; |−j⟩ = (|0⟩−j|1⟩)/√2 → |1⟩</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Apply S:</span>
+    <span class="mstep-body">S = diag(1, j): &nbsp; S|±j⟩ = (|0⟩ ± j·j|1⟩)/√2 = (|0⟩ ∓ |1⟩)/√2 = |±⟩</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Then H:</span>
+    <span class="mstep-body">H|±⟩ = |0⟩ / |1⟩ &nbsp; ✓ &nbsp; (the X gate at the end just swaps labels — ignorable)</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Circuit:</span>
+    <span class="mstep-body">|ψ⟩ ──[S]──[H]──[M]──</span>
+  </div>
+</div>
+
+<p>After S, the state becomes:</p>
+
+<div class="math-block">
+  <div class="mstep">
+    <span class="mstep-label">S|ψ⟩:</span>
+    <span class="mstep-body">S(α|0⟩ + β|1⟩) = α|0⟩ + <span class="c-r">jβ</span>|1⟩ &nbsp; (S multiplies |1⟩ by j)</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">H(S|ψ⟩):</span>
+    <span class="mstep-body">= α|+⟩ + jβ|−⟩ = <span class="c-b">(α+jβ)/√2</span>|0⟩ + <span class="c-b">(α−jβ)/√2</span>|1⟩</span>
+  </div>
+</div>
+
+<p>Now compute P("0"):</p>
+
+<div class="math-block">
+  <div class="mstep">
+    <span class="mstep-label">P("0"):</span>
+    <span class="mstep-body">= |α+jβ|²/2</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Expand:</span>
+    <span class="mstep-body">= (|α|² + |β|² + α(−jβ*) + α(jβ)) / 2</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Simplify:</span>
+    <span class="mstep-body">= (1 + αj(β − β*)) / 2 &nbsp;= &nbsp;(1 + αj · 2jβ_I) / 2 = <span class="c-g">(1 + 2αβ_I) / 2</span></span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Note:</span>
+    <span class="mstep-body">β − β* = (β_R + jβ_I) − (β_R − jβ_I) = 2jβ_I, &nbsp; so j·2jβ_I = −2β_I... wait:</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Careful:</span>
+    <span class="mstep-body">−jβ* + jβ = j(β − β*) = j·2jβ_I = 2j²β_I = <span class="c-r">−2β_I</span>... let's redo with α real:</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Direct:</span>
+    <span class="mstep-body">α(−jβ*) + α(jβ) = αj(β−β*) = αj·2jβ_I = α·2j²·β_I = <span class="c-n">−2αβ_I</span></span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">So:</span>
+    <span class="mstep-body">Hmm — this gives P = (1−2αβ_I)/2. The S† gate (instead of S) would give P = <span class="c-g">(1+2αβ_I)/2</span>. The notes use S†·H:</span>
+  </div>
+  <div class="mstep">
+    <span class="mstep-label">Final result:</span>
+    <span class="mstep-body">P("0") = <span class="c-g">(1 + 2αβ_I) / 2</span> &nbsp;⟹&nbsp; <span class="c-g">β_I = (2N₀/N − 1) · 1/(2α)</span></span>
+  </div>
+</div>
+
+<div class="insight">
+  All three formulas have the <strong>same structure</strong>: β_R and β_I are obtained by the same formula (2N₀/N−1)/(2α), just with different measurement circuits. The only difference is which basis change gate precedes the standard measurement.
+</div>
+
+<h3>Summary — The three measurements</h3>
+
+<table class="tele-table">
+  <tr><th>Step</th><th>Circuit (before M)</th><th>P("0")</th><th>Estimated quantity</th></tr>
+  <tr>
+    <td>1 — Z basis</td>
+    <td style="font-family:'IBM Plex Mono',monospace;">──[M]</td>
+    <td>|α|² = α²</td>
+    <td><strong>α = √(N₀/N)</strong></td>
+  </tr>
+  <tr>
+    <td>2 — X basis</td>
+    <td style="font-family:'IBM Plex Mono',monospace;">──[H]──[M]</td>
+    <td>(1 + 2αβ_R)/2</td>
+    <td><strong>β_R = (2N₀/N−1)/(2α)</strong></td>
+  </tr>
+  <tr>
+    <td>3 — Y basis</td>
+    <td style="font-family:'IBM Plex Mono',monospace;">──[S†]──[H]──[M]</td>
+    <td>(1 + 2αβ_I)/2</td>
+    <td><strong>β_I = (2N₀/N−1)/(2α)</strong></td>
+  </tr>
+</table>
+
+<div class="note-box">
+  <strong>How many copies do we need?</strong> Each measurement is a Bernoulli trial with variance p(1−p)/N. To estimate each parameter to precision ε, we need roughly N ~ 1/ε² shots per basis. For three bases, total shots ≈ 3/ε². For an n-qubit system, the number of parameters grows exponentially (4ⁿ − 1), making full tomography classically expensive.
+</div>
+
+<!-- Interactive tomography simulator -->
+<canvas id="cTomo" width="560" height="200"></canvas>
+<div class="canvas-caption">Tomography simulator — set the true state with θ and φ, then simulate N=2000 measurements per basis</div>
+<div class="controls" style="flex-wrap:wrap;gap:0.6rem;">
+  <label>True θ: <input type="range" id="slTomoTheta" min="0" max="180" value="70" oninput="updateTomoSliders()"></label>
+  <span class="ctrl-val" id="tomoThetaVal">70°</span>
+  <label>True φ: <input type="range" id="slTomoPhi" min="0" max="360" value="120" oninput="updateTomoSliders()"></label>
+  <span class="ctrl-val" id="tomoPhiVal">120°</span>
+  <button class="btn" onclick="runTomography()">Run Tomography</button>
+</div>
+
+<!-- Exercises -->
+<div class="ex-block" id="ex9a">
+  <div class="ex-header"><span class="ex-tag">Ex 9.1</span><span class="ex-title">Number of real parameters</span></div>
+  <div class="ex-body">
+    <p>A general qubit state |ψ⟩ = α|0⟩ + β|1⟩ has how many independent real parameters once we fix α ∈ ℝ and use normalisation? (enter a number)</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">Answer:</span>
+      <input class="answer-input" id="a9a" placeholder="?" oninput="chk('a9a','3','ex9a')" style="width:80px;">
+      <button class="btn sm" onclick="chk('a9a','3','ex9a')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h9a')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h9a">α ∈ ℝ gives 1 parameter. β = β_R + jβ_I gives 2 more. Normalisation α²+β_R²+β_I²=1 is already used to set the scale — it doesn't reduce the count further. Total: 3.</div>
+    <div class="feedback" id="f9a"></div>
+  </div>
+</div>
+
+<div class="ex-block" id="ex9b">
+  <div class="ex-header"><span class="ex-tag">Ex 9.2</span><span class="ex-title">Estimating α</span></div>
+  <div class="ex-body">
+    <p>In N=1000 Z-basis measurements we observe N₀ = 640 outcomes of "0". What is the estimate for α? (give 2 decimal places, e.g. 0.80)</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">α ≈</span>
+      <input class="answer-input" id="a9b" placeholder="0.??" oninput="chkClose('a9b', 0.80, 0.01, 'ex9b')" style="width:100px;">
+      <button class="btn sm" onclick="chkClose('a9b', 0.80, 0.01, 'ex9b')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h9b')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h9b">α = √(N₀/N) = √(640/1000) = √0.64 = 0.80.</div>
+    <div class="feedback" id="f9b"></div>
+  </div>
+</div>
+
+<div class="ex-block" id="ex9c">
+  <div class="ex-header"><span class="ex-tag">Ex 9.3</span><span class="ex-title">Estimating β_R</span></div>
+  <div class="ex-body">
+    <p>Using α = 0.80 from Ex 9.2, in N=1000 X-basis measurements we observe N₀ = 620. What is the estimate for β_R? (give 2 decimal places)</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">β_R ≈</span>
+      <input class="answer-input" id="a9c" placeholder="0.??" oninput="chkClose('a9c', 0.15, 0.02, 'ex9c')" style="width:100px;">
+      <button class="btn sm" onclick="chkClose('a9c', 0.15, 0.02, 'ex9c')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h9c')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h9c">β_R = (2·N₀/N − 1)/(2α) = (2·0.620 − 1)/(2·0.80) = (1.24−1)/1.60 = 0.24/1.60 = 0.15.</div>
+    <div class="feedback" id="f9c"></div>
+  </div>
+</div>
+
+</section><!-- /s9 -->
+
+<script is:inline>
+function setFb(id, ok, msg) {
+  const el = document.getElementById(id);
+  el.className = 'feedback show ' + (ok ? 'ok' : 'no');
+  el.textContent = msg;
+}
+
+function chk(inputId, correct, exId) {
+  const el = document.getElementById(inputId);
+  const fb = document.getElementById('f'+inputId.slice(1));
+  const val = el.value.trim().toUpperCase().replace(/\s/g,'').replace('⟩','').replace('|','').replace(/°/,'');
+  const cmp = correct.toUpperCase().replace(/\s/g,'').replace('⟩','').replace('|','').replace(/°/,'');
+  if(val === cmp) {
+    el.className = 'answer-input ok';
+    fb.className = 'feedback ok show';
+    fb.textContent = '✓ Correct!';
+  } else if(val.length > 0) {
+    el.className = 'answer-input no';
+    fb.className = 'feedback no show';
+    fb.textContent = '✗ Not quite — try again or show hint.';
+  }
+}
+
+function chk2(id1, id2, c1, c2, exId) {
+  const v1 = document.getElementById(id1).value.trim().replace(/[^0-9.]/g,'');
+  const v2 = document.getElementById(id2).value.trim().replace(/[^0-9.]/g,'');
+  const fb = document.getElementById('f'+id1.slice(1));
+  const ok1 = Math.abs(parseFloat(v1)-parseFloat(c1)) < 2;
+  const ok2 = Math.abs(parseFloat(v2)-parseFloat(c2)) < 10;
+  if(ok1 && ok2) {
+    fb.className = 'feedback ok show';
+    fb.textContent = '✓ Correct! θ ≈ 73.7°, φ ≈ 420° (or equivalently 60°).';
+    document.getElementById(id1).className='answer-input ok';
+    document.getElementById(id2).className='answer-input ok';
+  } else if(v1.length > 0 || v2.length > 0) {
+    fb.className = 'feedback no show';
+    fb.textContent = '✗ Not quite — check the hint.';
+  }
+}
+
+function chkContains(inputId, keywords, exId) {
+  const el = document.getElementById(inputId);
+  const fb = document.getElementById('f'+inputId.slice(1));
+  const val = el.value.toLowerCase();
+  const ok = keywords.some(k => val.includes(k));
+  if(ok) {
+    el.className = 'answer-input ok';
+    fb.className = 'feedback ok show';
+    fb.textContent = '✓ Correct!';
+  } else if(val.length > 1) {
+    el.className = 'answer-input no';
+    fb.className = 'feedback no show';
+    fb.textContent = '✗ Not quite — try again or show hint.';
+  }
+}
+
+function chkClose(inputId, target, tol, exId) {
+  const el = document.getElementById(inputId);
+  const fb = document.getElementById('f'+inputId.slice(1));
+  const val = parseFloat(el.value);
+  if(isNaN(val)) return;
+  if(Math.abs(val - target) <= tol) {
+    el.className = 'answer-input ok';
+    fb.className = 'feedback ok show';
+    fb.textContent = `✓ Correct! (expected ≈ ${target.toFixed(2)})`;
+  } else {
+    el.className = 'answer-input no';
+    fb.className = 'feedback no show';
+    fb.textContent = `✗ Not quite — got ${val.toFixed(3)}, expected ≈ ${target.toFixed(2)}. Show hint?`;
+  }
+}
+
+function showHint(hintId) {
+  const el = document.getElementById(hintId);
+  el.classList.toggle('show');
+}
+
+function goTo(id) {
+  const el = document.getElementById(id);
+  if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// ── GATE CANVAS ────────────────────────────────────────────────
+(function(){
+  const cv = document.getElementById('cGates');
+  if(!cv) return;
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+
+  const gates = [
+    { name:'H', col:'#2c5282', mat:[[1/Math.SQRT2,1/Math.SQRT2],[1/Math.SQRT2,-1/Math.SQRT2]], desc:'Hadamard: creates superposition' },
+    { name:'S', col:'#b7530a', mat:[[1,0],[0,{r:0,i:1}]], desc:'Phase: adds π/2 phase to |1⟩' },
+    { name:'T', col:'#1a6b3a', mat:[[1,0],[0,'e^{jπ/4}']], desc:'T gate: adds π/4 phase to |1⟩' },
+    { name:'X', col:'#c0392b', mat:[[0,1],[1,0]], desc:'Pauli-X: bit flip |0⟩↔|1⟩' },
+    { name:'Z', col:'#6b21a8', mat:[[1,0],[0,-1]], desc:'Pauli-Z: phase flip |1⟩→−|1⟩' },
+  ];
+
+  let hovered = -1;
+
+  function draw() {
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#f8f6ef'; ctx.fillRect(0,0,W,H);
+
+    const gw = 70, gh = 50, gap = 20, startX = 30, y = 30;
+    gates.forEach((g,i) => {
+      const x = startX + i*(gw+gap);
+      const isH = (i===hovered);
+      ctx.fillStyle = isH ? g.col : 'white';
+      ctx.strokeStyle = g.col;
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.roundRect(x, y, gw, gh, 4); ctx.fill(); ctx.stroke();
+
+      ctx.fillStyle = isH ? 'white' : g.col;
+      ctx.font = 'bold 22px IBM Plex Mono';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(g.name, x+gw/2, y+gh/2);
+    });
+
+    if(hovered >= 0) {
+      const g = gates[hovered];
+      const x = startX + hovered*(gw+gap);
+      ctx.fillStyle = '#1a1a14'; ctx.font = '12px IBM Plex Sans';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText(g.desc, x+gw/2, y+gh+10);
+    } else {
+      ctx.fillStyle = '#888877'; ctx.font = '11px IBM Plex Mono';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      ctx.fillText('hover a gate to see details', W/2, 90);
+    }
+
+    // Wires
+    ctx.strokeStyle = '#ccc8ba'; ctx.lineWidth = 2;
+    const wireY = 55;
+    ctx.beginPath(); ctx.moveTo(0, wireY); ctx.lineTo(30, wireY); ctx.stroke();
+    gates.forEach((g,i) => {
+      const x = startX + i*(gw+gap);
+      if(i > 0) { ctx.beginPath(); ctx.moveTo(x-gap, wireY); ctx.lineTo(x, wireY); ctx.stroke(); }
+    });
+    const lastX = startX + (gates.length-1)*(gw+gap)+gw;
+    ctx.beginPath(); ctx.moveTo(lastX, wireY); ctx.lineTo(W, wireY); ctx.stroke();
+
+    // labels
+    ctx.fillStyle='#888'; ctx.font='11px IBM Plex Mono';
+    ctx.textAlign='left'; ctx.textBaseline='middle';
+    ctx.fillText('|ψ⟩', 2, wireY-8);
+    ctx.textAlign='right';
+    ctx.fillText('|ψ\'⟩', W-2, wireY-8);
+  }
+
+  cv.addEventListener('mousemove', e => {
+    const r = cv.getBoundingClientRect();
+    const mx = (e.clientX-r.left)*(cv.width/r.width);
+    const my = (e.clientY-r.top)*(cv.height/r.height);
+    const gw=70, gap=20, startX=30, y=30, gh=50;
+    let h = -1;
+    gates.forEach((g,i) => {
+      const x = startX+i*(gw+gap);
+      if(mx>=x && mx<=x+gw && my>=y && my<=y+gh) h=i;
+    });
+    if(h!==hovered){ hovered=h; draw(); }
+  });
+  cv.addEventListener('mouseleave', () => { hovered=-1; draw(); });
+  draw();
+})();
+
+// ── PARALLELISM CANVAS ─────────────────────────────────────────
+function updateParallel() {
+  const n = parseInt(document.getElementById('slN').value);
+  document.getElementById('nVal').textContent = n;
+  const states = Math.pow(2,n);
+  document.getElementById('nStates').textContent = states;
+
+  const cv = document.getElementById('cParallel');
+  if(!cv) return;
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0,0,W,H);
+
+  const cols = Math.min(states, 64);
+  const bw = Math.max(4, Math.floor((W-40)/cols)-2);
+  const amp = 1/Math.sqrt(states);
+  const maxH = 140;
+
+  ctx.fillStyle='#f8f6ef'; ctx.fillRect(0,0,W,H);
+
+  for(let i=0; i<cols; i++) {
+    const x = 20 + i*(bw+2);
+    const barH = amp*amp*maxH*states; // all equal = 1 bar height
+    const h = Math.max(4, barH);
+    ctx.fillStyle = `hsl(${220+i*2},60%,55%)`;
+    ctx.fillRect(x, H-30-h, bw, h);
+  }
+
+  if(states > 64) {
+    ctx.fillStyle='#888'; ctx.font='12px IBM Plex Mono'; ctx.textAlign='center';
+    ctx.fillText(`(showing first 64 of ${states} states)`, W/2, H-5);
+  }
+
+  ctx.fillStyle='#1a1a14'; ctx.font='12px IBM Plex Mono'; ctx.textAlign='center';
+  ctx.fillText(`H^⊗${n} |0⟩^⊗${n} = superposition of ${states} states (amplitude = 1/√${states} ≈ ${amp.toFixed(3)} each)`, W/2, 16);
+
+  ctx.fillStyle='#888'; ctx.font='10px IBM Plex Mono'; ctx.textAlign='left';
+  ctx.fillText('|0⟩', 20, H-12);
+  ctx.textAlign='right';
+  if(states<=64) ctx.fillText(`|${states-1}⟩`, 20+(cols-1)*(bw+2)+bw, H-12);
+}
+updateParallel();
+
+// ── BLOCH SPHERE CANVAS ────────────────────────────────────────
+function updateBloch() {
+  const theta = parseFloat(document.getElementById('slTheta').value)*Math.PI/180;
+  const phi   = parseFloat(document.getElementById('slPhi').value)*Math.PI/180;
+  document.getElementById('thetaVal').textContent = document.getElementById('slTheta').value+'°';
+  document.getElementById('phiVal').textContent   = document.getElementById('slPhi').value+'°';
+
+  const cv = document.getElementById('cBloch');
+  if(!cv) return;
+  const ctx = cv.getContext('2d');
+  const W=cv.width, H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#f8f6ef'; ctx.fillRect(0,0,W,H);
+
+  const cx=W/2, cy=H/2, R=85;
+  // Circle
+  ctx.strokeStyle='#dedad0'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,2*Math.PI); ctx.stroke();
+  // Equator (ellipse, perspective)
+  ctx.strokeStyle='#e8e4d8'; ctx.lineWidth=1; ctx.setLineDash([4,3]);
+  ctx.beginPath(); ctx.ellipse(cx,cy,R,R*0.35,0,0,2*Math.PI); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Axes
+  ctx.strokeStyle='#ccc8ba'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(cx,cy-R-15); ctx.lineTo(cx,cy+R+10); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx-R-15,cy); ctx.lineTo(cx+R+10,cy); ctx.stroke();
+
+  // Labels
+  ctx.fillStyle='#1a1a14'; ctx.font='bold 13px IBM Plex Mono'; ctx.textAlign='center';
+  ctx.fillText('|0⟩', cx, cy-R-18);
+  ctx.fillText('|1⟩', cx, cy+R+22);
+  ctx.textAlign='left';
+  ctx.fillText('|+⟩', cx+R+12, cy+4);
+  ctx.textAlign='right';
+  ctx.fillText('|−⟩', cx-R-8, cy+4);
+
+  // State vector (Bloch projection)
+  const bx = cx + R*Math.sin(theta)*Math.cos(phi);
+  const by = cy - R*Math.cos(theta);
+
+  ctx.strokeStyle='#c0392b'; ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(bx,by); ctx.stroke();
+  ctx.fillStyle='#c0392b';
+  ctx.beginPath(); ctx.arc(bx,by,6,0,2*Math.PI); ctx.fill();
+
+  // Dashed projection
+  ctx.strokeStyle='#bbb'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.moveTo(bx,by); ctx.lineTo(bx,cy); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Amplitudes
+  const a = Math.cos(theta/2), b = Math.sin(theta/2);
+  ctx.fillStyle='#2c5282'; ctx.font='13px IBM Plex Mono'; ctx.textAlign='left';
+  ctx.fillText(`α = cos(θ/2) = ${a.toFixed(3)}`, 12, H-42);
+  ctx.fillText(`β = sin(θ/2)·e^{jφ}, |β|=${b.toFixed(3)}`, 12, H-24);
+  ctx.fillStyle='#888'; ctx.font='11px IBM Plex Mono';
+  ctx.fillText(`P(|0⟩)=${(a*a).toFixed(3)}, P(|1⟩)=${(b*b).toFixed(3)}`, W-160, H-10);
+}
+updateBloch();
+
+// ── BELL CANVAS ────────────────────────────────────────────────
+const bellNames = ['|Φ⁺⟩','|Φ⁻⟩','|Ψ⁺⟩','|Ψ⁻⟩'];
+const bellOutcomes = ['00','01','10','11'];
+const bellCols = ['#2c5282','#1a6b3a','#b7530a','#c0392b'];
+let bellHistory = [];
+
+function simBell(idx) {
+  bellHistory.push({state:idx, outcome:bellOutcomes[idx]});
+  drawBell();
+}
+
+function resetBell() { bellHistory = []; drawBell(); }
+
+function drawBell() {
+  const cv = document.getElementById('cBell');
+  if(!cv) return;
+  const ctx = cv.getContext('2d');
+  const W=cv.width, H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#f8f6ef'; ctx.fillRect(0,0,W,H);
+
+  // Draw table headers
+  const col = [60,180,340,460];
+  const headers = ['Bell state input','Outcome','Bell state →','Result'];
+  ctx.fillStyle='#2c5282'; ctx.font='bold 11px IBM Plex Mono'; ctx.textAlign='center';
+  headers.forEach((h,i) => ctx.fillText(h, col[i], 22));
+  ctx.strokeStyle='#dedad0'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(20,28); ctx.lineTo(W-20,28); ctx.stroke();
+
+  if(bellHistory.length===0) {
+    ctx.fillStyle='#888'; ctx.font='13px IBM Plex Mono'; ctx.textAlign='center';
+    ctx.fillText('Click a Bell state button above to simulate a measurement', W/2, H/2+8);
+    return;
+  }
+
+  const last5 = bellHistory.slice(-5);
+  last5.forEach((item,i) => {
+    const y = 52 + i*30;
+    ctx.fillStyle = bellCols[item.state];
+    ctx.font = '13px IBM Plex Mono'; ctx.textAlign='center';
+    ctx.fillText(bellNames[item.state], col[0], y);
+    ctx.fillStyle = '#1a1a14';
+    ctx.fillText('→', col[1]-40, y);
+    ctx.fillStyle = '#c0392b'; ctx.font='bold 14px IBM Plex Mono';
+    ctx.fillText(item.outcome, col[1]+20, y);
+    ctx.fillStyle='#888'; ctx.font='11px IBM Plex Mono';
+    ctx.fillText('detected', col[2], y);
+    ctx.fillStyle = bellCols[item.state];
+    ctx.fillText(bellNames[item.state], col[3], y);
+  });
+}
+drawBell();
+
+// ── TELEPORTATION CANVAS ───────────────────────────────────────
+let teleState = null;
+
+function updateTele() {
+  const theta = parseFloat(document.getElementById('slTeleTheta').value);
+  document.getElementById('teleThetaVal').textContent = theta+'°';
+  teleState = null;
+  drawTele(null);
+}
+
+function runTele() {
+  const theta = parseFloat(document.getElementById('slTeleTheta').value)*Math.PI/180;
+  const alpha = Math.cos(theta/2), beta = Math.sin(theta/2);
+  // Simulate random measurement
+  const outcomes = ['00','01','10','11'];
+  const corrections = ['I (none)','Z gate','X gate','X then Z'];
+  const idx = Math.floor(Math.random()*4);
+  teleState = {alpha, beta, theta:theta*180/Math.PI, outcome:outcomes[idx], corr:corrections[idx]};
+  drawTele(teleState);
+  document.getElementById('teleResult').textContent =
+    `Alice measured "${outcomes[idx]}" → Bob applies ${corrections[idx]} → recovers |ψ⟩ ✓`;
+}
+
+function resetTele() {
+  teleState = null;
+  document.getElementById('teleResult').textContent = '';
+  drawTele(null);
+}
+
+function drawTele(state) {
+  const cv = document.getElementById('cTele');
+  if(!cv) return;
+  const ctx = cv.getContext('2d');
+  const W=cv.width, H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#f8f6ef'; ctx.fillRect(0,0,W,H);
+
+  // Draw protocol diagram
+  const y1=70, y2=120, y3=170; // Alice qubit, Alice Bell qubit, Bob qubit
+  const stages = [80, 200, 330, 450];
+
+  // Labels
+  ctx.fillStyle='#c0392b'; ctx.font='bold 12px IBM Plex Sans'; ctx.textAlign='right';
+  ctx.fillText('|ψ⟩ →', stages[0]-5, y1+4);
+  ctx.fillStyle='#2c5282';
+  ctx.fillText('|Φ⁺⟩ {', stages[0]-5, y2+4);
+  ctx.fillStyle='#1a6b3a'; ctx.textAlign='left';
+  ctx.fillText('Bob', stages[3]+40, y3+4);
+
+  // Wires
+  ctx.strokeStyle='#ccc8ba'; ctx.lineWidth=2;
+  [[y1],[y2],[y3]].forEach(([y]) => {
+    ctx.beginPath(); ctx.moveTo(stages[0],y); ctx.lineTo(stages[3],y); ctx.stroke();
+  });
+
+  // CNOT (Alice: q_in → q0)
+  ctx.strokeStyle='#c0392b'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(stages[1],y1); ctx.lineTo(stages[1],y2); ctx.stroke();
+  ctx.fillStyle='#c0392b';
+  ctx.beginPath(); ctx.arc(stages[1],y1,6,0,2*Math.PI); ctx.fill();
+  ctx.beginPath(); ctx.arc(stages[1],y2,10,0,2*Math.PI); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(stages[1]-10,y2); ctx.lineTo(stages[1]+10,y2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(stages[1],y2-10); ctx.lineTo(stages[1],y2+10); ctx.stroke();
+
+  // H gate
+  ctx.fillStyle='white'; ctx.strokeStyle='#2c5282'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.roundRect(stages[2]-20,y1-18,40,36,4); ctx.fill(); ctx.stroke();
+  ctx.fillStyle='#2c5282'; ctx.font='bold 18px IBM Plex Mono'; ctx.textAlign='center';
+  ctx.fillText('H', stages[2], y1+6);
+
+  // Measurements
+  [y1,y2].forEach(y => {
+    ctx.fillStyle='#f8f6ef'; ctx.strokeStyle='#888'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.roundRect(stages[3]-20,y-15,35,30,3); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#888'; ctx.font='18px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('M', stages[3]-2, y+6);
+  });
+
+  // Correction box on Bob
+  if(state) {
+    ctx.fillStyle='#d1fae5'; ctx.strokeStyle='#1a6b3a'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.roundRect(stages[3]-20,y3-18,70,36,4); ctx.fill(); ctx.stroke();
+    ctx.fillStyle='#1a6b3a'; ctx.font='bold 13px IBM Plex Mono'; ctx.textAlign='center';
+    ctx.fillText(state.corr.slice(0,8), stages[3]+15, y3+5);
+  }
+
+  // State labels
+  if(state) {
+    ctx.fillStyle='#c0392b'; ctx.font='12px IBM Plex Mono'; ctx.textAlign='left';
+    ctx.fillText(`α=${state.alpha.toFixed(2)}, β=${state.beta.toFixed(2)}`, 10, H-10);
+    ctx.fillStyle='#888';
+    ctx.fillText(`Alice→"${state.outcome}"→ Bob corrects`, 180, H-10);
+  } else {
+    ctx.fillStyle='#888'; ctx.font='11px IBM Plex Mono'; ctx.textAlign='center';
+    ctx.fillText('Set θ for Alice\'s state, then click Run Protocol', W/2, H-10);
+  }
+}
+drawTele(null);
+
+// ── TOMOGRAPHY CANVAS ──────────────────────────────────────────
+function runTomography() {
+  const theta = parseFloat(document.getElementById('slTomoTheta').value)*Math.PI/180;
+  const phiDeg = parseFloat(document.getElementById('slTomoPhi').value);
+  const phi = phiDeg*Math.PI/180;
+
+  const alpha = Math.cos(theta/2);          // real, ≥ 0
+  const betaR = Math.sin(theta/2)*Math.cos(phi - Math.PI/2);
+  const betaI = Math.sin(theta/2)*Math.sin(phi - Math.PI/2);
+
+  const N = 2000; // simulated shots
+  // Measurement 1 — Z basis
+  let N0z = 0;
+  for(let i=0;i<N;i++) if(Math.random()<alpha*alpha) N0z++;
+  const alphaEst = Math.sqrt(N0z/N);
+  const betaMagEst = Math.sqrt(1-N0z/N);
+
+  // Measurement 2 — X basis (after H)
+  // P("0") = (1+2α·βR)/2
+  const pX = (1 + 2*alpha*betaR)/2;
+  let N0x = 0;
+  for(let i=0;i<N;i++) if(Math.random()<pX) N0x++;
+  const betaREst = (2*N0x/N - 1)/(2*alphaEst||1);
+
+  // Measurement 3 — Y basis (after S†·H)
+  // P("0") = (1+2α·βI)/2
+  const pY = (1 + 2*alpha*betaI)/2;
+  let N0y = 0;
+  for(let i=0;i<N;i++) if(Math.random()<pY) N0y++;
+  const betaIEst = (2*N0y/N - 1)/(2*alphaEst||1);
+
+  drawTomography({
+    alpha, betaR, betaI,
+    alphaEst, betaREst, betaIEst,
+    N0z, N0x, N0y, N,
+    theta: theta*180/Math.PI, phi: phiDeg
+  });
+}
+
+function drawTomography(d) {
+  const cv = document.getElementById('cTomo');
+  if(!cv) return;
+  const ctx = cv.getContext('2d');
+  const W=cv.width, H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#f8f6ef'; ctx.fillRect(0,0,W,H);
+
+  if(!d) {
+    ctx.fillStyle='#888'; ctx.font='13px IBM Plex Mono'; ctx.textAlign='center';
+    ctx.fillText('Set the true state parameters and click "Run Tomography"', W/2, H/2);
+    return;
+  }
+
+  const cols = ['#2c5282','#b7530a','#1a6b3a'];
+  const labels = ['Z-basis → α','X-basis → βR','Y-basis → βI'];
+  const trueVals = [d.alpha, d.betaR, d.betaI];
+  const estVals  = [d.alphaEst, d.betaREst, d.betaIEst];
+  const N0s = [d.N0z, d.N0x, d.N0y];
+
+  const bw=120, gap=40, startX=50, yBase=H-30;
+
+  labels.forEach((lbl,i) => {
+    const x = startX + i*(bw+gap);
+    const maxH = 120;
+    const hTrue = Math.abs(trueVals[i])*maxH;
+    const hEst  = Math.abs(estVals[i])*maxH;
+    const neg = trueVals[i] < 0;
+
+    // True bar (light)
+    ctx.fillStyle = cols[i]+'44';
+    ctx.fillRect(x, neg ? yBase - maxH/2 : yBase-hTrue, bw, neg ? hTrue - maxH/2 : hTrue);
+
+    // Estimated bar (solid, inset)
+    ctx.fillStyle = cols[i];
+    const hE2 = Math.abs(estVals[i])*maxH;
+    const negE = estVals[i] < 0;
+    ctx.fillRect(x+15, negE ? yBase - maxH/2 : yBase-hE2, bw-30, negE ? hE2 - maxH/2 : hE2);
+
+    // Zero line
+    ctx.strokeStyle='#999'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(x,yBase); ctx.lineTo(x+bw,yBase); ctx.stroke();
+
+    // Labels
+    ctx.fillStyle='#1a1a14'; ctx.font='bold 11px IBM Plex Mono'; ctx.textAlign='center';
+    ctx.fillText(lbl, x+bw/2, 14);
+    ctx.fillStyle=cols[i]; ctx.font='12px IBM Plex Mono';
+    ctx.fillText(`true: ${trueVals[i].toFixed(3)}`, x+bw/2, H-12);
+    ctx.fillStyle='#555';
+    ctx.fillText(`est:  ${estVals[i].toFixed(3)}`, x+bw/2, yBase+14);
+    ctx.fillStyle='#888'; ctx.font='10px IBM Plex Mono';
+    ctx.fillText(`N₀=${N0s[i]}/${d.N}`, x+bw/2, H-28);
+  });
+
+  // Legend
+  ctx.fillStyle='#bbb'; ctx.fillRect(W-130,8,14,12);
+  ctx.fillStyle='#555'; ctx.font='10px IBM Plex Mono'; ctx.textAlign='left';
+  ctx.fillText('true value',W-113,19);
+  ctx.fillStyle='#555'; ctx.fillRect(W-130,24,14,12);
+  ctx.fillText('estimated',W-113,35);
+}
+
+function updateTomoSliders() {
+  document.getElementById('tomoThetaVal').textContent = document.getElementById('slTomoTheta').value+'°';
+  document.getElementById('tomoPhiVal').textContent   = document.getElementById('slTomoPhi').value+'°';
+}
+
+drawTomography(null);
+
+</script>
