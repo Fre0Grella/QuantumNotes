@@ -4,9 +4,9 @@
 
 **Interactive notes for Quantum Computing — live in your browser, no setup required.**
 
-![Live Site](https://img.shields.io/badge/live_site-visit-4a90d9?style=flat-square)
-![Built with Astro](https://img.shields.io/badge/astro-ff5d01?style=flat-square&logo=astro&logoColor=white)
-![License: PolyForm NC](https://img.shields.io/badge/license-PolyForm_NC-lightgrey?style=flat-square)
+[![Live Site](https://img.shields.io/badge/live_site-visit-4a90d9?style=flat)](https://fre0grella.github.io/QuantumNotes/)
+![Built with Astro](https://img.shields.io/badge/astro-ff5d01?style=flat&logo=astro&logoColor=white)
+[![License: PolyForm NC](https://img.shields.io/badge/license-PolyForm_NC-3db077?style=flat-square)](LICENSE)
 
 </div>
 
