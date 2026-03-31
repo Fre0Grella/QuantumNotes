@@ -865,141 +865,328 @@ export const meta: NoteMeta = {
 <div class="section-num">Section 07</div>
 <h2>Measuring Two Qubits in the Bell Basis</h2>
 
-<p>Recall the four <strong>Bell states</strong> (maximally entangled 2-qubit states):</p>
+<p>Until now we have always measured in the <strong>computational basis</strong> &#123;|00⟩, |01⟩, |10⟩, |11⟩&#125;. But we can also measure in the <strong>Bell basis</strong> &#123;|Φ⁺⟩, |Φ⁻⟩, |Ψ⁺⟩, |Ψ⁻⟩&#125;, which is the natural basis for entangled states. This operation is called a <em>Bell measurement</em> and is the heart of quantum teleportation.</p>
+
+<h3>What is a Bell Measurement?</h3>
 
 <div class="def">
-  <div class="def-title">Bell States</div>
-  <div class="math-block">
-    <div class="mstep">
-      <span class="mstep-label">|Φ⁺⟩ =</span>
-      <span class="mstep-body"><span class="c-b">(|00⟩ + |11⟩) / √2</span></span>
+  <div class="def-title">Bell Measurement — the idea</div>
+  A Bell measurement is a joint measurement of <strong>two qubits</strong> that tells you <em>which Bell state</em> they were in, collapsing the state to that Bell state. The outcome is always one of four possibilities: |Φ⁺⟩, |Φ⁻⟩, |Ψ⁺⟩, or |Ψ⁻⟩ — communicated as two classical bits "00", "01", "10", "11".
+</div>
+
+<h3>Step 1 — Recall the Four Bell States</h3>
+<p>These are the maximally entangled two-qubit states we met in the previous note. Think of them as four "types" of entanglement, each with a unique signature:</p>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin:1rem 0;">
+  <div style="background:#dbeafe;border-left:4px solid #2c5282;padding:0.7rem 1rem;border-radius:0 6px 6px 0;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:0.85rem;color:#2c5282;margin-bottom:0.3rem;">|Φ⁺⟩ — "same, plus"</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.88rem;">(|00⟩ + |11⟩) / √2</div>
+    <div style="font-size:0.75rem;color:#555;margin-top:0.2rem;font-style:italic;">Both match — 00 or 11</div>
+  </div>
+  <div style="background:#fee2e2;border-left:4px solid #c0392b;padding:0.7rem 1rem;border-radius:0 6px 6px 0;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:0.85rem;color:#c0392b;margin-bottom:0.3rem;">|Φ⁻⟩ — "same, minus"</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.88rem;">(|00⟩ − |11⟩) / √2</div>
+    <div style="font-size:0.75rem;color:#555;margin-top:0.2rem;font-style:italic;">Both match — opposite phase</div>
+  </div>
+  <div style="background:#d1fae5;border-left:4px solid #1a6b3a;padding:0.7rem 1rem;border-radius:0 6px 6px 0;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:0.85rem;color:#1a6b3a;margin-bottom:0.3rem;">|Ψ⁺⟩ — "opposite, plus"</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.88rem;">(|01⟩ + |10⟩) / √2</div>
+    <div style="font-size:0.75rem;color:#555;margin-top:0.2rem;font-style:italic;">Always different — 01 or 10</div>
+  </div>
+  <div style="background:#ede9fe;border-left:4px solid #6b21a8;padding:0.7rem 1rem;border-radius:0 6px 6px 0;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:0.85rem;color:#6b21a8;margin-bottom:0.3rem;">|Ψ⁻⟩ — "opposite, minus"</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.88rem;">(|01⟩ − |10⟩) / √2</div>
+    <div style="font-size:0.75rem;color:#555;margin-top:0.2rem;font-style:italic;">Always different — opposite phase</div>
+  </div>
+</div>
+
+<h3>Step 2 — The Bell Measurement Circuit</h3>
+
+<p>We cannot directly measure in the Bell basis in hardware — real devices only measure in the computational basis &#123;|00⟩, |01⟩, |10⟩, |11⟩&#125;. So the strategy is:</p>
+
+<div class="def">
+  <div class="def-title">Strategy: Change basis THEN measure</div>
+  Apply an <strong>inverse Bell circuit</strong> (CNOT followed by H on the first qubit) to rotate the Bell basis into the computational basis, then measure in the standard way. The computational outcome tells you which Bell state you had.
+</div>
+
+<!-- Circuit diagram -->
+<div style="background:#f5f2ea;border:1px solid #dedad0;border-radius:8px;padding:1.2rem 1.4rem;margin:1rem 0;overflow-x:auto;">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;color:#888877;margin-bottom:0.8rem;">Bell Measurement Circuit</div>
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem;line-height:2.5;white-space:pre;">
+  <span style="color:#888">qubit 1</span>  ──●──<span style="border:2px solid #2c5282;color:#2c5282;padding:0.1rem 0.4rem;border-radius:3px;">H</span>──<span style="border:2px solid #888;padding:0.1rem 0.4rem;border-radius:3px;">M</span>── <span style="color:#c0392b;font-weight:700;">x</span>
+            │
+  <span style="color:#888">qubit 2</span>  ─<span style="border:2px solid #c0392b;border-radius:50%;width:1.2rem;height:1.2rem;display:inline-flex;align-items:center;justify-content:center;font-size:0.9rem;">⊕</span>───────<span style="border:2px solid #888;padding:0.1rem 0.4rem;border-radius:3px;">M</span>── <span style="color:#c0392b;font-weight:700;">y</span>
+  </div>
+  <div style="font-size:0.75rem;color:#888877;margin-top:0.5rem;font-style:italic;">Order: CNOT first (qubit 1 controls qubit 2), then H on qubit 1, then measure both. Outcomes: x, y ∈ &#123;0,1&#125;.</div>
+</div>
+
+<h3>Step 3 — What happens to each Bell state?</h3>
+
+<p>Let's trace each Bell state through the circuit carefully. We'll track: <strong>input → after CNOT → after H → measured outcome</strong>.</p>
+
+<div style="display:flex;flex-direction:column;gap:0.7rem;margin:1rem 0;">
+
+  <!-- Phi+ -->
+  <div style="border:1px solid #2c5282;border-radius:8px;overflow:hidden;">
+    <div style="background:#2c5282;color:white;padding:0.45rem 1rem;display:flex;align-items:center;gap:0.8rem;font-family:'IBM Plex Mono',monospace;">
+      <span style="font-size:1rem;font-weight:700;">|Φ⁺⟩</span>
+      <span style="font-size:0.75rem;opacity:0.8;">(|00⟩ + |11⟩)/√2</span>
+      <span style="margin-left:auto;background:white;color:#2c5282;font-weight:700;padding:0.1rem 0.5rem;border-radius:3px;font-size:0.78rem;">→ outcome "00"</span>
     </div>
-    <div class="mstep">
-      <span class="mstep-label">|Φ⁻⟩ =</span>
-      <span class="mstep-body"><span class="c-g">(|00⟩ − |11⟩) / √2</span></span>
+    <div style="padding:0.7rem 1rem;background:#f0f6ff;">
+      <div class="math-block" style="margin:0;padding:0.6rem 0.9rem;">
+        <div class="mstep" style="grid-template-columns:120px 1fr;">
+          <div class="mstep-label">Input:</div>
+          <div class="mstep-body"><span style="color:#2c5282;">(|00⟩ + |11⟩)</span> / √2</div>
+        </div>
+        <div class="mstep" style="grid-template-columns:120px 1fr;">
+          <div class="mstep-label" style="color:var(--red);">after CNOT:</div>
+          <div class="mstep-body">|00⟩ → |00⟩ &nbsp; |11⟩ → |01⟩ &nbsp; → &nbsp; <strong>(|00⟩ + |01⟩)</strong> / √2</div>
+        </div>
+        <div class="mstep" style="grid-template-columns:120px 1fr;">
+          <div class="mstep-label" style="color:var(--accent);">after H on q₁:</div>
+          <div class="mstep-body">H|0⟩ = |+⟩ = (|0⟩+|1⟩)/√2 → |0⟩(|0⟩+|1⟩)/√2 · (1/√2) → factor: <strong>|0⟩|0⟩</strong> dominant</div>
+        </div>
+        <div class="mstep" style="grid-template-columns:120px 1fr;">
+          <div class="mstep-label" style="color:var(--green);">result:</div>
+          <div class="mstep-body">Collapses to <strong style="color:#2c5282;">|00⟩</strong> with probability 1 → measure <strong style="color:#2c5282;">"00"</strong> ✓</div>
+        </div>
+      </div>
     </div>
-    <div class="mstep">
-      <span class="mstep-label">|Ψ⁺⟩ =</span>
-      <span class="mstep-body"><span class="c-o">(|01⟩ + |10⟩) / √2</span></span>
+  </div>
+
+  <!-- Phi- -->
+  <div style="border:1px solid #c0392b;border-radius:8px;overflow:hidden;">
+    <div style="background:#c0392b;color:white;padding:0.45rem 1rem;display:flex;align-items:center;gap:0.8rem;font-family:'IBM Plex Mono',monospace;">
+      <span style="font-size:1rem;font-weight:700;">|Φ⁻⟩</span>
+      <span style="font-size:0.75rem;opacity:0.8;">(|00⟩ − |11⟩)/√2</span>
+      <span style="margin-left:auto;background:white;color:#c0392b;font-weight:700;padding:0.1rem 0.5rem;border-radius:3px;font-size:0.78rem;">→ outcome "01"</span>
     </div>
-    <div class="mstep">
-      <span class="mstep-label">|Ψ⁻⟩ =</span>
-      <span class="mstep-body"><span class="c-n">(|01⟩ − |10⟩) / √2</span></span>
+    <div style="padding:0.7rem 1rem;background:#fff8f8;">
+      <div class="math-block" style="margin:0;padding:0.6rem 0.9rem;">
+        <div class="mstep" style="grid-template-columns:120px 1fr;">
+          <div class="mstep-label">Input:</div>
+          <div class="mstep-body"><span style="color:#c0392b;">(|00⟩ − |11⟩)</span> / √2</div>
+        </div>
+        <div class="mstep" style="grid-template-columns:120px 1fr;">
+          <div class="mstep-label" style="color:var(--red);">after CNOT:</div>
+          <div class="mstep-body">|00⟩ → |00⟩ &nbsp; |11⟩ → |01⟩ &nbsp; → &nbsp; <strong>(|00⟩ − |01⟩)</strong> / √2</div>
+        </div>
+        <div class="mstep" style="grid-template-columns:120px 1fr;">
+          <div class="mstep-label" style="color:var(--accent);">after H on q₁:</div>
+          <div class="mstep-body">= |0⟩(|0⟩−|1⟩)/√2 · (1/√2) &nbsp;→&nbsp; collapses to |0⟩|1⟩ = <strong>|01⟩</strong></div>
+        </div>
+        <div class="mstep" style="grid-template-columns:120px 1fr;">
+          <div class="mstep-label" style="color:var(--green);">result:</div>
+          <div class="mstep-body">Measure <strong style="color:#c0392b;">"01"</strong> ✓</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Psi+ -->
+  <div style="border:1px solid #1a6b3a;border-radius:8px;overflow:hidden;">
+    <div style="background:#1a6b3a;color:white;padding:0.45rem 1rem;display:flex;align-items:center;gap:0.8rem;font-family:'IBM Plex Mono',monospace;">
+      <span style="font-size:1rem;font-weight:700;">|Ψ⁺⟩</span>
+      <span style="font-size:0.75rem;opacity:0.8;">(|01⟩ + |10⟩)/√2</span>
+      <span style="margin-left:auto;background:white;color:#1a6b3a;font-weight:700;padding:0.1rem 0.5rem;border-radius:3px;font-size:0.78rem;">→ outcome "10"</span>
+    </div>
+    <div style="padding:0.7rem 1rem;background:#f0fff6;">
+      <div class="math-block" style="margin:0;padding:0.6rem 0.9rem;">
+        <div class="mstep" style="grid-template-columns:120px 1fr;">
+          <div class="mstep-label">Input:</div>
+          <div class="mstep-body"><span style="color:#1a6b3a;">(|01⟩ + |10⟩)</span> / √2</div>
+        </div>
+        <div class="mstep" style="grid-template-columns:120px 1fr;">
+          <div class="mstep-label" style="color:var(--red);">after CNOT:</div>
+          <div class="mstep-body">|01⟩ → |11⟩ &nbsp; |10⟩ → |10⟩ &nbsp; → &nbsp; <strong>(|11⟩ + |10⟩)</strong> / √2</div>
+        </div>
+        <div class="mstep" style="grid-template-columns:120px 1fr;">
+          <div class="mstep-label" style="color:var(--accent);">after H on q₁:</div>
+          <div class="mstep-body">= |1⟩(|1⟩+|0⟩)/√2 · (1/√2) &nbsp;→&nbsp; collapses to |1⟩|0⟩ = <strong>|10⟩</strong></div>
+        </div>
+        <div class="mstep" style="grid-template-columns:120px 1fr;">
+          <div class="mstep-label" style="color:var(--green);">result:</div>
+          <div class="mstep-body">Measure <strong style="color:#1a6b3a;">"10"</strong> ✓</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Psi- -->
+  <div style="border:1px solid #6b21a8;border-radius:8px;overflow:hidden;">
+    <div style="background:#6b21a8;color:white;padding:0.45rem 1rem;display:flex;align-items:center;gap:0.8rem;font-family:'IBM Plex Mono',monospace;">
+      <span style="font-size:1rem;font-weight:700;">|Ψ⁻⟩</span>
+      <span style="font-size:0.75rem;opacity:0.8;">(|01⟩ − |10⟩)/√2</span>
+      <span style="margin-left:auto;background:white;color:#6b21a8;font-weight:700;padding:0.1rem 0.5rem;border-radius:3px;font-size:0.78rem;">→ outcome "11"</span>
+    </div>
+    <div style="padding:0.7rem 1rem;background:#faf5ff;">
+      <div class="math-block" style="margin:0;padding:0.6rem 0.9rem;">
+        <div class="mstep" style="grid-template-columns:120px 1fr;">
+          <div class="mstep-label">Input:</div>
+          <div class="mstep-body"><span style="color:#6b21a8;">(|01⟩ − |10⟩)</span> / √2</div>
+        </div>
+        <div class="mstep" style="grid-template-columns:120px 1fr;">
+          <div class="mstep-label" style="color:var(--red);">after CNOT:</div>
+          <div class="mstep-body">|01⟩ → |11⟩ &nbsp; |10⟩ → |10⟩ &nbsp; → &nbsp; <strong>(|11⟩ − |10⟩)</strong> / √2</div>
+        </div>
+        <div class="mstep" style="grid-template-columns:120px 1fr;">
+          <div class="mstep-label" style="color:var(--accent);">after H on q₁:</div>
+          <div class="mstep-body">= |1⟩(|1⟩−|0⟩)/√2 · (1/√2) &nbsp;→&nbsp; collapses to |1⟩|1⟩ = <strong>|11⟩</strong></div>
+        </div>
+        <div class="mstep" style="grid-template-columns:120px 1fr;">
+          <div class="mstep-label" style="color:var(--green);">result:</div>
+          <div class="mstep-body">Measure <strong style="color:#6b21a8;">"11"</strong> ✓</div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
-<h3>The Bell measurement circuit</h3>
-<p>To measure in the Bell basis, we first apply the <strong>inverse Bell circuit</strong> (which maps Bell states to computational basis states), then measure in the computational basis.</p>
+<h3>Step 4 — The Complete Decoding Table</h3>
 
-<p>The inverse Bell circuit is: CNOT (control=qubit 1, target=qubit 2), then H on qubit 1.</p>
+<div style="background:#f5f2ea;border:1px solid #dedad0;border-radius:8px;padding:1rem 1.2rem;margin:1rem 0;overflow-x:auto;">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;color:#888877;margin-bottom:0.7rem;">Bell state → Classical outcome (two bits)</div>
+  <table style="border-collapse:collapse;width:100%;font-family:'IBM Plex Mono',monospace;font-size:0.88rem;">
+    <thead>
+      <tr style="background:var(--ink);color:white;">
+        <th style="padding:0.45rem 1rem;text-align:left;border-radius:4px 0 0 0;">Input Bell state</th>
+        <th style="padding:0.45rem 1rem;text-align:left;">Formula</th>
+        <th style="padding:0.45rem 1rem;text-align:center;">Outcome x y</th>
+        <th style="padding:0.45rem 1rem;text-align:left;border-radius:0 4px 0 0;">Detected</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="background:#dbeafe;">
+        <td style="padding:0.4rem 1rem;font-weight:700;color:#2c5282;">|Φ⁺⟩</td>
+        <td style="padding:0.4rem 1rem;">(|00⟩ + |11⟩)/√2</td>
+        <td style="padding:0.4rem 1rem;text-align:center;font-weight:700;color:#2c5282;font-size:1rem;">00</td>
+        <td style="padding:0.4rem 1rem;color:#2c5282;">|Φ⁺⟩ detected</td>
+      </tr>
+      <tr style="background:#fee2e2;">
+        <td style="padding:0.4rem 1rem;font-weight:700;color:#c0392b;">|Φ⁻⟩</td>
+        <td style="padding:0.4rem 1rem;">(|00⟩ − |11⟩)/√2</td>
+        <td style="padding:0.4rem 1rem;text-align:center;font-weight:700;color:#c0392b;font-size:1rem;">01</td>
+        <td style="padding:0.4rem 1rem;color:#c0392b;">|Φ⁻⟩ detected</td>
+      </tr>
+      <tr style="background:#d1fae5;">
+        <td style="padding:0.4rem 1rem;font-weight:700;color:#1a6b3a;">|Ψ⁺⟩</td>
+        <td style="padding:0.4rem 1rem;">(|01⟩ + |10⟩)/√2</td>
+        <td style="padding:0.4rem 1rem;text-align:center;font-weight:700;color:#1a6b3a;font-size:1rem;">10</td>
+        <td style="padding:0.4rem 1rem;color:#1a6b3a;">|Ψ⁺⟩ detected</td>
+      </tr>
+      <tr style="background:#ede9fe;">
+        <td style="padding:0.4rem 1rem;font-weight:700;color:#6b21a8;">|Ψ⁻⟩</td>
+        <td style="padding:0.4rem 1rem;">(|01⟩ − |10⟩)/√2</td>
+        <td style="padding:0.4rem 1rem;text-align:center;font-weight:700;color:#6b21a8;font-size:1rem;">11</td>
+        <td style="padding:0.4rem 1rem;color:#6b21a8;">|Ψ⁻⟩ detected</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<h3>Measuring a Superposition of Bell States</h3>
+
+<p>What if the state is not a single Bell state, but a superposition of them? For example:</p>
 
 <div class="math-block">
-  <div class="eq" style="font-size:0.9rem;">
-    |Ψ⟩ ──●──[H]──[M] &nbsp;&nbsp;&nbsp;&nbsp; (qubit 1)
-  </div>
-  <div class="eq" style="font-size:0.9rem;">
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;──⊕──────[M] &nbsp;&nbsp;&nbsp;&nbsp; (qubit 2)
-  </div>
+  <div class="eq">|Ψ⟩ = α|Φ⁺⟩ + β|Φ⁻⟩ + γ|Ψ⁺⟩ + δ|Ψ⁻⟩</div>
+  <div class="eq" style="margin-top:0.5rem;"><span class="eq-note">with |α|² + |β|² + |γ|² + |δ|² = 1 (normalisation)</span></div>
 </div>
 
-<h3>Step-by-step: which Bell state maps to which outcome?</h3>
+<p>Measuring in the Bell basis gives:</p>
 
-<div class="math-block">
-  <div class="mstep">
-    <span class="mstep-label" style="color:var(--accent);">|Φ⁺⟩:</span>
-    <span class="mstep-body">|00⟩+|11⟩ 
-      <span class="c-r">─CNOT→</span> |00⟩+|01⟩ = |0⟩(|0⟩+|1⟩) 
-      <span class="c-b">─H⊗I→</span> |0⟩·<span class="c-b">H</span>(|0⟩+|1⟩)/1 
-      = |0⟩·√2|+⟩ → 
-      wait, let's be careful:</span>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem;margin:0.8rem 0;">
+  <div style="background:#dbeafe;border-radius:6px;padding:0.6rem 0.7rem;text-align:center;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:1.1rem;color:#2c5282;">"00"</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:#1a1a14;margin:0.2rem 0;">P = |α|²</div>
+    <div style="font-size:0.7rem;color:#555;font-style:italic;">|Φ⁺⟩ detected</div>
+  </div>
+  <div style="background:#fee2e2;border-radius:6px;padding:0.6rem 0.7rem;text-align:center;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:1.1rem;color:#c0392b;">"01"</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:#1a1a14;margin:0.2rem 0;">P = |β|²</div>
+    <div style="font-size:0.7rem;color:#555;font-style:italic;">|Φ⁻⟩ detected</div>
+  </div>
+  <div style="background:#d1fae5;border-radius:6px;padding:0.6rem 0.7rem;text-align:center;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:1.1rem;color:#1a6b3a;">"10"</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:#1a1a14;margin:0.2rem 0;">P = |γ|²</div>
+    <div style="font-size:0.7rem;color:#555;font-style:italic;">|Ψ⁺⟩ detected</div>
+  </div>
+  <div style="background:#ede9fe;border-radius:6px;padding:0.6rem 0.7rem;text-align:center;">
+    <div style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:1.1rem;color:#6b21a8;">"11"</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:#1a1a14;margin:0.2rem 0;">P = |δ|²</div>
+    <div style="font-size:0.7rem;color:#555;font-style:italic;">|Ψ⁻⟩ detected</div>
   </div>
 </div>
-
-<div class="note-box">
-  <strong>Notation shortcut used in the notes:</strong> We work on the unnormalised states and drop the 1/√2 factors temporarily, restoring at the end.
-</div>
-
-<div class="math-block">
-  <div class="mstep">
-    <span class="mstep-label" style="color:var(--accent);">|Φ⁺⟩ → 00:</span>
-    <span class="mstep-body">
-      |00⟩+|11⟩ 
-      <span class="c-r">─CNOT─→</span> |00⟩+|01⟩ = |0⟩(|0⟩+|1⟩)
-      <span class="c-b">─H on q1─→</span> (|0⟩+|1⟩)(|0⟩+|1⟩) <span class="c-g">∝ |00⟩ → outcome 00 ✓</span>
-    </span>
-  </div>
-  <hr class="math-sep">
-  <div class="mstep">
-    <span class="mstep-label" style="color:var(--green);">|Φ⁻⟩ → 01:</span>
-    <span class="mstep-body">
-      |00⟩−|11⟩
-      <span class="c-r">─CNOT─→</span> |00⟩−|01⟩ = |0⟩(|0⟩−|1⟩)
-      <span class="c-b">─H─→</span> (|0⟩+|1⟩)(|0⟩−|1⟩) <span class="c-g">∝ |01⟩ → outcome 01 ✓</span>
-    </span>
-  </div>
-  <hr class="math-sep">
-  <div class="mstep">
-    <span class="mstep-label" style="color:var(--orange);">|Ψ⁺⟩ → 10:</span>
-    <span class="mstep-body">
-      |01⟩+|10⟩
-      <span class="c-r">─CNOT─→</span> |11⟩+|10⟩ = |1⟩(|1⟩+|0⟩)
-      <span class="c-b">─H─→</span> (|0⟩−|1⟩)(|0⟩+|1⟩) <span class="c-g">∝ |10⟩ → outcome 10 ✓</span>
-    </span>
-  </div>
-  <hr class="math-sep">
-  <div class="mstep">
-    <span class="mstep-label" style="color:var(--red);">|Ψ⁻⟩ → 11:</span>
-    <span class="mstep-body">
-      |01⟩−|10⟩
-      <span class="c-r">─CNOT─→</span> |11⟩−|10⟩ = |1⟩(|1⟩−|0⟩)
-      <span class="c-b">─H─→</span> (|0⟩−|1⟩)(|1⟩−|0⟩) <span class="c-g">∝ −|11⟩ → outcome 11 ✓</span>
-    </span>
-  </div>
-</div>
-
-<p>Summary of the Bell measurement:</p>
-
-<table class="tele-table">
-  <tr><th>Measurement outcome</th><th>Bell state detected</th><th>Probability</th></tr>
-  <tr><td>00</td><td>|Φ⁺⟩</td><td>|α|²</td></tr>
-  <tr><td>01</td><td>|Φ⁻⟩</td><td>|β|²</td></tr>
-  <tr><td>10</td><td>|Ψ⁺⟩</td><td>|γ|²</td></tr>
-  <tr><td>11</td><td>|Ψ⁻⟩</td><td>|δ|²</td></tr>
-</table>
-
-<p>where |Ψ⟩ = α|Φ⁺⟩ + β|Φ⁻⟩ + γ|Ψ⁺⟩ + δ|Ψ⁻⟩ is the state before measurement.</p>
 
 <div class="insight">
-  The Bell measurement is at the heart of quantum teleportation and superdense coding. It converts the entangled "language" of Bell states into the classical language of 00/01/10/11, allowing classical communication of quantum information.
+  <strong>The elegance of the Bell basis:</strong> the Born rule works exactly the same way as in the computational basis — the probability of each outcome is the squared magnitude of the amplitude of the corresponding Bell state. The basis change circuit does all the hard work of "translating" the state before measurement.
 </div>
 
-<!-- Interactive Bell visualizer -->
+<!-- Interactive Bell Simulator -->
 <canvas id="cBell" width="560" height="200"></canvas>
-<div class="canvas-caption">Bell measurement simulator — click a Bell state to see which outcome you get</div>
-<div class="controls" style="gap:0.5rem;">
-  <button class="btn sm" onclick="simBell(0)">|Φ⁺⟩</button>
-  <button class="btn sm" onclick="simBell(1)">|Φ⁻⟩</button>
-  <button class="btn sm" onclick="simBell(2)">|Ψ⁺⟩</button>
-  <button class="btn sm" onclick="simBell(3)">|Ψ⁻⟩</button>
-  <button class="btn" onclick="resetBell()">Reset</button>
+<div class="canvas-caption">Bell measurement simulator — click a Bell state to trace it through the circuit and see the outcome</div>
+<div class="controls" style="gap:0.5rem;flex-wrap:wrap;">
+  <button class="btn sm active" id="bBell0" onclick="simBellDetailed(0)" style="border-color:#2c5282;color:#2c5282;">|Φ⁺⟩</button>
+  <button class="btn sm" id="bBell1" onclick="simBellDetailed(1)" style="border-color:#c0392b;color:#c0392b;">|Φ⁻⟩</button>
+  <button class="btn sm" id="bBell2" onclick="simBellDetailed(2)" style="border-color:#1a6b3a;color:#1a6b3a;">|Ψ⁺⟩</button>
+  <button class="btn sm" id="bBell3" onclick="simBellDetailed(3)" style="border-color:#6b21a8;color:#6b21a8;">|Ψ⁻⟩</button>
 </div>
+<div id="bellDetailMsg" style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:var(--ink2);margin-top:0.5rem;min-height:2rem;line-height:1.6;"></div>
 
 <!-- Exercises -->
 <div class="ex-block" id="ex7a">
-  <div class="ex-header"><span class="ex-tag">Ex 7.1</span><span class="ex-title">Bell circuit gates</span></div>
+  <div class="ex-header"><span class="ex-tag">Ex 7.1</span><span class="ex-title">Bell circuit gates — order matters!</span></div>
   <div class="ex-body">
-    <p>The inverse Bell circuit (to decode Bell states into computational basis) consists of two gates applied in order. What are they? (write as "gate1, gate2" where gate1 is applied first)</p>
+    <p>The Bell measurement circuit applies two gates before the standard measurement. What is the correct order? Write "CNOT then H" or "H then CNOT".</p>
   </div>
   <div class="answer-area">
     <div class="answer-row">
-      <span class="ans-label">Answer:</span>
-      <input class="answer-input" id="a7a" placeholder="..." oninput="chkContains('a7a',['cnot','h'],'ex7a')" style="width:180px;">
-      <button class="btn sm" onclick="chkContains('a7a',['cnot','h'],'ex7a')">Check</button>
+      <span class="ans-label">Order:</span>
+      <input class="answer-input" id="a7a" placeholder="..." style="width:200px;" oninput="chkContains('a7a',['cnot then h','cnot,h','cnot then hadamard'],'f7a')">
+      <button class="btn sm" onclick="chkContains('a7a',['cnot then h','cnot,h','cnot then hadamard'],'f7a')">Check</button>
       <button class="hint-toggle" onclick="showHint('h7a')">show hint</button>
     </div>
-    <div class="feedback hint" id="h7a">First apply CNOT (control=qubit1, target=qubit2), then Hadamard on qubit1. This is the reverse of the Bell state preparation circuit.</div>
+    <div class="feedback hint" id="h7a">Look at the circuit diagram above: the ● (control dot on qubit 1) and ⊕ (target on qubit 2) form the CNOT — it comes first. Then H is applied on qubit 1 only. Finally both are measured.</div>
     <div class="feedback" id="f7a"></div>
+  </div>
+</div>
+
+<div class="ex-block" id="ex7b">
+  <div class="ex-header"><span class="ex-tag">Ex 7.2</span><span class="ex-title">Identify the Bell state from an outcome</span></div>
+  <div class="ex-body">
+    <p>A Bell measurement gives outcome "10". Which Bell state was the system in before measurement?</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">Bell state:</span>
+      <select class="answer-input" id="a7b" style="width:130px;">
+        <option value="">— choose —</option>
+        <option value="phi+">|Φ⁺⟩</option>
+        <option value="phi-">|Φ⁻⟩</option>
+        <option value="psi+">|Ψ⁺⟩</option>
+        <option value="psi-">|Ψ⁻⟩</option>
+      </select>
+      <button class="btn sm" onclick="chkSelect('a7b','psi+','f7b','✓ Correct! Outcome 10 always means |Ψ⁺⟩ was detected.','✗ Check the decoding table above — outcome 10 corresponds to which row?')">Check</button>
+    </div>
+    <div class="feedback" id="f7b"></div>
+  </div>
+</div>
+
+<div class="ex-block" id="ex7c">
+  <div class="ex-header"><span class="ex-tag">Ex 7.3</span><span class="ex-title">Probability in a Bell superposition</span></div>
+  <div class="ex-body">
+    <p>A state is |Ψ⟩ = (1/2)|Φ⁺⟩ + (√3/2)|Ψ⁻⟩. What is the probability of getting outcome "11" (detecting |Ψ⁻⟩)?</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">P("11") =</span>
+      <input class="answer-input" id="a7c" placeholder="0.??" style="width:100px;" oninput="chkClose7c()">
+      <button class="btn sm" onclick="chkClose7c()">Check</button>
+      <button class="hint-toggle" onclick="showHint('h7c')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h7c">P("11") = |δ|² where δ is the coefficient of |Ψ⁻⟩. Here δ = √3/2, so P = (√3/2)² = 3/4 = 0.75.</div>
+    <div class="feedback" id="f7c"></div>
   </div>
 </div>
 </section><!-- /s7 -->
@@ -1012,156 +1199,647 @@ export const meta: NoteMeta = {
 <div class="section-num">Section 08</div>
 <h2>Quantum Teleportation</h2>
 
-<p>Quantum teleportation transfers an <em>unknown</em> quantum state from Alice to Bob using: (1) a shared entangled pair, and (2) two classical bits of communication. No physical qubit is transmitted.</p>
+<p>Quantum teleportation is one of the most striking results in quantum information. It answers a puzzling question: can we transmit a quantum state — an unknown qubit — without physically sending the qubit itself?</p>
 
 <div class="def">
-  <div class="def-title">Resources needed</div>
-  <ul style="padding-left:1.2rem;line-height:2;">
-    <li>One pre-shared Bell pair (|Φ⁺⟩ = (|00⟩+|11⟩)/√2)</li>
-    <li>Alice has q₀ (her half of the Bell pair) and q_&#123;in&#125; = |ψ⟩ (the state to teleport)</li>
-    <li>Bob has q₁ (his half of the Bell pair)</li>
-    <li>A classical channel (2 bits: x, y ∈ &#123;0,1&#125;)</li>
-  </ul>
-</div>
-
-<h3>The protocol (3 steps)</h3>
-
-<div class="math-block">
-  <div class="mstep">
-    <span class="mstep-label" style="color:var(--accent);">Step 1:</span>
-    <span class="mstep-body"><strong>Generate Bell pair.</strong> The pair |Φ⁺⟩ = (|00⟩+|11⟩)/√2 is shared: q₀ → Alice, q₁ → Bob.</span>
-  </div>
-  <div class="mstep">
-    <span class="mstep-label" style="color:var(--accent);">Step 2:</span>
-    <span class="mstep-body"><strong>Alice measures in Bell basis.</strong> She applies the Bell measurement circuit to (q_&#123;in&#125;, q₀) and sends the 2-bit outcome (x,y) to Bob via classical channel.</span>
-  </div>
-  <div class="mstep">
-    <span class="mstep-label" style="color:var(--accent);">Step 3:</span>
-    <span class="mstep-body"><strong>Bob corrects.</strong> Based on (x,y), Bob applies a correction to q₁ to recover |ψ⟩.</span>
-  </div>
-</div>
-
-<h3>Detailed calculation</h3>
-
-<div class="math-block">
-  <div class="mstep">
-    <span class="mstep-label">Initial state:</span>
-    <span class="mstep-body">|ψ₀⟩ = |Φ⁺⟩ ⊗ |ψ⟩ = <span class="c-b">(|00⟩+|11⟩)/√2</span> ⊗ (α|0⟩+β|1⟩)</span>
-  </div>
-  <div class="mstep">
-    <span class="mstep-label">Expand:</span>
-    <span class="mstep-body">= (1/√2)(α|000⟩ + α|110⟩ + β|001⟩ + β|111⟩)
-    <span class="eq-note"> &nbsp; (order: q_&#123;in&#125;, q₀, q₁)</span></span>
-  </div>
-  <hr class="math-sep">
-  <div class="mstep">
-    <span class="mstep-label" style="color:var(--red);">CNOT:</span>
-    <span class="mstep-body">Apply CNOT(q_&#123;in&#125;→q₀). This flips q₀ when q_&#123;in&#125;=|1⟩:</span>
-  </div>
-  <div class="mstep">
-    <span class="mstep-label"></span>
-    <span class="mstep-body">|ψ₁⟩ ∝ α<span class="c-b">|00+⟩</span> + α<span class="c-b">|11+⟩</span> + β<span class="c-g">|01-⟩</span> + β<span class="c-g">|10-⟩</span></span>
-  </div>
-  <div class="mstep">
-    <span class="mstep-label"></span>
-    <span class="mstep-body">= α|000⟩+α|001⟩+α|110⟩+α|111⟩ + β|010⟩−β|011⟩+β|100⟩−β|101⟩</span>
-  </div>
-  <hr class="math-sep">
-  <div class="mstep">
-    <span class="mstep-label" style="color:var(--blue-hl);color:var(--accent);">Hadamard:</span>
-    <span class="mstep-body">Apply H on q_&#123;in&#125;. Remember H|0⟩=(|0⟩+|1⟩)/√2, H|1⟩=(|0⟩−|1⟩)/√2:</span>
-  </div>
-  <div class="mstep">
-    <span class="mstep-label"></span>
-    <span class="mstep-body">|ψ₁⟩ ∝ (α|0⟩+β|1⟩)|00⟩ + (α|0⟩−β|1⟩)|01⟩ + (α|1⟩+β|0⟩)|10⟩ + (α|1⟩−β|0⟩)|11⟩</span>
-  </div>
-</div>
-
-<p>Now group by the 2-bit outcome (q_&#123;in&#125;, q₀) to see what Bob's qubit q₁ becomes:</p>
-
-<table class="tele-table">
-  <tr><th>Alice outcome (x,y)</th><th>Bob's qubit q₁ state</th><th>Correction needed</th><th>Bob applies</th></tr>
-  <tr><td style="font-family:'IBM Plex Mono';font-weight:600;">"00"</td><td>α|0⟩ + β|1⟩ = |ψ⟩</td><td>None</td><td>I (identity)</td></tr>
-  <tr><td style="font-family:'IBM Plex Mono';font-weight:600;">"01"</td><td>α|0⟩ − β|1⟩ = Z|ψ⟩</td><td>Apply Z</td><td>Z gate</td></tr>
-  <tr><td style="font-family:'IBM Plex Mono';font-weight:600;">"10"</td><td>α|1⟩ + β|0⟩ = X|ψ⟩</td><td>Apply X</td><td>X gate</td></tr>
-  <tr><td style="font-family:'IBM Plex Mono';font-weight:600;">"11"</td><td>α|1⟩ − β|0⟩ = XZ|ψ⟩</td><td>Apply XZ</td><td>Z then X</td></tr>
-</table>
-
-<p style="margin-top:0.8rem;">In all cases, Bob can recover |ψ⟩ exactly after receiving the 2 classical bits and applying the appropriate correction.</p>
-
-<div class="warning">
-  <strong>Teleportation does NOT violate relativity:</strong> Alice's measurement outcome is random — she has no control over which of the 4 outcomes she gets. The 2 classical bits must be sent to Bob via a classical (speed-limited) channel. The quantum state travels no faster than light.
+  <div class="def-title">The Goal</div>
+  Alice holds an unknown qubit |ψ⟩ = α|0⟩ + β|1⟩. She wants to send the <em>state</em> |ψ⟩ to Bob, who is far away. She does NOT know α and β (and by the no-cloning theorem she cannot measure them without destroying the state). She can only send <strong>classical bits</strong> (phone calls, emails...). Can she do it?
 </div>
 
 <div class="insight">
-  Teleportation demonstrates something profound: <strong>1 entangled pair + 2 classical bits = 1 qubit</strong> of quantum channel capacity. This is the resource equation of quantum communication.
+  <strong>Yes — if they share an entangled pair first!</strong> Using one pre-shared Bell pair and just 2 classical bits of communication, Alice can transfer the full quantum state |ψ⟩ to Bob. No qubit physically travels. This is quantum teleportation.
+</div>
+
+<h3>What We Need (Resources)</h3>
+
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.6rem;margin:1rem 0;">
+  <div style="background:#dbeafe;border:1px solid #2c5282;border-radius:8px;padding:0.8rem;text-align:center;">
+    <div style="font-size:1.5rem;margin-bottom:0.3rem;">🔗</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;font-weight:700;color:#2c5282;">1 Bell pair</div>
+    <div style="font-size:0.72rem;color:#555;margin-top:0.2rem;">|Φ⁺⟩ shared between Alice and Bob <em>before the protocol</em></div>
+  </div>
+  <div style="background:#d1fae5;border:1px solid #1a6b3a;border-radius:8px;padding:0.8rem;text-align:center;">
+    <div style="font-size:1.5rem;margin-bottom:0.3rem;">📡</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;font-weight:700;color:#1a6b3a;">2 classical bits</div>
+    <div style="font-size:0.72rem;color:#555;margin-top:0.2rem;">Alice sends x, y ∈ &#123;0,1&#125; over a classical channel</div>
+  </div>
+  <div style="background:#ede9fe;border:1px solid #6b21a8;border-radius:8px;padding:0.8rem;text-align:center;">
+    <div style="font-size:1.5rem;margin-bottom:0.3rem;">⚙️</div>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;font-weight:700;color:#6b21a8;">Bob's correction</div>
+    <div style="font-size:0.72rem;color:#555;margin-top:0.2rem;">Bob applies at most X and Z based on (x, y)</div>
+  </div>
+</div>
+
+<h3>The Three Steps of the Protocol</h3>
+
+<div style="display:flex;flex-direction:column;gap:0;margin:1rem 0;">
+  <div style="display:flex;gap:0.8rem;align-items:stretch;">
+    <div style="display:flex;flex-direction:column;align-items:center;">
+      <div style="width:36px;height:36px;background:var(--accent);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:0.9rem;flex-shrink:0;">1</div>
+      <div style="width:2px;flex:1;background:var(--line);margin:4px 0;"></div>
+    </div>
+    <div style="background:var(--page);border:1px solid var(--line);border-radius:6px;padding:0.8rem 1rem;margin-bottom:0.5rem;flex:1;">
+      <strong>Share a Bell pair.</strong> Alice and Bob meet (or use a quantum channel) and create the entangled pair |Φ⁺⟩ = (|00⟩+|11⟩)/√2. Alice keeps qubit q₀ and Bob keeps qubit q₁. They can now be <em>light-years apart</em>.
+    </div>
+  </div>
+  <div style="display:flex;gap:0.8rem;align-items:stretch;">
+    <div style="display:flex;flex-direction:column;align-items:center;">
+      <div style="width:36px;height:36px;background:var(--red);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:0.9rem;flex-shrink:0;">2</div>
+      <div style="width:2px;flex:1;background:var(--line);margin:4px 0;"></div>
+    </div>
+    <div style="background:var(--page);border:1px solid var(--line);border-radius:6px;padding:0.8rem 1rem;margin-bottom:0.5rem;flex:1;">
+      <strong>Alice performs a Bell measurement.</strong> Alice has the state |ψ⟩ to send plus her half q₀ of the Bell pair. She applies the Bell measurement circuit (CNOT + H + measure) to these two qubits and gets a 2-bit outcome (x, y) ∈ &#123;00, 01, 10, 11&#125;. She sends (x, y) to Bob via a classical channel.
+    </div>
+  </div>
+  <div style="display:flex;gap:0.8rem;align-items:stretch;">
+    <div style="display:flex;flex-direction:column;align-items:center;">
+      <div style="width:36px;height:36px;background:var(--green);color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:0.9rem;flex-shrink:0;">3</div>
+    </div>
+    <div style="background:var(--page);border:1px solid var(--line);border-radius:6px;padding:0.8rem 1rem;flex:1;">
+      <strong>Bob applies a correction gate.</strong> Based on the 2 bits (x, y) he received, Bob applies a simple correction (I, Z, X, or XZ) to his qubit q₁. After the correction, q₁ is in the state |ψ⟩ — the teleportation succeeded!
+    </div>
+  </div>
+</div>
+
+<h3>The Complete Teleportation Circuit</h3>
+
+<p>Here is the full circuit with all three qubits. Read it left to right. The dashed vertical lines mark the three stages of the protocol.</p>
+
+<!-- Full teleportation circuit -->
+<div style="background:#1a1a2e;border-radius:10px;padding:1.4rem 1.6rem;margin:1.2rem 0;overflow-x:auto;position:relative;">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.58rem;letter-spacing:0.18em;text-transform:uppercase;color:#7a8499;margin-bottom:1rem;">Full Teleportation Circuit</div>
+  <div style="position:relative;">
+    <!-- Stage labels -->
+    <div style="display:grid;grid-template-columns:85px 1fr 1fr 1fr;margin-bottom:0.3rem;font-family:'IBM Plex Mono',monospace;font-size:0.6rem;text-align:center;color:#7a8499;">
+      <div></div>
+      <div style="color:#fde68a;">① Share Bell pair</div>
+      <div style="color:#fde68a;">② Alice measures</div>
+      <div style="color:#fde68a;">③ Bob corrects</div>
+    </div>
+    <!-- Qubit rows -->
+    <div style="display:flex;flex-direction:column;gap:0.2rem;">
+
+      <!-- q_in (Alice's unknown state) -->
+      <div style="display:grid;grid-template-columns:85px 1fr 1fr 1fr;align-items:center;gap:0;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:#c0392b;font-weight:600;">|ψ⟩ =<br><span style="color:#aaa;font-weight:300;font-size:0.65rem;">α|0⟩+β|1⟩</span></div>
+        <div style="display:flex;align-items:center;padding:0 0.3rem;">
+          <div style="height:2px;background:#a0e0ff;flex:1;"></div>
+          <div style="height:2px;background:#a0e0ff;flex:1;"></div>
+        </div>
+        <div style="display:flex;align-items:center;padding:0 0.3rem;gap:0.3rem;">
+          <div style="height:2px;background:#a0e0ff;flex:1;"></div>
+          <div style="border:2px solid #a0e0ff;border-radius:50%;width:12px;height:12px;flex-shrink:0;background:#1a1a2e;"></div><!-- control -->
+          <div style="height:2px;background:#a0e0ff;flex:1;"></div>
+          <div style="border:2px solid #fde68a;border-radius:3px;padding:0.1rem 0.3rem;font-family:'IBM Plex Mono',monospace;font-size:0.65rem;font-weight:700;color:#fde68a;flex-shrink:0;">H</div>
+          <div style="height:2px;background:#a0e0ff;flex:1;"></div>
+          <div style="border:1.5px solid #aaa;border-radius:3px;padding:0.1rem 0.3rem;font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:#aaa;flex-shrink:0;">M</div>
+          <div style="height:2px;background:none;border-top:2px dashed #555;flex:1;"></div>
+        </div>
+        <div style="display:flex;align-items:center;padding:0 0.3rem;gap:0.2rem;">
+          <div style="height:2px;background:none;border-top:2px dashed #555;flex:1;"></div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:#c0392b;font-weight:700;flex-shrink:0;">x</div>
+        </div>
+      </div>
+
+      <!-- connector line Alice's CNOT -->
+      <div style="display:grid;grid-template-columns:85px 1fr 1fr 1fr;height:18px;">
+        <div></div><div></div>
+        <div style="padding-left:calc(0.3rem + 1fr/2);display:flex;justify-content:center;align-items:center;">
+          <div style="width:2px;height:100%;background:#a0e0ff;margin-left:calc(50% - 45px);"></div>
+        </div>
+        <div></div>
+      </div>
+
+      <!-- q0 (Alice's half of Bell pair) -->
+      <div style="display:grid;grid-template-columns:85px 1fr 1fr 1fr;align-items:center;gap:0;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:#2c5282;font-weight:600;">q₀ → Alice<br><span style="color:#7a8499;font-weight:300;font-size:0.62rem;">Bell pair</span></div>
+        <div style="display:flex;align-items:center;padding:0 0.3rem;gap:0.3rem;">
+          <div style="height:2px;background:#a0cfff;flex:1;"></div>
+          <div style="border:2px solid #fde68a;border-radius:3px;padding:0.1rem 0.3rem;font-family:'IBM Plex Mono',monospace;font-size:0.65rem;font-weight:700;color:#fde68a;flex-shrink:0;">H</div>
+          <div style="height:2px;background:#a0cfff;flex:1;"></div>
+          <div style="border:1.5px solid #a0cfff;border-radius:50%;width:10px;height:10px;background:#1a1a2e;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+            <div style="width:5px;height:1.5px;background:#a0cfff;"></div><div style="width:1.5px;height:5px;background:#a0cfff;position:absolute;"></div>
+          </div>
+          <div style="height:2px;background:#a0cfff;flex:1;"></div>
+        </div>
+        <div style="display:flex;align-items:center;padding:0 0.3rem;gap:0.3rem;">
+          <div style="height:2px;background:#a0cfff;flex:1;"></div>
+          <!-- CNOT target from q_in -->
+          <div style="border:2px solid #a0e0ff;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:0.8rem;color:#a0e0ff;font-weight:700;flex-shrink:0;">⊕</div>
+          <div style="height:2px;background:#a0cfff;flex:1;"></div>
+          <div style="border:1.5px solid #aaa;border-radius:3px;padding:0.1rem 0.3rem;font-family:'IBM Plex Mono',monospace;font-size:0.65rem;color:#aaa;flex-shrink:0;">M</div>
+          <div style="height:2px;background:none;border-top:2px dashed #555;flex:1;"></div>
+        </div>
+        <div style="display:flex;align-items:center;padding:0 0.3rem;gap:0.2rem;">
+          <div style="height:2px;background:none;border-top:2px dashed #555;flex:1;"></div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:#2c5282;font-weight:700;flex-shrink:0;">y</div>
+        </div>
+      </div>
+
+      <!-- connector line Bob's CNOT -->
+      <div style="display:grid;grid-template-columns:85px 1fr 1fr 1fr;height:18px;">
+        <div></div>
+        <div style="display:flex;align-items:center;padding:0 0.3rem;">
+          <div style="width:2px;height:100%;background:#a0cfff;margin-left:calc(100% - 14px);"></div>
+        </div>
+        <div></div><div></div>
+      </div>
+
+      <!-- q1 (Bob's qubit) -->
+      <div style="display:grid;grid-template-columns:85px 1fr 1fr 1fr;align-items:center;gap:0;">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:#1a6b3a;font-weight:600;">q₁ → Bob<br><span style="color:#7a8499;font-weight:300;font-size:0.62rem;">Bell pair</span></div>
+        <div style="display:flex;align-items:center;padding:0 0.3rem;gap:0.3rem;">
+          <div style="height:2px;background:#6dd6a0;flex:1;"></div>
+          <!-- CNOT target from q0 -->
+          <div style="border:2px solid #6dd6a0;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:0.8rem;color:#6dd6a0;font-weight:700;flex-shrink:0;">⊕</div>
+          <div style="height:2px;background:#6dd6a0;flex:1;"></div>
+        </div>
+        <div style="display:flex;align-items:center;padding:0 0.3rem;">
+          <div style="height:2px;background:#6dd6a0;flex:1;"></div>
+          <div style="height:2px;background:none;border-top:2px dashed #555;flex:1;"></div>
+        </div>
+        <div style="display:flex;align-items:center;padding:0 0.3rem;gap:0.3rem;">
+          <div style="height:2px;background:none;border-top:2px dashed #555;flex:1;"></div>
+          <div style="border:2px solid #c0392b;border-radius:3px;padding:0.1rem 0.3rem;font-family:'IBM Plex Mono',monospace;font-size:0.65rem;font-weight:700;color:#c0392b;flex-shrink:0;">X<sup style="font-size:0.55rem;color:#aaa;">if x=1</sup></div>
+          <div style="height:2px;background:#6dd6a0;flex:0.3;"></div>
+          <div style="border:2px solid #2c5282;border-radius:3px;padding:0.1rem 0.3rem;font-family:'IBM Plex Mono',monospace;font-size:0.65rem;font-weight:700;color:#2c5282;flex-shrink:0;">Z<sup style="font-size:0.55rem;color:#aaa;">if y=1</sup></div>
+          <div style="height:2px;background:#6dd6a0;flex:0.5;"></div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:#c0392b;font-weight:700;flex-shrink:0;">|ψ⟩</div>
+        </div>
+      </div>
+
+    </div>
+    <!-- Stage separator lines -->
+    <div style="position:absolute;top:1.5rem;bottom:0;left:calc(85px + 33%);width:1px;border-left:1px dashed #444;pointer-events:none;"></div>
+    <div style="position:absolute;top:1.5rem;bottom:0;left:calc(85px + 66%);width:1px;border-left:1px dashed #444;pointer-events:none;"></div>
+  </div>
+
+  <!-- Stage labels bottom -->
+  <div style="display:grid;grid-template-columns:85px 1fr 1fr 1fr;margin-top:0.7rem;font-family:'IBM Plex Mono',monospace;font-size:0.6rem;text-align:center;color:#7a8499;">
+    <div></div>
+    <div>|ψ₀⟩</div>
+    <div>|ψ₁⟩ after CNOT+H</div>
+    <div>|ψ₂⟩ after correction</div>
+  </div>
+  <div style="margin-top:0.8rem;font-size:0.72rem;color:#7a8499;font-style:italic;">
+    Classical communication (x, y) from Alice to Bob shown as dashed lines. Bob's correction uses at most two gates.
+  </div>
+</div>
+
+<h3>Step-by-Step Calculation</h3>
+
+<p>Let's trace the mathematics carefully. Alice has |ψ⟩ = α|0⟩ + β|1⟩ to teleport. The three qubits are ordered as (q_in, q₀, q₁).</p>
+
+<div class="math-block">
+  <div class="mstep">
+    <div class="mstep-label" style="color:var(--accent);font-size:0.8rem;">Initial state |ψ₀⟩:</div>
+    <div class="mstep-body">
+      |ψ₀⟩ = |Φ⁺⟩ ⊗ |ψ⟩ = <span style="color:#2c5282;">(|00⟩ + |11⟩)/√2</span> ⊗ (α|0⟩ + β|1⟩)
+    </div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label"></div>
+    <div class="mstep-body" style="color:var(--muted);font-size:0.82rem;">Expand: = (α|000⟩ + α|110⟩ + β|001⟩ + β|111⟩) / √2</div>
+  </div>
+  <hr class="math-sep">
+  <div class="mstep">
+    <div class="mstep-label" style="color:var(--red);font-size:0.8rem;">After CNOT<br>(q_in → q₀):</div>
+    <div class="mstep-body">
+      CNOT flips q₀ when q_in = |1⟩:<br>
+      |000⟩ → |000⟩ &nbsp; |110⟩ → |100⟩ &nbsp; |001⟩ → |011⟩ &nbsp; |111⟩ → |101⟩<br>
+      <span style="color:var(--muted);font-size:0.82rem;">= (α|000⟩ + α|100⟩ + β|011⟩ + β|101⟩) / √2</span>
+    </div>
+  </div>
+  <hr class="math-sep">
+  <div class="mstep">
+    <div class="mstep-label" style="color:var(--accent);font-size:0.8rem;">After H<br>(on q_in):</div>
+    <div class="mstep-body">
+      H|0⟩ = (|0⟩+|1⟩)/√2 and H|1⟩ = (|0⟩−|1⟩)/√2. Collecting by the (q_in, q₀) outcome:
+    </div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label"></div>
+    <div class="mstep-body">
+      |ψ₁⟩ ∝
+      <span style="color:#2c5282;">(α|0⟩+β|1⟩)|00⟩</span> +
+      <span style="color:#c0392b;">(α|0⟩−β|1⟩)|01⟩</span> +
+      <span style="color:#1a6b3a;">(α|1⟩+β|0⟩)|10⟩</span> +
+      <span style="color:#6b21a8;">(α|1⟩−β|0⟩)|11⟩</span>
+    </div>
+  </div>
+</div>
+
+<div class="note-box">
+  <strong>How to read this:</strong> The state |ψ₁⟩ is a superposition of all four possible outcomes. The first two qubits (Alice's) are in a superposition of "00", "01", "10", "11". For each outcome, Bob's qubit q₁ is in a <em>different state</em> — shown by the coloured expressions. Alice's measurement collapses everything to one of these four terms.
+</div>
+
+<h3>The Four Possible Outcomes and Corrections</h3>
+
+<p>After Alice's Bell measurement she gets one of four results. For each, Bob's qubit is in a specific state that differs from |ψ⟩ by at most a simple gate:</p>
+
+<div style="display:flex;flex-direction:column;gap:0.55rem;margin:1rem 0;">
+
+  <div style="display:grid;grid-template-columns:80px 1fr 120px;align-items:center;background:#dbeafe;border-radius:8px;overflow:hidden;">
+    <div style="background:#2c5282;color:white;height:100%;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:1.1rem;padding:0.8rem;">"00"</div>
+    <div style="padding:0.65rem 1rem;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem;color:#1a1a14;">Bob's qubit: <strong>α|0⟩ + β|1⟩</strong></div>
+      <div style="font-size:0.75rem;color:#555;margin-top:0.15rem;">This is already |ψ⟩ — no correction needed!</div>
+    </div>
+    <div style="padding:0.65rem 0.8rem;text-align:center;">
+      <div style="border:2px solid #2c5282;border-radius:4px;padding:0.2rem 0.5rem;font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:#2c5282;font-weight:700;display:inline-block;">Apply: I</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:80px 1fr 120px;align-items:center;background:#fee2e2;border-radius:8px;overflow:hidden;">
+    <div style="background:#c0392b;color:white;height:100%;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:1.1rem;padding:0.8rem;">"01"</div>
+    <div style="padding:0.65rem 1rem;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem;color:#1a1a14;">Bob's qubit: <strong>α|0⟩ − β|1⟩ = Z|ψ⟩</strong></div>
+      <div style="font-size:0.75rem;color:#555;margin-top:0.15rem;">Phase is flipped — Z gate corrects it (Z²=I)</div>
+    </div>
+    <div style="padding:0.65rem 0.8rem;text-align:center;">
+      <div style="border:2px solid #c0392b;border-radius:4px;padding:0.2rem 0.5rem;font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:#c0392b;font-weight:700;display:inline-block;">Apply: Z</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:80px 1fr 120px;align-items:center;background:#d1fae5;border-radius:8px;overflow:hidden;">
+    <div style="background:#1a6b3a;color:white;height:100%;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:1.1rem;padding:0.8rem;">"10"</div>
+    <div style="padding:0.65rem 1rem;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem;color:#1a1a14;">Bob's qubit: <strong>α|1⟩ + β|0⟩ = X|ψ⟩</strong></div>
+      <div style="font-size:0.75rem;color:#555;margin-top:0.15rem;">Bit is flipped — X gate corrects it (X²=I)</div>
+    </div>
+    <div style="padding:0.65rem 0.8rem;text-align:center;">
+      <div style="border:2px solid #1a6b3a;border-radius:4px;padding:0.2rem 0.5rem;font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:#1a6b3a;font-weight:700;display:inline-block;">Apply: X</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:80px 1fr 120px;align-items:center;background:#ede9fe;border-radius:8px;overflow:hidden;">
+    <div style="background:#6b21a8;color:white;height:100%;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:1.1rem;padding:0.8rem;">"11"</div>
+    <div style="padding:0.65rem 1rem;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem;color:#1a1a14;">Bob's qubit: <strong>α|1⟩ − β|0⟩ = XZ|ψ⟩</strong></div>
+      <div style="font-size:0.75rem;color:#555;margin-top:0.15rem;">Both flipped — apply Z first then X (or ZX, up to global phase)</div>
+    </div>
+    <div style="padding:0.65rem 0.8rem;text-align:center;">
+      <div style="border:2px solid #6b21a8;border-radius:4px;padding:0.2rem 0.5rem;font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:#6b21a8;font-weight:700;display:inline-block;">Apply: ZX</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="insight">
+  <strong>The resource equation:</strong> 1 Bell pair + 2 classical bits = 1 qubit transferred. This is tight — you cannot teleport a qubit with fewer resources. Quantum teleportation turns entanglement (a non-classical resource) into a quantum communication channel.
 </div>
 
 <!-- Interactive teleportation simulator -->
-<canvas id="cTele" width="560" height="240"></canvas>
-<div class="canvas-caption">Teleportation simulator — set Alice's state |ψ⟩ and simulate the protocol</div>
-<div class="controls">
-  <label>Alice θ: <input type="range" id="slTeleTheta" min="0" max="180" value="60" oninput="updateTele()"></label>
-  <span class="ctrl-val" id="teleThetaVal">60°</span>
-  <button class="btn" onclick="runTele()">Run Protocol</button>
-  <button class="btn sm" onclick="resetTele()">Reset</button>
+<canvas id="cTeleDetailed" width="560" height="240"></canvas>
+<div class="canvas-caption">Teleportation simulator — set |ψ⟩ with θ and φ, simulate Alice's Bell measurement, and watch Bob apply corrections</div>
+<div class="controls" style="flex-wrap:wrap;gap:0.6rem;">
+  <label style="font-size:0.8rem;color:var(--muted);">θ (polar): <input type="range" id="slTele2Theta" min="0" max="180" value="60" oninput="updateTele2()"></label>
+  <span class="ctrl-val" id="tele2ThetaVal">60°</span>
+  <label style="font-size:0.8rem;color:var(--muted);">φ (phase): <input type="range" id="slTele2Phi" min="0" max="360" value="45" oninput="updateTele2()"></label>
+  <span class="ctrl-val" id="tele2PhiVal">45°</span>
+  <button class="btn" onclick="runTele2()">▶ Simulate Protocol</button>
+  <button class="btn sm" onclick="resetTele2()" style="border-color:var(--muted);color:var(--muted);">↺ Reset</button>
 </div>
-<div id="teleResult" style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem;color:var(--ink2);margin:0.4rem 0;min-height:1.5rem;"></div>
+<div id="teleDetailedResult" style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem;color:var(--ink2);min-height:3.5rem;margin-top:0.5rem;line-height:1.8;"></div>
+
+<h3>Common Misconceptions</h3>
+
+<div class="warning">
+  <strong>Does teleportation violate the no-cloning theorem?</strong> No! After teleportation, Alice's original qubit is destroyed (it was measured and collapsed). The state |ψ⟩ is not duplicated — it has moved. The original is gone; the copy appears at Bob's end.
+</div>
+
+<div class="warning">
+  <strong>Does teleportation violate special relativity (faster than light)?</strong> No! Alice must send the 2 classical bits (x, y) to Bob via a classical channel, which travels at most at the speed of light. Without those bits, Bob's qubit is in a completely mixed state — he cannot extract |ψ⟩ from it alone. The quantum channel carries no usable information until the classical bits arrive.
+</div>
+
+<div class="note-box">
+  <strong>What exactly is being "teleported"?</strong> The <em>quantum state</em> |ψ⟩ — encoded in the two complex numbers α and β. This is an infinite amount of classical information (two arbitrary real numbers), yet only 2 classical bits + 1 entangled pair are needed! The trick: we don't need to learn α and β, we just need to transfer them. Entanglement enables this "wholesale" transfer without knowledge of the contents.
+</div>
 
 <!-- Exercises -->
 <div class="ex-block" id="ex8a">
   <div class="ex-header"><span class="ex-tag">Ex 8.1</span><span class="ex-title">Classical bits needed</span></div>
   <div class="ex-body">
-    <p>How many classical bits does Alice send to Bob in the teleportation protocol?</p>
+    <p>How many classical bits does Alice send to Bob in the teleportation protocol? Why is that the minimum?</p>
   </div>
   <div class="answer-area">
     <div class="answer-row">
-      <span class="ans-label">Answer:</span>
-      <input class="answer-input" id="a8a" placeholder="number" oninput="chk('a8a','2','ex8a')" style="width:80px;">
-      <button class="btn sm" onclick="chk('a8a','2','ex8a')">Check</button>
+      <span class="ans-label">Number of bits:</span>
+      <input class="answer-input" id="a8a" placeholder="?" style="width:80px;" oninput="chk('a8a','2','f8a')">
+      <button class="btn sm" onclick="chk('a8a','2','f8a')">Check</button>
       <button class="hint-toggle" onclick="showHint('h8a')">show hint</button>
     </div>
-    <div class="feedback hint" id="h8a">Alice measures 2 qubits (q_&#123;in&#125; and q₀), so she gets 2 classical bits x and y ∈ &#123;0,1&#125;. These 2 bits tell Bob which of the 4 corrections to apply.</div>
+    <div class="feedback hint" id="h8a">Alice measures 2 qubits, getting 2 bits x and y. There are 4 possible outcomes (00, 01, 10, 11) requiring 2 bits to distinguish. Bob needs to know which of the 4 corrections to apply — he needs both bits.</div>
     <div class="feedback" id="f8a"></div>
   </div>
 </div>
 
 <div class="ex-block" id="ex8b">
-  <div class="ex-header"><span class="ex-tag">Ex 8.2</span><span class="ex-title">Correction gates</span></div>
+  <div class="ex-header"><span class="ex-tag">Ex 8.2</span><span class="ex-title">Bob's correction gate</span></div>
   <div class="ex-body">
-    <p>If Alice measures outcome "10", what gate should Bob apply to recover |ψ⟩?</p>
+    <p>Alice's Bell measurement gives outcome (x=1, y=0), i.e., "10". What gate should Bob apply to his qubit to recover |ψ⟩? Use the correction table above.</p>
   </div>
   <div class="answer-area">
     <div class="answer-row">
-      <span class="ans-label">Answer:</span>
-      <input class="answer-input" id="a8b" placeholder="gate" oninput="chk('a8b','X','ex8b')" style="width:100px;">
-      <button class="btn sm" onclick="chk('a8b','X','ex8b')">Check</button>
-      <button class="hint-toggle" onclick="showHint('h8b')">show hint</button>
+      <span class="ans-label">Bob applies:</span>
+      <select class="answer-input" id="a8b" style="width:100px;">
+        <option value="">—</option>
+        <option value="I">I (nothing)</option>
+        <option value="X">X gate</option>
+        <option value="Z">Z gate</option>
+        <option value="ZX">Z then X</option>
+      </select>
+      <button class="btn sm" onclick="chkSelect('a8b','X','f8b','✓ Correct! Outcome 10 leaves Bob with X|ψ⟩ — applying X again (X²=I) recovers |ψ⟩.','✗ Look at the 10 row in the correction table above.')">Check</button>
     </div>
-    <div class="feedback hint" id="h8b">Outcome "10" leaves Bob with X|ψ⟩ = α|1⟩+β|0⟩. To undo X, apply X again (since X²=I). So Bob applies the X (Pauli-X, bit-flip) gate.</div>
     <div class="feedback" id="f8b"></div>
   </div>
 </div>
 
 <div class="ex-block" id="ex8c">
-  <div class="ex-header"><span class="ex-tag">Ex 8.3</span><span class="ex-title">No-faster-than-light</span></div>
+  <div class="ex-header"><span class="ex-tag">Ex 8.3</span><span class="ex-title">Why doesn't teleportation clone?</span></div>
   <div class="ex-body">
-    <p>Why can't teleportation be used to send information faster than light? (complete the sentence: "Because Alice must send ____ via a classical ____.")</p>
+    <p>After teleportation succeeds, how many qubits are in the state |ψ⟩? Alice's original or Bob's copy — or both?</p>
   </div>
   <div class="answer-area">
     <div class="answer-row">
-      <span class="ans-label">Answer:</span>
-      <input class="answer-input" id="a8c" placeholder="..." oninput="chkContains('a8c',['class','bit','channel'],'ex8c')" style="width:250px;">
-      <button class="btn sm" onclick="chkContains('a8c',['class','bit','channel'],'ex8c')">Check</button>
-      <button class="hint-toggle" onclick="showHint('h8c')">show hint</button>
+      <span class="ans-label">Qubits in state |ψ⟩:</span>
+      <select class="answer-input" id="a8c" style="width:160px;">
+        <option value="">—</option>
+        <option value="both">Both Alice and Bob</option>
+        <option value="alice">Only Alice's qubit</option>
+        <option value="bob">Only Bob's qubit</option>
+        <option value="neither">Neither — it's destroyed</option>
+      </select>
+      <button class="btn sm"
+  data-correct="a8c"
+  data-user="bob"
+  data-answer="f8c"
+  data-msg-ok="✓ Correct! Alice's qubit was measured (collapsed) — it no longer holds |ψ⟩. Only Bob's qubit ends up in state |ψ⟩."
+  data-msg-err="✗ Remember: Alice measured her qubits. Measurement destroys the superposition."
+  onclick="chkSelect(this)">Check</button>
     </div>
-    <div class="feedback hint" id="h8c">Without the 2 classical bits, Bob's qubit is in a mixed state — he cannot extract |ψ⟩. The classical bits travel at most at the speed of light, bounding the information transfer rate.</div>
     <div class="feedback" id="f8c"></div>
-  </div>
 </div>
 
 </section><!-- /s8 -->
 
+<script is:inline>
+// ── HELPER for Bell section ─────────────────────────────────
+function setFb(id, ok, msg) {
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.className = 'feedback show ' + (ok ? 'ok' : 'no');
+  el.textContent = msg;
+}
+function showHint(id) { const el=document.getElementById(id); if(el) el.classList.toggle('show'); }
+function goTo(id) { const el=document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); }
+
+function chk(inputId, correct, fbId) {
+  const el = document.getElementById(inputId); if(!el) return;
+  const val = el.value.trim().toLowerCase().replace(/\s/g,'').replace('−','-');
+  const cmp = correct.toLowerCase().replace(/\s/g,'');
+  const ok = val === cmp || (parseFloat(val) && Math.abs(parseFloat(val) - parseFloat(cmp)) < 0.01);
+  el.className = 'answer-input ' + (ok?'ok':'no');
+  setFb(fbId, ok, ok ? '✓ Correct!' : '✗ Not quite — check the hint.');
+}
+
+function chkContains(inputId, keywords, fbId) {
+  const el = document.getElementById(inputId); if(!el) return;
+  const val = el.value.toLowerCase();
+  const ok = keywords.some(k => val.includes(k));
+  el.className = 'answer-input ' + (ok?'ok':'no');
+  setFb(fbId, ok, ok ? '✓ Correct!' : '✗ Not quite. Try again or show hint.');
+}
+
+function chkSelect(btn) {
+  const { correct, user, answer, msgOk, msgErr } = btn.dataset;
+  const el = document.getElementById(inputId); if(!el) return;
+  const ok = el.value === correct;
+  setFb(fbId, ok, ok ? msgOk : msgNo);
+}
+
+function chkClose7c() {
+  const el = document.getElementById('a7c'); if(!el) return;
+  const v = parseFloat(el.value.replace(',','.'));
+  const ok = !isNaN(v) && Math.abs(v - 0.75) < 0.02;
+  el.className = 'answer-input ' + (ok?'ok':'no');
+  setFb('f7c', ok, ok ? '✓ Correct! P = |√3/2|² = 3/4 = 0.75.' : '✗ P("11") = |δ|² = |√3/2|² = 3/4 = 0.75.');
+}
+
+// ── BELL MEASUREMENT DETAILED CANVAS ───────────────────────────
+const bellInfo = [
+  { name:'|Φ⁺⟩', col:'#2c5282', bg:'#dbeafe', input:'(|00⟩+|11⟩)/√2', afterCNOT:'(|00⟩+|01⟩)/√2', afterH:'|00⟩', outcome:'00', desc:'Both qubits matched (+phase) → outcome 00' },
+  { name:'|Φ⁻⟩', col:'#c0392b', bg:'#fee2e2', input:'(|00⟩−|11⟩)/√2', afterCNOT:'(|00⟩−|01⟩)/√2', afterH:'|01⟩', outcome:'01', desc:'Both qubits matched (−phase) → outcome 01' },
+  { name:'|Ψ⁺⟩', col:'#1a6b3a', bg:'#d1fae5', input:'(|01⟩+|10⟩)/√2', afterCNOT:'(|11⟩+|10⟩)/√2', afterH:'|10⟩', outcome:'10', desc:'Qubits opposite (+phase) → outcome 10' },
+  { name:'|Ψ⁻⟩', col:'#6b21a8', bg:'#ede9fe', input:'(|01⟩−|10⟩)/√2', afterCNOT:'(|11⟩−|10⟩)/√2', afterH:'|11⟩', outcome:'11', desc:'Qubits opposite (−phase) → outcome 11' },
+];
+let currentBell = 0;
+
+function simBellDetailed(idx) {
+  currentBell = idx;
+  [0,1,2,3].forEach(i => {
+    const b = document.getElementById('bBell'+i);
+    if(b) b.classList.remove('active');
+  });
+  const btn = document.getElementById('bBell'+idx);
+  if(btn) { btn.classList.add('active'); btn.style.background = bellInfo[idx].col; btn.style.color = 'white'; }
+  [0,1,2,3].filter(i=>i!==idx).forEach(i => {
+    const b = document.getElementById('bBell'+i);
+    if(b) { b.style.background='white'; b.style.color=bellInfo[i].col; }
+  });
+  const d = bellInfo[idx];
+  const msg = document.getElementById('bellDetailMsg');
+  if(msg) msg.innerHTML = `<span style="color:${d.col};font-weight:700;">${d.name}</span> &nbsp;→&nbsp; after CNOT: <span style="color:var(--red);">${d.afterCNOT}</span> &nbsp;→&nbsp; after H: <span style="color:var(--accent);">${d.afterH}</span> &nbsp;→&nbsp; <strong>outcome "<span style="color:${d.col};font-size:1.05rem;">${d.outcome}</span>"</strong><br><span style="color:var(--muted);font-size:0.75rem;">${d.desc}</span>`;
+  drawBellDetailed(idx);
+}
+
+function drawBellDetailed(idx) {
+  const cv = document.getElementById('cBell'); if(!cv) return;
+  const ctx = cv.getContext('2d'), W=cv.width, H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#fafaf8'; ctx.fillRect(0,0,W,H);
+  const d = bellInfo[idx];
+
+  // stage labels
+  const stages = ['Input', 'after CNOT', 'after H', 'Outcome'];
+  const sx = [70, 210, 350, 490];
+  ctx.fillStyle='#888'; ctx.font="9px 'IBM Plex Mono',monospace"; ctx.textAlign='center';
+  stages.forEach((s,i)=>ctx.fillText(s, sx[i], 18));
+
+  // draw flow
+  const items = [d.input, d.afterCNOT, d.afterH, '"'+d.outcome+'"'];
+  const bgCols = ['#f5f2ea','#fff3e0','#e8f5e9', d.bg];
+  const fgCols = ['#1a1a14','#b7530a','#1a6b3a', d.col];
+
+  items.forEach((text, i) => {
+    const x = sx[i], y = H/2;
+    const w = 120, h = 44;
+    ctx.fillStyle = bgCols[i];
+    ctx.strokeStyle = i===3 ? d.col : '#dedad0';
+    ctx.lineWidth = i===3 ? 2.5 : 1;
+    ctx.beginPath(); ctx.roundRect(x-w/2, y-h/2, w, h, 6); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = fgCols[i];
+    ctx.font = i===3 ? `bold 18px 'IBM Plex Mono',monospace` : `11px 'IBM Plex Mono',monospace`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(text, x, y);
+
+    // arrow between stages
+    if(i < items.length-1) {
+      const ax = x + w/2 + 2, ay = y;
+      ctx.strokeStyle='#ccc'; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(sx[i+1]-w/2-2,ay); ctx.stroke();
+      ctx.fillStyle='#ccc';
+      const ex=sx[i+1]-w/2-2;
+      ctx.beginPath(); ctx.moveTo(ex,ay); ctx.lineTo(ex-7,ay-4); ctx.lineTo(ex-7,ay+4); ctx.closePath(); ctx.fill();
+      // gate label on arrow
+      const gateLabels = ['CNOT','H','→'];
+      ctx.fillStyle='#888'; ctx.font="9px 'IBM Plex Mono',monospace"; ctx.textAlign='center';
+      ctx.fillText(gateLabels[i], (ax + ex)/2, ay - 10);
+    }
+  });
+
+  // Bell state name header
+  ctx.fillStyle = d.col; ctx.font = `bold 13px 'IBM Plex Mono',monospace`; ctx.textAlign='left';
+  ctx.fillText(d.name, 8, H-10);
+  ctx.fillStyle='#888'; ctx.font="10px 'IBM Plex Mono',monospace";
+  ctx.fillText('= '+d.input, 60, H-10);
+}
+simBellDetailed(0);
+
+// ── TELEPORTATION DETAILED ─────────────────────────────────────────
+let tele2State = null;
+
+function updateTele2() {
+  const theta = parseFloat(document.getElementById('slTele2Theta').value);
+  const phi   = parseFloat(document.getElementById('slTele2Phi').value);
+  document.getElementById('tele2ThetaVal').textContent = theta+'°';
+  document.getElementById('tele2PhiVal').textContent   = phi+'°';
+  tele2State = null;
+  drawTele2Idle(theta, phi);
+}
+
+function drawTele2Idle(thetaDeg, phiDeg) {
+  const cv = document.getElementById('cTeleDetailed'); if(!cv) return;
+  cv.width = cv.parentElement.clientWidth - 2;
+  const ctx = cv.getContext('2d'), W=cv.width, H=cv.height;
+  ctx.clearRect(0,0,W,H); ctx.fillStyle='#fafaf8'; ctx.fillRect(0,0,W,H);
+  const theta = thetaDeg*Math.PI/180, phi = phiDeg*Math.PI/180;
+  const alpha = Math.cos(theta/2), betaR = Math.sin(theta/2)*Math.cos(phi), betaI = Math.sin(theta/2)*Math.sin(phi);
+
+  // Bloch sphere
+  const cx=80, cy=H/2, R=55;
+  ctx.strokeStyle='#dedad0'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.arc(cx,cy,R,0,2*Math.PI); ctx.stroke();
+  ctx.strokeStyle='#e8e4d8'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.ellipse(cx,cy,R,R*0.3,0,0,2*Math.PI); ctx.stroke(); ctx.setLineDash([]);
+  ctx.strokeStyle='#ccc'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(cx,cy-R-8); ctx.lineTo(cx,cy+R+8); ctx.stroke();
+  ctx.fillStyle='#888'; ctx.font="9px 'IBM Plex Mono',monospace"; ctx.textAlign='center';
+  ctx.fillText('|0⟩',cx,cy-R-11); ctx.fillText('|1⟩',cx,cy+R+18);
+
+  const bx=cx+R*Math.sin(theta)*Math.cos(phi), by=cy-R*Math.cos(theta);
+  ctx.strokeStyle='#c0392b'; ctx.lineWidth=2; ctx.setLineDash([2,2]);
+  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(bx,by); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle='#c0392b'; ctx.beginPath(); ctx.arc(bx,by,5,0,2*Math.PI); ctx.fill();
+  ctx.fillStyle='white'; ctx.beginPath(); ctx.arc(bx,by,2.5,0,2*Math.PI); ctx.fill();
+
+  // State info
+  const tx=cx+R+18;
+  ctx.fillStyle='#2c5282'; ctx.font="bold 11px 'IBM Plex Mono',monospace"; ctx.textAlign='left';
+  ctx.fillText('|ψ⟩ to teleport:', tx, 24);
+  ctx.fillStyle='#1a1a14'; ctx.font="11px 'IBM Plex Mono',monospace";
+  ctx.fillText('α = '+alpha.toFixed(3)+' (real)', tx, 42);
+  ctx.fillText('β = '+betaR.toFixed(3)+(betaI>=0?'+':'')+betaI.toFixed(3)+'j', tx, 58);
+  ctx.fillText('P(|0⟩) = '+(alpha*alpha*100).toFixed(1)+'%', tx, 76);
+  ctx.fillText('P(|1⟩) = '+(Math.sin(theta/2)**2*100).toFixed(1)+'%', tx, 92);
+
+  ctx.fillStyle='#888'; ctx.font="italic 10px 'Lora',serif"; ctx.textAlign='center';
+  ctx.fillText("Click ▶ Simulate Protocol to run teleportation", W/2, H-12);
+}
+
+function runTele2() {
+  const theta = parseFloat(document.getElementById('slTele2Theta').value)*Math.PI/180;
+  const phi   = parseFloat(document.getElementById('slTele2Phi').value)*Math.PI/180;
+  const alpha = Math.cos(theta/2), betaR = Math.sin(theta/2)*Math.cos(phi), betaI = Math.sin(theta/2)*Math.sin(phi);
+  const outcomes = ['00','01','10','11'];
+  const corrections = ['I — nothing', 'Z gate', 'X gate', 'Z then X'];
+  const corrColors = ['#2c5282','#c0392b','#1a6b3a','#6b21a8'];
+  const idx = Math.floor(Math.random()*4);
+  tele2State = { alpha, betaR, betaI, theta, phi, outcome:outcomes[idx], corr:corrections[idx], corrCol:corrColors[idx], idx };
+  drawTele2Result(tele2State);
+
+  const el = document.getElementById('teleDetailedResult');
+  if(el) el.innerHTML =
+    `<span style="color:${corrColors[idx]};font-weight:700;">Alice measured "${outcomes[idx]}"</span> &nbsp;→&nbsp; ` +
+    `Bob applies <strong style="color:${corrColors[idx]};">${corrections[idx]}</strong> &nbsp;→&nbsp; ` +
+    `<span style="color:var(--green);font-weight:600;">|ψ⟩ successfully teleported ✓</span><br>` +
+    `<span style="color:var(--muted);font-size:0.75rem;">Alice's qubits collapsed → her original |ψ⟩ is destroyed. Bob now holds |ψ⟩.</span>`;
+}
+
+function drawTele2Result(state) {
+  const cv = document.getElementById('cTeleDetailed'); if(!cv) return;
+  cv.width = cv.parentElement.clientWidth - 2;
+  const ctx = cv.getContext('2d'), W=cv.width, H=cv.height;
+  ctx.clearRect(0,0,W,H); ctx.fillStyle='#fafaf8'; ctx.fillRect(0,0,W,H);
+
+  // Alice side - collapsed
+  const ax = W*0.22, ay = H/2;
+  ctx.fillStyle='#fee2e2'; ctx.strokeStyle='#c0392b'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.roundRect(ax-70, ay-50, 140, 100, 8); ctx.fill(); ctx.stroke();
+  ctx.fillStyle='#c0392b'; ctx.font="bold 11px 'IBM Plex Mono',monospace"; ctx.textAlign='center';
+  ctx.fillText('ALICE', ax, ay-30);
+  ctx.fillStyle='#555'; ctx.font="10px 'IBM Plex Mono',monospace";
+  ctx.fillText('Measured: "'+state.outcome+'"', ax, ay-12);
+  ctx.fillText('Qubits collapsed →', ax, ay+6);
+  ctx.fillText('|ψ⟩ destroyed here', ax, ay+22);
+  ctx.fillStyle='#c0392b'; ctx.font="italic 9px 'Lora',serif";
+  ctx.fillText('no qubit physically sent', ax, ay+40);
+
+  // Classical channel
+  const mid = W/2;
+  ctx.strokeStyle='#888'; ctx.lineWidth=2; ctx.setLineDash([6,4]);
+  ctx.beginPath(); ctx.moveTo(ax+70, ay); ctx.lineTo(mid-10, ay); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle='#888'; ctx.font="10px 'IBM Plex Mono',monospace"; ctx.textAlign='center';
+  ctx.fillText('classical bits', mid-40, ay-10);
+  const outcomeColors = ['#2c5282','#c0392b','#1a6b3a','#6b21a8'];
+  ctx.fillStyle = state.corrCol; ctx.font="bold 16px 'IBM Plex Mono',monospace";
+  ctx.fillText('"'+state.outcome+'"', mid-40, ay+8);
+  ctx.fillStyle='#888'; ctx.font="8px 'IBM Plex Mono',monospace";
+  ctx.fillText('x='+(state.idx>=2?'1':'0')+' y='+(state.idx%2===1?'1':'0'), mid-40, ay+24);
+
+  // Arrow head
+  ctx.fillStyle='#888';
+  ctx.beginPath(); ctx.moveTo(mid-10,ay); ctx.lineTo(mid-18,ay-5); ctx.lineTo(mid-18,ay+5); ctx.closePath(); ctx.fill();
+
+  // Bob side
+  const bx = W*0.78, by = H/2;
+  ctx.fillStyle='#d1fae5'; ctx.strokeStyle='#1a6b3a'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.roundRect(bx-70, by-50, 140, 100, 8); ctx.fill(); ctx.stroke();
+  ctx.fillStyle='#1a6b3a'; ctx.font="bold 11px 'IBM Plex Mono',monospace"; ctx.textAlign='center';
+  ctx.fillText('BOB', bx, by-30);
+  ctx.fillStyle='#555'; ctx.font="10px 'IBM Plex Mono',monospace";
+  ctx.fillText('Receives (x='+(state.idx>=2?1:0)+',y='+(state.idx%2===1?1:0)+')', bx, by-12);
+  ctx.fillStyle = state.corrCol; ctx.font="bold 10px 'IBM Plex Mono',monospace";
+  ctx.fillText('Applies: '+state.corr, bx, by+6);
+  ctx.fillStyle='#1a6b3a'; ctx.font="bold 12px 'IBM Plex Mono',monospace";
+  ctx.fillText('→ Now has |ψ⟩ ✓', bx, by+24);
+
+  // Bloch sphere at Bob
+  const R=25, bsX=bx, bsY=by+52;
+  ctx.strokeStyle='#dedad0'; ctx.lineWidth=1; ctx.beginPath(); ctx.arc(bsX,bsY,R,0,2*Math.PI); ctx.stroke();
+  const svX = bsX+R*Math.sin(state.theta)*Math.cos(state.phi), svY = bsY-R*Math.cos(state.theta);
+  ctx.strokeStyle='#1a6b3a'; ctx.lineWidth=1.5; ctx.setLineDash([2,2]);
+  ctx.beginPath(); ctx.moveTo(bsX,bsY); ctx.lineTo(svX,svY); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle='#1a6b3a'; ctx.beginPath(); ctx.arc(svX,svY,4,0,2*Math.PI); ctx.fill();
+}
+
+function resetTele2() {
+  tele2State=null;
+  document.getElementById('teleDetailedResult').innerHTML='';
+  updateTele2();
+}
+updateTele2();
+</script>
 
 
 <!-- ══════════════════════════════════════ -->
