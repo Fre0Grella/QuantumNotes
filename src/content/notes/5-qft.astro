@@ -1,0 +1,1049 @@
+---
+import type { NoteMeta } from '../../lib/notes';
+
+export const meta: NoteMeta = {
+  title: "Quantum Fourier Transform",
+  order: 5,
+  slug: "5-qft",
+  description: "From the classical Discrete Fourier Transform to its quantum analogue: how the QFT maps amplitudes, how to implement it with H and controlled-phase gates, and why it is exponentially faster than the FFT.",
+  sections: [
+    { id: "s1", label: "Classical DFT" },
+    { id: "s2", label: "Quantum Variant" },
+    { id: "s3", label: "QFT on Basis States" },
+    { id: "s4", label: "N=4 Circuit (2 qubits)" },
+    { id: "s5", label: "N=8 Circuit (3 qubits)" },
+    { id: "s6", label: "Complexity" },
+  ]
+}
+---
+
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-label">Interactive Notes · Note 05</div>
+  <h1>Quantum Fourier Transform</h1>
+  <p>{meta.description}</p>
+  <div class="cover-meta">
+    <span>6 sections</span>
+    <span>12 exercises</span>
+    <span>Interactive circuit visualizer</span>
+  </div>
+</div>
+
+<!-- TOC -->
+<div class="toc">
+  <div class="toc-title">Contents</div>
+  <ul class="toc-list">
+    <li><a onclick="goTo('s1')" href="javascript:void(0)">1 · Classical DFT</a></li>
+    <li><a onclick="goTo('s2')" href="javascript:void(0)">2 · Quantum Variant</a></li>
+    <li><a onclick="goTo('s3')" href="javascript:void(0)">3 · QFT on Basis States</a></li>
+    <li><a onclick="goTo('s4')" href="javascript:void(0)">4 · N=4 Circuit (2 qubits)</a></li>
+    <li><a onclick="goTo('s5')" href="javascript:void(0)">5 · N=8 Circuit (3 qubits)</a></li>
+    <li><a onclick="goTo('s6')" href="javascript:void(0)">6 · Complexity</a></li>
+  </ul>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 1 — CLASSICAL DFT -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="section" id="s1">
+<div class="section-num">Section 01</div>
+<h2>Recalling the Classical Discrete Fourier Transform</h2>
+
+<p>Before diving into the quantum version, we need to understand what the Fourier transform <em>does</em> and why it is so useful. The central idea is simple: any signal that oscillates in time can be decomposed into a sum of pure sinusoids at different frequencies. The Fourier transform performs exactly this decomposition.</p>
+
+<h3>What is the DFT?</h3>
+
+<p>Suppose we have a list of N complex numbers <strong>x</strong> = (x₀, x₁, …, x<sub>N−1</sub>). Think of these as samples of a signal at N equally spaced moments in time. The <strong>Discrete Fourier Transform (DFT)</strong> converts this time-domain list into a frequency-domain list <strong>X</strong> = (X₀, X₁, …, X<sub>N−1</sub>) via:</p>
+
+<div class="def">
+  <div class="def-title">Definition — DFT</div>
+  <div class="math-block">
+    <div class="mstep">
+      <div class="mstep-label">Forward DFT:</div>
+      <div class="mstep-body">
+        X<sub>q</sub> = <span class="scalar">1/√N</span> Σ<sub>k=0</sub><sup>N−1</sup> x<sub>k</sub> · e<sup>j2πkq/N</sup>
+        = <span class="scalar">1/√N</span> Σ<sub>k=0</sub><sup>N−1</sup> x<sub>k</sub> · ω<sub>N</sub><sup>kq</sup>
+      </div>
+    </div>
+    <hr class="math-sep">
+    <div class="mstep">
+      <div class="mstep-label">Inverse DFT:</div>
+      <div class="mstep-body">
+        x<sub>k</sub> = <span class="scalar">1/√N</span> Σ<sub>q=0</sub><sup>N−1</sup> X<sub>q</sub> · e<sup>−j2πkq/N</sup>
+        = <span class="scalar">1/√N</span> Σ<sub>q=0</sub><sup>N−1</sup> X<sub>q</sub> · ω<sub>N</sub><sup>−kq</sup>
+      </div>
+    </div>
+    <hr class="math-sep">
+    <div class="mstep">
+      <div class="mstep-label">Root of unity:</div>
+      <div class="mstep-body">ω<sub>N</sub> = e<sup>j2π/N</sup> &nbsp;&nbsp; (a complex number of modulus 1)</div>
+    </div>
+  </div>
+</div>
+
+<div class="note-box">
+  <strong>Why ω<sub>N</sub>?</strong> The number ω<sub>N</sub> = e<sup>j2π/N</sup> is a complex number sitting on the unit circle at angle 2π/N. Raising it to the power k rotates by k steps of angle 2π/N. For N=2: ω₂ = e<sup>jπ</sup> = −1. For N=4: ω₄ = e<sup>jπ/2</sup> = j. These specific values make the math beautiful.
+</div>
+
+<h3>Matrix form of the DFT</h3>
+
+<p>The DFT is a <strong>linear transformation</strong>, so it can be written as a matrix multiplication. Writing ω = ω<sub>N</sub> for brevity:</p>
+
+<div class="math-block">
+  <div class="eq">
+    <span class="vec"><table><tbody>
+      <tr><td>X₀</td></tr><tr><td>X₁</td></tr><tr><td>⋮</td></tr><tr><td>X<sub>N−1</sub></td></tr>
+    </tbody></table></span>
+    <span>&nbsp;=&nbsp;</span>
+    <span class="scalar">1/√N</span>
+    <span class="mx"><table><tbody>
+      <tr><td>1</td><td>1</td><td>1</td><td class="c-0">…</td><td>1</td></tr>
+      <tr><td>1</td><td class="c-l">ω</td><td class="c-l">ω²</td><td class="c-0">…</td><td class="c-l">ω<sup>N−1</sup></td></tr>
+      <tr><td>⋮</td><td>⋮</td><td>⋮</td><td class="c-0">⋱</td><td>⋮</td></tr>
+      <tr><td>1</td><td class="c-l">ω<sup>N−1</sup></td><td class="c-l">ω<sup>2(N−1)</sup></td><td class="c-0">…</td><td class="c-l">ω<sup>(N−1)²</sup></td></tr>
+    </tbody></table></span>
+    <span class="vec"><table><tbody>
+      <tr><td>x₀</td></tr><tr><td>x₁</td></tr><tr><td>⋮</td></tr><tr><td>x<sub>N−1</sub></td></tr>
+    </tbody></table></span>
+  </div>
+  <div class="eq" style="margin-top:0.6rem;"><span>Compact form: <strong>X</strong> = F<sub>N</sub> · <strong>x</strong></span></div>
+</div>
+
+<div class="insight">
+  <strong>F<sub>N</sub> is a unitary matrix!</strong> This is why the DFT can be directly implemented as a quantum gate — unitary matrices are exactly what quantum gates are. The entry at row q, column k is (F<sub>N</sub>)<sub>qk</sub> = ω<sub>N</sub><sup>kq</sup>/√N.
+</div>
+
+<h3>Basis vector notation</h3>
+
+<p>Adopting the standard basis vectors u₀ = (1,0,…,0)ᵀ, u₁ = (0,1,0,…)ᵀ, …, u<sub>N−1</sub> = (0,…,0,1)ᵀ, any vector <strong>x</strong> can be written as:</p>
+
+<div class="math-block">
+  <div class="mstep">
+    <div class="mstep-label">Decomposition:</div>
+    <div class="mstep-body"><strong>x</strong> = Σ<sub>k=0</sub><sup>N−1</sup> x<sub>k</sub> u<sub>k</sub> &nbsp;&nbsp; and &nbsp;&nbsp; <strong>X</strong> = Σ<sub>q=0</sub><sup>N−1</sup> X<sub>q</sub> u<sub>q</sub></div>
+  </div>
+</div>
+
+<p>This notation anticipates the quantum version where u<sub>k</sub> will become the ket |k⟩.</p>
+
+<!-- Exercise 1.1 -->
+<div class="ex-block">
+  <div class="ex-header"><span class="ex-tag">Ex 1.1</span><span class="ex-title">Computing ω₄</span></div>
+  <div class="ex-body">
+    <p>For N = 4, compute ω₄ = e<sup>j2π/4</sup> = e<sup>jπ/2</sup>. Using Euler's formula e<sup>jθ</sup> = cos θ + j sin θ, what is the value? (Enter as "a+bj")</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">ω₄ =</span>
+      <input class="answer-input" id="a11" placeholder="a+bj" style="width:100px;">
+      <button class="btn sm" onclick="chkFreeQFT('a11',['j','0+j','0+1j','0+1·j'],'fb11')">Check</button>
+    </div>
+    <button class="hint-toggle" onclick="showHintQFT('h11')">show hint</button>
+    <div class="feedback hint" id="h11">e<sup>jπ/2</sup> = cos(π/2) + j·sin(π/2) = 0 + j·1 = j</div>
+    <div class="feedback" id="fb11"></div>
+  </div>
+</div>
+
+<!-- Exercise 1.2 -->
+<div class="ex-block">
+  <div class="ex-header"><span class="ex-tag">Ex 1.2</span><span class="ex-title">DFT matrix for N=2</span></div>
+  <div class="ex-body">
+    <p>For N = 2 we have ω₂ = e<sup>jπ</sup> = −1. Write out the 2×2 DFT matrix F₂ = (1/√2)·((1, 1),(1, ω₂)). What famous quantum gate does F₂ equal?</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">F₂ =</span>
+      <input class="answer-input" id="a12" placeholder="gate name" style="width:140px;">
+      <button class="btn sm" onclick="chkFreeQFT('a12',['h','hadamard','H gate','Hadamard gate'],'fb12')">Check</button>
+    </div>
+    <button class="hint-toggle" onclick="showHintQFT('h12')">show hint</button>
+    <div class="feedback hint" id="h12">F₂ = (1/√2)·((1,1),(1,−1)) = H (Hadamard). The 2-point DFT is exactly the Hadamard gate!</div>
+    <div class="feedback" id="fb12"></div>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 2 — QUANTUM VARIANT -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="section" id="s2">
+<div class="section-num">Section 02</div>
+<h2>The Quantum Fourier Transform</h2>
+
+<p>The quantum analogue of the DFT acts on quantum states instead of classical vectors. The key idea is that a quantum state |ψ⟩ is itself a vector of amplitudes — so the DFT matrix F<sub>N</sub> can be applied to it directly as a unitary gate.</p>
+
+<div class="def">
+  <div class="def-title">Definition — Quantum Fourier Transform</div>
+  <div class="math-block">
+    <div class="mstep">
+      <div class="mstep-label">Input state:</div>
+      <div class="mstep-body">|x⟩ = Σ<sub>k=0</sub><sup>N−1</sup> x<sub>k</sub>|k⟩ &nbsp;&nbsp; (amplitudes form the vector <strong>x</strong>)</div>
+    </div>
+    <div class="mstep">
+      <div class="mstep-label">QFT action:</div>
+      <div class="mstep-body">QFT<sub>N</sub>|x⟩ = |X⟩ = Σ<sub>q=0</sub><sup>N−1</sup> X<sub>q</sub>|q⟩ &nbsp;&nbsp; where <strong>X</strong> = F<sub>N</sub><strong>x</strong></div>
+    </div>
+    <div class="mstep">
+      <div class="mstep-label">Compact form:</div>
+      <div class="mstep-body">QFT<sub>N</sub>|ψ⟩ = F<sub>N</sub>|ψ⟩</div>
+    </div>
+  </div>
+  The QFT acts on an <strong>n-qubit</strong> system with N = 2<sup>n</sup>.
+</div>
+
+<p>The circuit representation is:</p>
+
+<div class="math-block" style="text-align:center;padding:1.2rem;">
+  <div style="display:flex;align-items:center;justify-content:center;gap:0;font-family:'IBM Plex Mono',monospace;font-size:0.85rem;">
+    <div style="border:2px solid var(--line);padding:0.3rem 0.5rem;border-radius:3px;color:var(--muted);">|ψ⟩</div>
+    <div style="display:flex;flex-direction:column;gap:2px;margin:0 0.5rem;">
+      <div style="height:2px;width:1.5rem;background:var(--ink2);margin-top:0.6rem;"></div>
+      <div style="height:2px;width:1.5rem;background:var(--ink2);"></div>
+      <div style="height:2px;width:1.5rem;background:var(--ink2);"></div>
+    </div>
+    <div style="border:2px solid var(--accent);padding:0.6rem 1.2rem;border-radius:4px;color:var(--accent);font-weight:700;">QFT<sub>N</sub></div>
+    <div style="display:flex;flex-direction:column;gap:2px;margin:0 0.5rem;">
+      <div style="height:2px;width:1.5rem;background:var(--ink2);margin-top:0.6rem;"></div>
+      <div style="height:2px;width:1.5rem;background:var(--ink2);"></div>
+      <div style="height:2px;width:1.5rem;background:var(--ink2);"></div>
+    </div>
+    <div style="border:2px solid var(--line);padding:0.3rem 0.5rem;border-radius:3px;color:var(--muted);">|φ⟩ = F<sub>N</sub>|ψ⟩</div>
+  </div>
+  <div style="font-size:0.75rem;color:var(--muted);margin-top:0.5rem;">n qubits in, n qubits out, N = 2<sup>n</sup></div>
+</div>
+
+<h3>Why is this powerful?</h3>
+
+<div class="note-box">
+  <strong>Classical DFT:</strong> Given a vector of N numbers, the FFT (Fast Fourier Transform) computes the DFT in O(N log N) operations. For N = 2<sup>n</sup> this is O(n·2<sup>n</sup>) — exponential in the number of bits.<br><br>
+  <strong>QFT:</strong> Computes the same transform using only O(n²) = O((log N)²) quantum gates — a double-exponential improvement in terms of the number of bits.
+</div>
+
+<div class="insight">
+  <strong>The catch:</strong> The QFT computes the DFT of the amplitude vector, but we cannot directly read out all N amplitudes after the QFT — measuring collapses the state to a single outcome. The power of the QFT emerges when combined cleverly with other operations (like in Shor's algorithm). The QFT is a subroutine, not a standalone tool.
+</div>
+
+<canvas id="cvQFTdemo" width="560" height="180"></canvas>
+<div class="canvas-caption">Visualization: a periodic amplitude pattern (left) and its QFT (right). The QFT concentrates amplitude at the frequency of the pattern.</div>
+<div class="controls">
+  <label>Period P = <input type="range" id="slPer" min="1" max="8" value="4" oninput="updateQFTdemo()"></label>
+  <span class="ctrl-val" id="perVal">4</span>
+</div>
+
+<!-- Exercise 2.1 -->
+<div class="ex-block">
+  <div class="ex-header"><span class="ex-tag">Ex 2.1</span><span class="ex-title">Size of QFT</span></div>
+  <div class="ex-body">
+    <p>The QFT<sub>N</sub> acts on n qubits where N = 2<sup>n</sup>. If we use n = 3 qubits, what is N?</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">N =</span>
+      <input class="answer-input" id="a21" placeholder="?" style="width:80px;" type="number">
+      <button class="btn sm" onclick="chkNumQFT('a21',8,'fb21')">Check</button>
+    </div>
+    <div class="feedback" id="fb21"></div>
+  </div>
+</div>
+
+<!-- Exercise 2.2 -->
+<div class="ex-block">
+  <div class="ex-header"><span class="ex-tag">Ex 2.2</span><span class="ex-title">Is QFT unitary?</span></div>
+  <div class="ex-body">
+    <p>For the QFT to be a valid quantum gate it must be unitary: F<sub>N</sub><sup>†</sup>F<sub>N</sub> = I. Given that the rows of F<sub>N</sub> form an orthonormal set (because different Fourier basis vectors are orthogonal), does this guarantee unitarity? (yes/no)</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <input class="answer-input" id="a22" placeholder="yes/no" style="width:80px;">
+      <button class="btn sm" onclick="chkFreeQFT('a22',['yes','sì','si'],'fb22')">Check</button>
+    </div>
+    <button class="hint-toggle" onclick="showHintQFT('h22')">show hint</button>
+    <div class="feedback hint" id="h22">Yes. A matrix whose rows form an orthonormal set is unitary by definition. The Fourier basis vectors &#123;e<sup>j2πkq/N</sup>/√N&#125; are orthonormal in ℂ<sup>N</sup>.</div>
+    <div class="feedback" id="fb22"></div>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 3 — QFT ON BASIS STATES -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="section" id="s3">
+<div class="section-num">Section 03</div>
+<h2>QFT on Computational Basis States</h2>
+
+<p>To understand how to implement the QFT as a circuit, we first compute what it does to a computational basis state |k⟩. By linearity, once we know this, we know what the QFT does to any state.</p>
+
+<div class="note-box">
+  <strong>Key strategy:</strong> It suffices to work out QFT|k⟩ for a generic basis state |k⟩. By linearity of quantum mechanics, QFT(Σ x<sub>k</sub>|k⟩) = Σ x<sub>k</sub> QFT|k⟩. So understanding basis states gives us everything.
+</div>
+
+<h3>Computing QFT|k⟩</h3>
+
+<p>The basis state |k⟩ is a vector with a single 1 at position k. Its DFT amplitudes are X<sub>q</sub> = (1/√N) · ω<sub>N</sub><sup>qk</sup>, so:</p>
+
+<div class="math-block">
+  <div class="mstep">
+    <div class="mstep-label">Step 1:</div>
+    <div class="mstep-body">QFT|k⟩ = <span class="scalar">1/√N</span> Σ<sub>q=0</sub><sup>N−1</sup> ω<sub>N</sub><sup>qk</sup> |q⟩</div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label">Step 2:</div>
+    <div class="mstep-body">= <span class="scalar">1/√N</span> (|0⟩ + ω<sub>N</sub><sup>k</sup>|1⟩ + ω<sub>N</sub><sup>2k</sup>|2⟩ + … + ω<sub>N</sub><sup>(N−1)k</sup>|N−1⟩)</div>
+  </div>
+</div>
+
+<div class="insight">
+  <strong>Product form:</strong> Writing k in binary as |k⟩ = |k<sub>n−1</sub>…k₁k₀⟩ and using the binary expansion k = k₀ + 2k₁ + … + 2<sup>n−1</sup>k<sub>n−1</sub>, the QFT output factors into a tensor product of single-qubit states. This is the crucial insight that makes circuit implementation possible!
+</div>
+
+<h3>Binary representation</h3>
+
+<p>Write k in binary: k = k₀ + 2k₁ + 4k₂ + … + 2<sup>n−1</sup>k<sub>n−1</sub>, and represent |k⟩ = |k<sub>n−1</sub>…k₁k₀⟩ (MSB first). Then:</p>
+
+<div class="math-block">
+  <div class="mstep">
+    <div class="mstep-label">Product form:</div>
+    <div class="mstep-body">
+      QFT|k⟩ ∝ (|0⟩ + ω<sub>N</sub><sup>k</sup>|1⟩) ⊗ (|0⟩ + ω<sub>N</sub><sup>2k</sup>|1⟩) ⊗ … ⊗ (|0⟩ + ω<sub>N</sub><sup>2<sup>n−1</sup>k</sup>|1⟩)
+    </div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label">Why factors?</div>
+    <div class="mstep-body">
+      Each factor (|0⟩ + ω<sup>2<sup>j</sup>k</sup>|1⟩) only depends on a few bits of k because ω<sup>2<sup>j</sup>k</sup> = e<sup>j2π·2<sup>j</sup>k/N</sup> and higher powers of 2 above N wrap around to 1.
+    </div>
+  </div>
+</div>
+
+<h3>Example: N=16, n=4</h3>
+<p>For a 4-qubit system N=16, the QFT on |k⟩ = |k₃k₂k₁k₀⟩ gives:</p>
+
+<div class="math-block">
+  <div class="mstep">
+    <div class="mstep-label">QFT|k⟩ ∝</div>
+    <div class="mstep-body">
+      <span style="text-decoration:underline;">(|0⟩ + ω₁₆<sup>8k</sup>|1⟩)</span> ⊗
+      <span style="text-decoration:underline;">(|0⟩ + ω₁₆<sup>4k</sup>|1⟩)</span> ⊗
+      <span style="text-decoration:underline;">(|0⟩ + ω₁₆<sup>2k</sup>|1⟩)</span> ⊗
+      <span style="text-decoration:underline;">(|0⟩ + ω₁₆<sup>k</sup>|1⟩)</span>
+    </div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label">&nbsp;</div>
+    <div class="mstep-body">q₃ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; q₂ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; q₁ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; q₀</div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label">Key insight:</div>
+    <div class="mstep-body">ω₁₆<sup>8k</sup> = e<sup>jπk</sup> = (−1)<sup>k</sup> = (−1)<sup>k₀</sup> &nbsp;&nbsp; (only depends on the last bit!)<br>
+    This is because 8k/16 = k/2, so only the parity of k matters, which is k₀ mod 2 = k₀.</div>
+  </div>
+</div>
+
+<div class="note-box">
+  <strong>Fractional binary notation:</strong> Define 0.k<sub>ℓ</sub>k<sub>ℓ+1</sub>…k<sub>n−1</sub> = k<sub>ℓ</sub>/2 + k<sub>ℓ+1</sub>/4 + … Then ω<sub>N</sub><sup>2<sup>j</sup>k</sup> = e<sup>j2π·0.k<sub>j</sub>k<sub>j+1</sub>…k<sub>n−1</sub></sup>. The j-th qubit factor only depends on bits k<sub>j</sub> through k<sub>n−1</sub> — crucially, NOT on the more significant bits!
+</div>
+
+<!-- Exercise 3.1 -->
+<div class="ex-block">
+  <div class="ex-header"><span class="ex-tag">Ex 3.1</span><span class="ex-title">Evaluating ω₈</span></div>
+  <div class="ex-body">
+    <p>For N = 8, ω₈ = e<sup>j2π/8</sup> = e<sup>jπ/4</sup>. Using cos(π/4) = sin(π/4) = 1/√2, write ω₈ in rectangular form a + bj.</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">ω₈ =</span>
+      <input class="answer-input" id="a31" placeholder="a+bj" style="width:130px;">
+      <button class="btn sm" onclick="chkFreeQFT('a31',['1/√2+j/√2','(1+j)/√2','1/√2 + j/√2'],'fb31')">Check</button>
+    </div>
+    <button class="hint-toggle" onclick="showHintQFT('h31')">show hint</button>
+    <div class="feedback hint" id="h31">ω₈ = cos(π/4) + j·sin(π/4) = 1/√2 + j/√2 = (1+j)/√2 ≈ 0.707 + 0.707j</div>
+    <div class="feedback" id="fb31"></div>
+  </div>
+</div>
+
+<!-- Exercise 3.2 -->
+<div class="ex-block">
+  <div class="ex-header"><span class="ex-tag">Ex 3.2</span><span class="ex-title">Bit parity and ω</span></div>
+  <div class="ex-body">
+    <p>For N = 8, compute ω₈<sup>4k</sup>. Recall ω₈ = e<sup>jπ/4</sup> so ω₈<sup>4</sup> = e<sup>jπ</sup> = −1. Therefore ω₈<sup>4k</sup> = (−1)<sup>k</sup>. In binary k = k₀ + 2k₁ + 4k₂, which single bit determines (−1)<sup>k</sup>?</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">The bit is:</span>
+      <input class="answer-input" id="a32" placeholder="k₀ or k₁ or k₂" style="width:120px;">
+      <button class="btn sm" onclick="chkFreeQFT('a32',['k0','k₀','k_0','k0 (lsb)'],'fb32')">Check</button>
+    </div>
+    <button class="hint-toggle" onclick="showHintQFT('h32')">show hint</button>
+    <div class="feedback hint" id="h32">(−1)<sup>k</sup> = (−1)<sup>k₀+2k₁+4k₂</sup> = (−1)<sup>k₀</sup>·((−1)²)<sup>k₁</sup>·((−1)⁴)<sup>k₂</sup> = (−1)<sup>k₀</sup>·1·1. Only k₀ (the least significant bit) matters!</div>
+    <div class="feedback" id="fb32"></div>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 4 — N=4 CIRCUIT -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="section" id="s4">
+<div class="section-num">Section 04</div>
+<h2>QFT Circuit for N = 4 (2 qubits)</h2>
+
+<p>Now we build the actual circuit. For N = 4, n = 2 qubits, and k = k₀ + 2k₁, we have |k⟩ = |k₁k₀⟩. The QFT output factors as:</p>
+
+<div class="math-block">
+  <div class="mstep">
+    <div class="mstep-label">QFT|k⟩ ∝</div>
+    <div class="mstep-body">
+      (|0⟩ + ω₄<sup>2k</sup>|1⟩) ⊗ (|0⟩ + ω₄<sup>k</sup>|1⟩)
+    </div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label">Step A:</div>
+    <div class="mstep-body">
+      ω₄<sup>2k</sup> = (e<sup>j2π/4</sup>)<sup>2k</sup> = e<sup>jπk</sup> = (−1)<sup>k</sup> = (−1)<sup>k₀</sup>·((−1)<sup>2</sup>)<sup>k₁</sup> = <span class="c-r">(−1)<sup>k₀</sup></span>
+      <br><span class="eq-note">Only depends on k₀!</span>
+    </div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label">Step B:</div>
+    <div class="mstep-body">
+      k = k₀ + 2k₁, so ω₄<sup>k</sup> = ω₄<sup>k₀</sup>·ω₄<sup>2k₁</sup> = ω₄<sup>k₀</sup>·<span class="c-r">(−1)<sup>k₁</sup></span>
+      <br><span class="eq-note">Depends on both k₀ and k₁.</span>
+    </div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label">So QFT|k⟩ ∝</div>
+    <div class="mstep-body">
+      <span class="c-b">(|0⟩ + (−1)<sup>k₀</sup>|1⟩)</span> ⊗ <span class="c-g">(|0⟩ + ω₄<sup>k₀</sup>(−1)<sup>k₁</sup>|1⟩)</span>
+      &nbsp;&nbsp;= q₁ ⊗ q₀
+    </div>
+  </div>
+</div>
+
+<h3>Identifying the gates</h3>
+
+<div class="math-block">
+  <div class="mstep">
+    <div class="mstep-label">Qubit q₁:</div>
+    <div class="mstep-body">
+      (|0⟩ + (−1)<sup>k₀</sup>|1⟩) → this is exactly <strong>H|k₀⟩</strong>!
+      Hadamard maps |0⟩ → (|0⟩+|1⟩)/√2 and |1⟩ → (|0⟩−|1⟩)/√2.
+    </div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label">Qubit q₀:</div>
+    <div class="mstep-body">
+      After H on |k₁⟩ we get (|0⟩ + (−1)<sup>k₁</sup>|1⟩). We then want to multiply the |1⟩ component by ω₄<sup>k₀</sup> = j<sup>k₀</sup> — but <em>only when k₀ = 1</em>. This is a <strong>controlled-phase gate</strong>!
+    </div>
+  </div>
+</div>
+
+<div class="def">
+  <div class="def-title">Definition — Controlled-Phase Gate Ω<sub>N</sub></div>
+  <div class="math-block">
+    <div class="eq">
+      Ω<sub>N</sub> = <span class="mx"><table><tbody>
+        <tr><td>1</td><td class="c-0">0</td></tr>
+        <tr><td class="c-0">0</td><td class="c-l">ω<sub>N</sub></td></tr>
+      </tbody></table></span>
+      <span class="eq-note">&nbsp;&nbsp; Ω<sub>N</sub>|0⟩ = |0⟩, &nbsp; Ω<sub>N</sub>|1⟩ = ω<sub>N</sub>|1⟩</span>
+    </div>
+  </div>
+  When <em>controlled</em> (applied only when the control qubit is |1⟩), it multiplies the |1⟩ amplitude by ω<sub>N</sub> — and does nothing if the control is |0⟩.
+</div>
+
+<div class="note-box">
+  <strong>Special case:</strong> Ω₄ = S gate (phase gate, adds phase j to |1⟩). Ω₂ = Z gate. In general, Ω<sub>2<sup>k</sup></sub> is a controlled rotation of angle 2π/2<sup>k</sup> around the Z axis.
+</div>
+
+<h3>The N=4 QFT circuit</h3>
+
+<div class="math-block" style="padding:1rem 1.2rem;">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem;line-height:2.2;">
+    <div style="display:grid;grid-template-columns:50px 1fr;gap:0.2rem 0.5rem;align-items:center;">
+      <span style="color:var(--muted);">|k₀⟩</span>
+      <div style="display:flex;align-items:center;gap:0;">
+        <div style="height:2px;width:1rem;background:var(--ink2);"></div>
+        <div style="width:1rem;display:flex;justify-content:center;">●</div>
+        <div style="height:2px;width:0.5rem;background:var(--ink2);"></div>
+        <div style="border:2px solid var(--accent);padding:0.15rem 0.4rem;border-radius:3px;font-weight:700;color:var(--accent);">H</div>
+        <div style="height:2px;width:1.5rem;background:var(--ink2);"></div>
+        <span style="color:var(--green);font-weight:600;">|q₁⟩</span>
+      </div>
+      <span style="color:var(--muted);">|k₁⟩</span>
+      <div style="display:flex;align-items:center;gap:0;">
+        <div style="height:2px;width:0.5rem;background:var(--ink2);"></div>
+        <div style="border:2px solid var(--accent);padding:0.15rem 0.4rem;border-radius:3px;font-weight:700;color:var(--accent);">H</div>
+        <div style="height:2px;width:0.5rem;background:var(--ink2);"></div>
+        <div style="border:2px solid var(--orange);padding:0.15rem 0.4rem;border-radius:3px;font-weight:700;color:var(--orange);">Ω₄</div>
+        <div style="height:2px;width:1.5rem;background:var(--ink2);"></div>
+        <span style="color:var(--green);font-weight:600;">|q₀⟩</span>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:0.6rem;font-size:0.75rem;color:var(--muted);">
+    Note: The Ω₄ gate on wire |k₁⟩ is controlled by |k₀⟩ (the dot ● above). The output is in <em>reverse order</em>: swap gates are needed if you want |q₀⟩ on top.
+  </div>
+</div>
+
+<h3>Step-by-step walkthrough for |k⟩ = |1,1⟩ = |11⟩ (k=3)</h3>
+
+<div class="math-block">
+  <div class="mstep">
+    <div class="mstep-label">Initial:</div>
+    <div class="mstep-body">|k₀=1⟩|k₁=1⟩ = |1⟩|1⟩</div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label">H on k₁:</div>
+    <div class="mstep-body">|1⟩ ⊗ H|1⟩ = |1⟩ ⊗ (|0⟩−|1⟩)/√2</div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label">Ctrl-Ω₄:</div>
+    <div class="mstep-body">Since k₀ = 1, apply Ω₄ to target: |1⟩ ⊗ (|0⟩ − j|1⟩)/√2<br>
+    <span class="eq-note">(Ω₄ multiplies |1⟩ by j, leaving |0⟩ unchanged)</span></div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label">H on k₀:</div>
+    <div class="mstep-body">H|1⟩ ⊗ (|0⟩ − j|1⟩)/√2 = (|0⟩−|1⟩)/√2 ⊗ (|0⟩ − j|1⟩)/√2</div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label">Output (q₁,q₀):</div>
+    <div class="mstep-body" style="color:var(--green);">= |q₁⟩|q₀⟩ as expected (reversed order — swap to fix)</div>
+  </div>
+</div>
+
+<canvas id="cvN4circuit" width="560" height="200"></canvas>
+<div class="canvas-caption">Interactive N=4 QFT circuit. Select an input basis state to trace the signal through each gate.</div>
+<div class="controls" style="gap:0.5rem;flex-wrap:wrap;">
+  <span style="font-size:0.8rem;color:var(--muted);">Input |k⟩ =</span>
+  <button class="btn sm active" id="n4btn0" onclick="setN4(0)">|00⟩</button>
+  <button class="btn sm" id="n4btn1" onclick="setN4(1)">|01⟩</button>
+  <button class="btn sm" id="n4btn2" onclick="setN4(2)">|10⟩</button>
+  <button class="btn sm" id="n4btn3" onclick="setN4(3)">|11⟩</button>
+</div>
+<div id="n4info" style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:var(--ink2);margin-top:0.5rem;min-height:3rem;line-height:1.9;"></div>
+
+<!-- Exercise 4.1 -->
+<div class="ex-block">
+  <div class="ex-header"><span class="ex-tag">Ex 4.1</span><span class="ex-title">QFT on |00⟩ for N=4</span></div>
+  <div class="ex-body">
+    <p>For k=0 (|k⟩ = |00⟩), apply the QFT formula. What should be the probability of each basis state |00⟩, |01⟩, |10⟩, |11⟩?</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">P(each state) =</span>
+      <input class="answer-input" id="a41" placeholder="e.g. 1/4" style="width:100px;">
+      <button class="btn sm" onclick="chkFreeQFT('a41',['1/4','0.25','25%'],'fb41')">Check</button>
+    </div>
+    <button class="hint-toggle" onclick="showHintQFT('h41')">show hint</button>
+    <div class="feedback hint" id="h41">QFT|0⟩ = (1/√4)(|0⟩+|1⟩+|2⟩+|3⟩) — uniform superposition. Each amplitude is 1/√4 = 1/2, so each probability is |1/2|² = 1/4.</div>
+    <div class="feedback" id="fb41"></div>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 5 — N=8 CIRCUIT -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="section" id="s5">
+<div class="section-num">Section 05</div>
+<h2>QFT Circuit for N = 8 (3 qubits)</h2>
+
+<p>Extending to 3 qubits shows the recursive structure of the QFT. With k = k₀ + 2k₁ + 4k₂ we write |k⟩ = |k₂k₁k₀⟩ and factor:</p>
+
+<div class="math-block">
+  <div class="mstep">
+    <div class="mstep-label">QFT|k⟩ ∝</div>
+    <div class="mstep-body">
+      (|0⟩ + ω₈<sup>4k</sup>|1⟩) ⊗ (|0⟩ + ω₈<sup>2k</sup>|1⟩) ⊗ (|0⟩ + ω₈<sup>k</sup>|1⟩)
+    </div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label">Simplify ω₈<sup>4k</sup>:</div>
+    <div class="mstep-body">
+      ω₈<sup>4k</sup> = e<sup>jπk</sup> = (−1)<sup>k</sup> = (−1)<sup>k₀</sup> &nbsp;&nbsp; <span class="eq-note">(only k₀ matters)</span>
+    </div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label">Simplify ω₈<sup>2k</sup>:</div>
+    <div class="mstep-body">
+      ω₈<sup>2k</sup> = ω₄<sup>k</sup> = ω₄<sup>k₀</sup>·(−1)<sup>k₁</sup> &nbsp;&nbsp; <span class="eq-note">(depends on k₀ and k₁)</span>
+    </div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label">Simplify ω₈<sup>k</sup>:</div>
+    <div class="mstep-body">
+      ω₈<sup>k</sup> = ω₈<sup>k₀</sup>·ω₄<sup>k₁</sup>·(−1)<sup>k₂</sup> &nbsp;&nbsp; <span class="eq-note">(depends on k₀, k₁, k₂)</span>
+    </div>
+  </div>
+</div>
+
+<p>So the full factored form is:</p>
+
+<div class="math-block">
+  <div class="eq" style="flex-wrap:wrap;gap:0.3rem;">
+    <span>QFT|k⟩ ∝</span>
+    <span><strong>(|0⟩ + (−1)<sup>k₀</sup>|1⟩)</strong></span>
+    <span>⊗</span>
+    <span><strong>(|0⟩ + ω₄<sup>k₀</sup>(−1)<sup>k₁</sup>|1⟩)</strong></span>
+    <span>⊗</span>
+    <span><strong>(|0⟩ + ω₈<sup>k₀</sup>ω₄<sup>k₁</sup>(−1)<sup>k₂</sup>|1⟩)</strong></span>
+  </div>
+</div>
+
+<h3>Circuit structure</h3>
+
+<div class="math-block" style="padding:1rem 1.2rem;">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.79rem;line-height:2.4;">
+    <div style="display:grid;grid-template-columns:50px 1fr;gap:0.1rem 0.5rem;align-items:center;">
+      <span style="color:var(--muted);">|k₀⟩</span>
+      <div style="display:flex;align-items:center;gap:0;">
+        <div style="height:2px;width:0.5rem;background:var(--ink2);"></div>
+        <div style="min-width:0.8rem;text-align:center;">●</div>
+        <div style="height:2px;width:0.3rem;background:var(--ink2);"></div>
+        <div style="min-width:0.8rem;text-align:center;">●</div>
+        <div style="height:2px;width:0.3rem;background:var(--ink2);"></div>
+        <div style="border:2px solid var(--accent);padding:0.1rem 0.4rem;border-radius:3px;font-weight:700;color:var(--accent);">H</div>
+        <div style="height:2px;width:2rem;background:var(--ink2);"></div>
+        <span style="color:var(--green);font-weight:600;">|q₂⟩</span>
+      </div>
+      <span style="color:var(--muted);">|k₁⟩</span>
+      <div style="display:flex;align-items:center;gap:0;">
+        <div style="height:2px;width:0.5rem;background:var(--ink2);"></div>
+        <div style="min-width:0.8rem;text-align:center;">●</div>
+        <div style="height:2px;width:0.3rem;background:var(--ink2);"></div>
+        <div style="border:2px solid var(--accent);padding:0.1rem 0.4rem;border-radius:3px;font-weight:700;color:var(--accent);">H</div>
+        <div style="height:2px;width:0.3rem;background:var(--ink2);"></div>
+        <div style="border:2px solid var(--orange);padding:0.1rem 0.4rem;border-radius:3px;font-weight:700;color:var(--orange);">Ω₄</div>
+        <div style="height:2px;width:2rem;background:var(--ink2);"></div>
+        <span style="color:var(--green);font-weight:600;">|q₁⟩</span>
+      </div>
+      <span style="color:var(--muted);">|k₂⟩</span>
+      <div style="display:flex;align-items:center;gap:0;">
+        <div style="height:2px;width:0.5rem;background:var(--ink2);"></div>
+        <div style="border:2px solid var(--accent);padding:0.1rem 0.4rem;border-radius:3px;font-weight:700;color:var(--accent);">H</div>
+        <div style="height:2px;width:0.3rem;background:var(--ink2);"></div>
+        <div style="border:2px solid var(--orange);padding:0.1rem 0.4rem;border-radius:3px;font-weight:700;color:var(--orange);">Ω₄</div>
+        <div style="height:2px;width:0.3rem;background:var(--ink2);"></div>
+        <div style="border:2px solid var(--red);padding:0.1rem 0.4rem;border-radius:3px;font-weight:700;color:var(--red);">Ω₈</div>
+        <div style="height:2px;width:2rem;background:var(--ink2);"></div>
+        <span style="color:var(--green);font-weight:600;">|q₀⟩</span>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:0.5rem;font-size:0.73rem;color:var(--muted);">
+    The ● symbols indicate control wires coming from above. Ω₄ = S (phase by j), Ω₈ = T (phase by e<sup>jπ/4</sup>). Output in reverse order.
+  </div>
+</div>
+
+<div class="insight">
+  <strong>Recursive structure:</strong> Notice that QFT₈ contains QFT₄ as a sub-circuit! The bottom two wires (|k₁⟩, |k₂⟩) form a QFT₄ structure, and then |k₀⟩ adds one more stage. In general, QFT<sub>2<sup>n</sup></sub> contains QFT<sub>2<sup>n−1</sup></sub> — this is why the algorithm is efficient.
+</div>
+
+<h3>General pattern for n qubits</h3>
+
+<p>For an n-qubit QFT with input |k<sub>n−1</sub>…k₁k₀⟩:</p>
+
+<div class="math-block">
+  <div class="mstep">
+    <div class="mstep-label">Wire j (from top):</div>
+    <div class="mstep-body">
+      receives H, then controlled-Ω<sub>4</sub>, Ω<sub>8</sub>, …, Ω<sub>2<sup>j+1</sup></sub> gates<br>
+      controlled by wires above (k₀ is the topmost control wire)
+    </div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label">Phase gates:</div>
+    <div class="mstep-body">
+      Ω<sub>N</sub> where N = 2<sup>m</sup> means a phase of ω<sub>2<sup>m</sup></sub> = e<sup>j2π/2<sup>m</sup></sup> applied to |1⟩
+    </div>
+  </div>
+</div>
+
+<!-- Exercise 5.1 -->
+<div class="ex-block">
+  <div class="ex-header"><span class="ex-tag">Ex 5.1</span><span class="ex-title">Identifying Ω₄ = S gate</span></div>
+  <div class="ex-body">
+    <p>The gate Ω₄ applies phase ω₄ = j to |1⟩. What standard single-qubit gate has matrix diag(1, j) and therefore equals Ω₄?</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">Gate =</span>
+      <input class="answer-input" id="a51" placeholder="gate name" style="width:120px;">
+      <button class="btn sm" onclick="chkFreeQFT('a51',['s','s gate','phase gate','S'],'fb51')">Check</button>
+    </div>
+    <button class="hint-toggle" onclick="showHintQFT('h51')">show hint</button>
+    <div class="feedback hint" id="h51">The S gate (phase gate) has matrix diag(1, j) = diag(1, ω₄). So Ω₄ = S.</div>
+    <div class="feedback" id="fb51"></div>
+  </div>
+</div>
+
+<!-- Exercise 5.2 -->
+<div class="ex-block">
+  <div class="ex-header"><span class="ex-tag">Ex 5.2</span><span class="ex-title">Identifying Ω₈ = T gate</span></div>
+  <div class="ex-body">
+    <p>Similarly, Ω₈ applies phase ω₈ = e<sup>jπ/4</sup> to |1⟩. What standard gate equals Ω₈? (Hint: look at the T (π/8) gate from the earlier notes.)</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">Gate =</span>
+      <input class="answer-input" id="a52" placeholder="gate name" style="width:120px;">
+      <button class="btn sm" onclick="chkFreeQFT('a52',['t','t gate','T','pi/8 gate'],'fb52')">Check</button>
+    </div>
+    <button class="hint-toggle" onclick="showHintQFT('h52')">show hint</button>
+    <div class="feedback hint" id="h52">The T gate (π/8 gate) has matrix diag(1, e<sup>jπ/4</sup>) = diag(1, ω₈). So Ω₈ = T.</div>
+    <div class="feedback" id="fb52"></div>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 6 — COMPLEXITY -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section class="section" id="s6">
+<div class="section-num">Section 06</div>
+<h2>Complexity of the QFT</h2>
+
+<p>The QFT's exponential speedup over the classical FFT is one of the most striking results in quantum computing. Let us count the gates precisely.</p>
+
+<h3>Gate count</h3>
+
+<div class="math-block">
+  <div class="mstep">
+    <div class="mstep-label"># Hadamard gates:</div>
+    <div class="mstep-body">n (one per qubit, applied once)</div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label"># Controlled-Ω gates:</div>
+    <div class="mstep-body">
+      Wire 0 (|k₂⟩): 1 controlled gate (Ω₄)<br>
+      Wire 1 (|k₁⟩): 2 controlled gates (Ω₄, Ω₈)<br>
+      Wire j: j controlled gates<br>
+      <strong>Total:</strong> 1 + 2 + … + (n−1) = n(n−1)/2
+    </div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label">Total gates:</div>
+    <div class="mstep-body">
+      n + n(n−1)/2 = n(n+1)/2 ≈ n²/2 &nbsp;&nbsp; <span class="eq-note">(quadratic in n!)</span>
+    </div>
+  </div>
+</div>
+
+<div class="def">
+  <div class="def-title">Complexity comparison</div>
+  <div class="math-block">
+    <div class="mstep">
+      <div class="mstep-label">QFT<sub>N</sub>:</div>
+      <div class="mstep-body">
+        O(n²) = O((log₂ N)²) gates &nbsp;&nbsp; with n = log₂ N qubits
+      </div>
+    </div>
+    <div class="mstep">
+      <div class="mstep-label">Classical FFT<sub>N</sub>:</div>
+      <div class="mstep-body">
+        O(N log₂ N) = O(n · 2<sup>n</sup>) operations &nbsp;&nbsp; <span class="eq-note">(exponential in n)</span>
+      </div>
+    </div>
+    <div class="mstep">
+      <div class="mstep-label">Speedup:</div>
+      <div class="mstep-body" style="color:var(--green);font-weight:600;">
+        n · 2<sup>n</sup> vs n² &nbsp;→&nbsp; exponential speedup!
+        <br><span class="eq-note">For n = 1000 (an RSA-like problem): 1000 × 2¹⁰⁰⁰ vs 10⁶ gates</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<canvas id="cvComplexity" width="560" height="220"></canvas>
+<div class="canvas-caption">Complexity comparison: QFT gates (blue, n²) vs FFT operations (red, n·2ⁿ). Drag the slider to see the gap grow.</div>
+<div class="controls">
+  <label>n (qubits) = <input type="range" id="slNcomp" min="1" max="20" value="5" oninput="updateComplexity()"></label>
+  <span class="ctrl-val" id="nCompVal">5</span>
+</div>
+<div id="compInfo" style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem;color:var(--accent);margin-top:0.4rem;min-height:1.5rem;"></div>
+
+<div class="warning">
+  <strong>Important caveat:</strong> Despite its O(n²) gate complexity, the QFT does not directly give exponential speedup over FFT for <em>all tasks</em>. Why? Because after the QFT, measuring the state gives only a single random sample from the output distribution — not all N amplitudes simultaneously. The QFT only provides a speedup when used as a subroutine in a cleverly designed algorithm (like Shor's period-finding) where a single sample is enough.
+</div>
+
+<!-- Exercise 6.1 -->
+<div class="ex-block">
+  <div class="ex-header"><span class="ex-tag">Ex 6.1</span><span class="ex-title">Gate count for n=4</span></div>
+  <div class="ex-body">
+    <p>For n = 4 qubits (N = 16), how many total gates (H + controlled-Ω) does the QFT require?</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">Total gates =</span>
+      <input class="answer-input" id="a61" placeholder="?" type="number" style="width:80px;">
+      <button class="btn sm" onclick="chkNumQFT('a61',10,'fb61')">Check</button>
+    </div>
+    <button class="hint-toggle" onclick="showHintQFT('h61')">show hint</button>
+    <div class="feedback hint" id="h61">n = 4. H gates: 4. Controlled-Ω gates: 1+2+3 = 6. Total: 4 + 6 = 10. Formula: n(n+1)/2 = 4·5/2 = 10.</div>
+    <div class="feedback" id="fb61"></div>
+  </div>
+</div>
+
+<!-- Exercise 6.2 -->
+<div class="ex-block">
+  <div class="ex-header"><span class="ex-tag">Ex 6.2</span><span class="ex-title">Classical vs quantum for n=10</span></div>
+  <div class="ex-body">
+    <p>For n = 10 (N = 1024): how many operations does the classical FFT need (≈ N log₂ N)? How many gates for QFT (≈ n²)? Compute the ratio FFT/QFT.</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">FFT ops ≈</span>
+      <input class="answer-input" id="a62a" placeholder="?" type="number" style="width:100px;">
+      <span class="ans-label">QFT gates =</span>
+      <input class="answer-input" id="a62b" placeholder="?" type="number" style="width:80px;">
+      <button class="btn sm" onclick="chk2QFT('a62a',10240,'a62b',100,'fb62')">Check</button>
+    </div>
+    <button class="hint-toggle" onclick="showHintQFT('h62')">show hint</button>
+    <div class="feedback hint" id="h62">FFT: N log₂N = 1024 × 10 = 10240. QFT: n² = 100. Ratio: 102.4 — QFT uses ~100x fewer operations even for small n!</div>
+    <div class="feedback" id="fb62"></div>
+  </div>
+</div>
+</section>
+
+<script is:inline>
+/* ── HELPERS ── */
+function goTo(id) { const el=document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); }
+function showHintQFT(id) { document.getElementById(id).classList.toggle('show'); }
+
+function setFbQFT(id, ok, msg) {
+  const el = document.getElementById(id);
+  el.className = 'feedback show ' + (ok ? 'ok' : 'no');
+  el.textContent = msg;
+}
+function chkFreeQFT(inputId, accepted, fbId) {
+  const v = document.getElementById(inputId).value.trim().toLowerCase().replace(/\s/g,'');
+  const ok = accepted.some(a => v === a.toLowerCase().replace(/\s/g,''));
+  document.getElementById(inputId).className = 'answer-input ' + (ok?'ok':'no');
+  setFbQFT(fbId, ok, ok ? '✓ Correct!' : '✗ Not quite — try again or check the hint.');
+}
+function chkNumQFT(inputId, target, fbId) {
+  const v = parseInt(document.getElementById(inputId).value);
+  const ok = v === target;
+  document.getElementById(inputId).className = 'answer-input ' + (ok?'ok':'no');
+  setFbQFT(fbId, ok, ok ? `✓ Correct! Answer = ${target}.` : `✗ Got ${v}, expected ${target}.`);
+}
+function chk2QFT(id1, t1, id2, t2, fbId) {
+  const v1 = parseInt(document.getElementById(id1).value);
+  const v2 = parseInt(document.getElementById(id2).value);
+  const ok1 = Math.abs(v1-t1)/t1 < 0.05;
+  const ok2 = v2 === t2;
+  document.getElementById(id1).className='answer-input '+(ok1?'ok':'no');
+  document.getElementById(id2).className='answer-input '+(ok2?'ok':'no');
+  setFbQFT(fbId, ok1&&ok2, (ok1&&ok2)?`✓ Correct! FFT≈${t1}, QFT=${t2}.`:`✗ FFT expected≈${t1}, QFT expected=${t2}.`);
+}
+
+/* ── QFT DEMO CANVAS ── */
+function updateQFTdemo() {
+  const P = parseInt(document.getElementById('slPer').value);
+  document.getElementById('perVal').textContent = P;
+  drawQFTdemo(P);
+}
+function drawQFTdemo(P) {
+  const cv = document.getElementById('cvQFTdemo'); if(!cv) return;
+  const ctx = cv.getContext('2d'), W=cv.width, H=cv.height;
+  ctx.clearRect(0,0,W,H); ctx.fillStyle='#fafaf8'; ctx.fillRect(0,0,W,H);
+  const N=16, half=W/2, pad=30, bw=Math.floor((half-2*pad)/N)-2;
+  const accent='#2c5282', orange='#b7530a';
+
+  // time domain
+  ctx.fillStyle='#888'; ctx.font="10px 'IBM Plex Mono',monospace"; ctx.textAlign='center';
+  ctx.fillText('Time domain (period P='+P+')', half/2, 14);
+
+  const x = new Array(N).fill(0).map((_,k)=> k%P===0?1:0);
+  const maxH = H-55;
+  x.forEach((v,k) => {
+    const bx = pad + k*(bw+2);
+    ctx.fillStyle = v>0 ? accent : '#e8e4d8';
+    ctx.fillRect(bx, H-30-v*maxH*0.7, bw, v*maxH*0.7);
+    if(k%4===0){ ctx.fillStyle='#aaa'; ctx.font="8px 'IBM Plex Mono',monospace"; ctx.fillText(k, bx+bw/2, H-14); }
+  });
+
+  // frequency domain (DFT magnitudes)
+  ctx.fillStyle='#888'; ctx.textAlign='center';
+  ctx.fillText('Frequency domain (QFT magnitude)', half+half/2, 14);
+
+  // Compute DFT magnitudes
+  const mags = new Array(N);
+  for(let q=0;q<N;q++){
+    let re=0,im=0;
+    for(let k=0;k<N;k++){
+      re += x[k]*Math.cos(2*Math.PI*k*q/N);
+      im += x[k]*Math.sin(2*Math.PI*k*q/N);
+    }
+    mags[q] = Math.sqrt(re*re+im*im)/Math.sqrt(N);
+  }
+  const maxMag = Math.max(...mags);
+  mags.forEach((m,q) => {
+    const bx = half + pad + q*(bw+2);
+    const h = maxMag>0 ? m/maxMag*maxH*0.7 : 0;
+    ctx.fillStyle = h > maxH*0.4 ? orange : '#e8e4d8';
+    ctx.fillRect(bx, H-30-h, bw, h);
+    if(q%4===0){ ctx.fillStyle='#aaa'; ctx.font="8px 'IBM Plex Mono',monospace"; ctx.fillText(q, bx+bw/2, H-14); }
+  });
+
+  // divider
+  ctx.strokeStyle='#e0ddd5'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(half,10); ctx.lineTo(half,H-5); ctx.stroke();
+}
+updateQFTdemo();
+
+/* ── N=4 CIRCUIT CANVAS ── */
+let n4state = 0;
+function setN4(k) {
+  n4state = k;
+  [0,1,2,3].forEach(i => {
+    const b=document.getElementById('n4btn'+i);
+    if(b) b.classList.toggle('active', i===k);
+  });
+  drawN4(k);
+}
+
+function drawN4(k) {
+  const cv = document.getElementById('cvN4circuit'); if(!cv) return;
+  const ctx = cv.getContext('2d'), W=cv.width, H=cv.height;
+  ctx.clearRect(0,0,W,H); ctx.fillStyle='#fafaf8'; ctx.fillRect(0,0,W,H);
+
+  const k0 = k & 1, k1 = (k >> 1) & 1;
+  const names = ['|00⟩','|01⟩','|10⟩','|11⟩'];
+
+  // wire y positions
+  const y0=65, y1=140, accent='#2c5282', orange='#b7530a', green='#1a6b3a';
+
+  // stage x positions
+  const xs = [60, 170, 270, 380, 470];
+
+  ctx.font = "bold 12px 'IBM Plex Mono',monospace"; ctx.textAlign='right'; ctx.textBaseline='middle';
+  ctx.fillStyle = '#888'; ctx.fillText('|k₀='+(k0)+'⟩', 52, y0);
+  ctx.fillText('|k₁='+(k1)+'⟩', 52, y1);
+
+  // draw wires
+  ctx.strokeStyle='#ccc'; ctx.lineWidth=2;
+  [y0,y1].forEach(y => {
+    ctx.beginPath(); ctx.moveTo(55,y); ctx.lineTo(W-20,y); ctx.stroke();
+  });
+
+  // Ctrl-Ω₄: control at k0=y0, target at k1=y1, moment xs[1]
+  // Draw control dot and vertical line
+  ctx.fillStyle = '#666'; ctx.beginPath(); ctx.arc(xs[1], y0, 6, 0, 2*Math.PI); ctx.fill();
+  ctx.strokeStyle='#666'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(xs[1],y0); ctx.lineTo(xs[1],y1-20); ctx.stroke();
+
+  // H on k1 (before Ω₄)
+  const drawGate = (x, y, label, col) => {
+    ctx.fillStyle='white'; ctx.strokeStyle=col; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.roundRect(x-18, y-18, 36, 36, 4); ctx.fill(); ctx.stroke();
+    ctx.fillStyle=col; ctx.font="bold 14px 'IBM Plex Mono',monospace"; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(label, x, y);
+  };
+
+  drawGate(xs[1], y1, 'H', accent);
+  drawGate(xs[2], y1, 'Ω₄', orange);
+
+  // H on k0 (last)
+  drawGate(xs[3], y0, 'H', accent);
+
+  // Ctrl line for Ω₄
+  ctx.fillStyle = '#666'; ctx.beginPath(); ctx.arc(xs[2]-30, y0, 6, 0, 2*Math.PI); ctx.fill();
+  ctx.strokeStyle='#666'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(xs[2]-30,y0); ctx.lineTo(xs[2]-30,y1-18); ctx.stroke();
+  // connect dot to Ω₄ box
+  ctx.beginPath(); ctx.moveTo(xs[2]-30, y1); ctx.lineTo(xs[2]-18, y1); ctx.stroke();
+
+  // Output labels
+  ctx.fillStyle=green; ctx.font="bold 12px 'IBM Plex Mono',monospace"; ctx.textAlign='left';
+  ctx.fillText('|q₁⟩', xs[3]+22, y0);
+  ctx.fillText('|q₀⟩', xs[2]+22, y1);
+
+  // Info text
+  const phi4 = k0===1 ? 'j' : '1';
+  const minus1k0 = k0===1 ? '−' : '+';
+  const minus1k1 = k1===1 ? '−' : '+';
+  const infos = [
+    `Input: |k₀=${k0}⟩|k₁=${k1}⟩ = ${names[k]}`,
+    `After H on |k₁⟩: |${k0}⟩ ⊗ (|0⟩${minus1k1}|1⟩)/√2`,
+    `After ctrl-Ω₄: |${k0}⟩ ⊗ (|0⟩${minus1k1}${phi4}|1⟩)/√2  [Ω₄ flips by j when k₀=1]`,
+    `After H on |k₀⟩: (|0⟩${minus1k0}|1⟩)/√2 ⊗ prev  = |q₁⟩|q₀⟩`,
+  ];
+  document.getElementById('n4info').innerHTML = infos.join('<br>');
+}
+drawN4(0);
+
+/* ── COMPLEXITY CANVAS ── */
+function updateComplexity() {
+  const n = parseInt(document.getElementById('slNcomp').value);
+  document.getElementById('nCompVal').textContent = n;
+  drawComplexity(n);
+  const qft = n*n, fft = n*Math.pow(2,n);
+  document.getElementById('compInfo').textContent =
+    `n=${n}: QFT gates ≈ ${qft.toFixed(0)} · Classical FFT ops ≈ ${fft.toFixed(0)}  (ratio: ${(fft/qft).toFixed(1)}×)`;
+}
+function drawComplexity(nCur) {
+  const cv = document.getElementById('cvComplexity'); if(!cv) return;
+  const ctx = cv.getContext('2d'), W=cv.width, H=cv.height;
+  ctx.clearRect(0,0,W,H); ctx.fillStyle='#fafaf8'; ctx.fillRect(0,0,W,H);
+
+  const nMax = 20, PL=50, PR=20, PT=20, PB=45;
+  const pW=W-PL-PR, pH=H-PT-PB;
+
+  // find max for scaling
+  const maxVal = Math.max(nMax*Math.pow(2,nMax), nMax*nMax);
+  // use log scale
+  const logMax = Math.log10(nMax*Math.pow(2,nMax)+1);
+
+  ctx.fillStyle='#888'; ctx.font="9px 'IBM Plex Mono',monospace"; ctx.textAlign='right';
+  [1,2,3,4,5,6].forEach(e => {
+    const y = PT+pH - (e/logMax)*pH;
+    if(y>PT){ ctx.fillText('10'+e.toString().replace('0','').replace('1','¹').replace('2','²').replace('3','³').replace('4','⁴').replace('5','⁵').replace('6','⁶'), PL-5, y+3);
+    ctx.strokeStyle='#eee'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(PL,y); ctx.lineTo(W-PR,y); ctx.stroke(); }
+  });
+
+  // draw FFT curve (red)
+  ctx.strokeStyle='#c0392b'; ctx.lineWidth=2;
+  ctx.beginPath();
+  for(let n=1;n<=nMax;n++){
+    const x = PL + (n-1)/(nMax-1)*pW;
+    const v = n*Math.pow(2,n);
+    const y = PT+pH - Math.log10(v+1)/logMax*pH;
+    n===1?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+
+  // draw QFT curve (blue)
+  ctx.strokeStyle='#2c5282'; ctx.lineWidth=2;
+  ctx.beginPath();
+  for(let n=1;n<=nMax;n++){
+    const x = PL + (n-1)/(nMax-1)*pW;
+    const v = n*n;
+    const y = PT+pH - Math.log10(v+1)/logMax*pH;
+    n===1?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+
+  // current n marker
+  const nx = PL + (nCur-1)/(nMax-1)*pW;
+  ctx.strokeStyle='#888'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+  ctx.beginPath(); ctx.moveTo(nx,PT); ctx.lineTo(nx,PT+pH); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle='#888'; ctx.font="10px 'IBM Plex Mono',monospace"; ctx.textAlign='center';
+  ctx.fillText('n='+nCur, nx, PT+pH+14);
+
+  // labels
+  ctx.textAlign='left';
+  ctx.fillStyle='#c0392b'; ctx.fillText('FFT: O(n·2ⁿ)', PL+5, PT+12);
+  ctx.fillStyle='#2c5282'; ctx.fillText('QFT: O(n²)', PL+5, PT+26);
+
+  // x axis labels
+  ctx.fillStyle='#888'; ctx.textAlign='center';
+  [1,5,10,15,20].forEach(n => {
+    const x = PL + (n-1)/(nMax-1)*pW;
+    ctx.fillText(n, x, PT+pH+28);
+  });
+  ctx.fillStyle='#888'; ctx.font="9px 'IBM Plex Mono',monospace";
+  ctx.fillText('n (number of qubits)', PL+pW/2, PT+pH+42);
+}
+updateComplexity();
+</script>
