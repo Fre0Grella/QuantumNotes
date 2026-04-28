@@ -210,6 +210,18 @@ body.with-sidebar .page {
   box-sizing: border-box;
 }
 
+.footer-link {
+      color: var(--sidebar-muted);
+      text-decoration: none;
+      transition: color 0.15s;
+  }
+.footer-link:hover {
+    color: var(--sidebar-active);
+}
+.footer-sep {
+      color: var(--border2);
+  }
+
 @media (max-width: 768px) {
   body.with-sidebar .qn-main { margin-left: 0; }
 }

@@ -5,1265 +5,1165 @@ export const meta: NoteMeta = {
   title: "Shor's Algorithm",
   order: 6,
   slug: "6-shor",
-  description: "How to factor large numbers in polynomial time using quantum computing. From the RSA problem to order-finding, period-finding with QFT, continued fractions, and the full quantum circuit — with complete derivations.",
+  description: "From the first quantum algorithm ever — Deutsch's — to Shor's factoring algorithm that can break RSA encryption. Covers quantum parallelism, period finding, the Quantum Fourier Transform, and the exponential speedup over classical computers.",
   sections: [
-    { id: "s1", label: "The Factoring Problem" },
-    { id: "s2", label: "Reduction to Order-Finding" },
-    { id: "s3", label: "Why Order-Finding Works" },
-    { id: "s4", label: "Order → Period Finding" },
-    { id: "s5", label: "Classical Period Finding (FFT)" },
-    { id: "s6", label: "Quantum Period Finding (QFT)" },
-    { id: "s7", label: "Reading the Period" },
-    { id: "s8", label: "Complete Example: n=15" },
-    { id: "s9", label: "Complexity" },
+    { id: "s1",  label: "Deutsch's Algorithm" },
+    { id: "s2",  label: "Factorization = Order Finding" },
+    { id: "s3",  label: "Order Finding = Period Finding" },
+    { id: "s4",  label: "Period Finding with FT" },
+    { id: "s5",  label: "Classical Period Finding" },
+    { id: "s6",  label: "Order Finding with QFT (Shor)" },
+    { id: "s7",  label: "QFT of First Register" },
+    { id: "s8",  label: "Complexity Analysis" },
+    { id: "s9",  label: "Full Example: Factor 15" },
   ]
 }
 ---
 
 <!-- COVER -->
 <div class="cover">
-  <div class="cover-label">Interactive Notes · Note 06</div>
-  <h1>Shor's Algorithm</h1>
-  <p>{meta.description}</p>
-  <div class="cover-meta">
-    <span>9 sections</span>
-    <span>14 exercises</span>
-    <span>Full example: factor 15</span>
-  </div>
+  <div class="cover-label">Interactive Notes</div>
+  <h1>Quantum Algorithms:<br><em>Deutsch &amp; Shor</em></h1>
+  <p style="color:var(--muted);font-size:0.85rem;font-style:italic;margin-top:0.5rem;">
+    From the first quantum algorithm in history to the one that threatens modern cryptography.
+  </p>
 </div>
 
 <!-- TOC -->
 <div class="toc">
   <div class="toc-title">Contents</div>
   <ul class="toc-list">
-    <li><a onclick="goTo('s1')" href="javascript:void(0)">1 · The Factoring Problem</a></li>
-    <li><a onclick="goTo('s2')" href="javascript:void(0)">2 · Reduction to Order-Finding</a></li>
-    <li><a onclick="goTo('s3')" href="javascript:void(0)">3 · Why It Works (Proof)</a></li>
-    <li><a onclick="goTo('s4')" href="javascript:void(0)">4 · Order → Period Finding</a></li>
+    <li><a onclick="goTo('s1')" href="javascript:void(0)">1 · Deutsch's Algorithm</a></li>
+    <li><a onclick="goTo('s2')" href="javascript:void(0)">2 · Factorization = Order Finding</a></li>
+    <li><a onclick="goTo('s3')" href="javascript:void(0)">3 · Order Finding = Period Finding</a></li>
+    <li><a onclick="goTo('s4')" href="javascript:void(0)">4 · Period Finding with FT</a></li>
     <li><a onclick="goTo('s5')" href="javascript:void(0)">5 · Classical Period Finding</a></li>
-    <li><a onclick="goTo('s6')" href="javascript:void(0)">6 · Quantum Period Finding</a></li>
-    <li><a onclick="goTo('s7')" href="javascript:void(0)">7 · Reading the Period</a></li>
-    <li><a onclick="goTo('s8')" href="javascript:void(0)">8 · Complete Example: n=15</a></li>
-    <li><a onclick="goTo('s9')" href="javascript:void(0)">9 · Complexity</a></li>
+    <li><a onclick="goTo('s6')" href="javascript:void(0)">6 · Order Finding with QFT (Shor)</a></li>
+    <li><a onclick="goTo('s7')" href="javascript:void(0)">7 · QFT of First Register</a></li>
+    <li><a onclick="goTo('s8')" href="javascript:void(0)">8 · Complexity Analysis</a></li>
+    <li><a onclick="goTo('s9')" href="javascript:void(0)">9 · Full Example: Factor 15</a></li>
   </ul>
 </div>
 
-<!-- ══════════════════════════════════════════════════════ -->
-<!-- SECTION 1 — THE FACTORING PROBLEM -->
-<!-- ══════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════ -->
+<!-- SECTION 1 — DEUTSCH'S ALGORITHM       -->
+<!-- ══════════════════════════════════════ -->
 <section class="section" id="s1">
 <div class="section-num">Section 01</div>
-<h2>The Factoring Problem</h2>
+<h2>Deutsch's Algorithm — The First Quantum Algorithm in History</h2>
 
-<p>At the heart of modern internet security lies a simple mathematical observation: it is easy to multiply two large prime numbers together, but apparently very hard to factor the result back into its prime factors.</p>
+<p>
+  In 1985, David Deutsch published the first quantum algorithm ever devised. It is beautifully simple,
+  yet it captures the essence of <em>quantum advantage</em>: solving a problem with <strong>one</strong>
+  query to a black box where a classical computer would need <strong>two</strong>.
+  This algorithm directly inspired Shor's factoring algorithm a decade later.
+</p>
 
 <div class="def">
-  <div class="def-title">Definition — Integer Factoring Problem</div>
-  Given a composite integer n, find its prime factors. That is, find primes p₁, p₂, … such that n = p₁ · p₂ · ….
+  <div class="def-title">The Problem</div>
+  You are given a black-box function f : &#123;0,1&#125; → &#123;0,1&#125;. You cannot see inside the box — you can only feed it an input and read the output. Your task: <strong>determine whether f(0) = f(1) (constant) or f(0) ≠ f(1) (balanced)</strong>, using as few calls to f as possible.
 </div>
 
-<h3>Why does this matter?</h3>
-
-<p>The RSA cryptosystem — used to secure email, banking, and most web traffic — relies entirely on the hardness of factoring. The RSA scheme works as follows:</p>
+<p>There are exactly four possible functions of this type:</p>
 
 <div class="math-block">
-  <div class="mstep">
-    <div class="mstep-label">Key generation:</div>
-    <div class="mstep-body">
-      Pick two large primes p, q (each ~500 bits). Compute n = p · q (~1024 bits).
-      Publish n as the public key. Keep p and q secret.
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0.6rem;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;">
+    <div>
+      <div style="background:var(--accent);color:white;padding:0.2rem;border-radius:3px 3px 0 0;font-size:0.7rem;letter-spacing:0.08em;">CONSTANT 0</div>
+      <table style="width:100%;border-collapse:collapse;">
+        <tr><th style="border:1px solid var(--line);padding:0.2rem 0.5rem;background:#f5f2ea;">x</th><th style="border:1px solid var(--line);padding:0.2rem 0.5rem;background:#f5f2ea;">f(x)</th></tr>
+        <tr><td style="border:1px solid var(--line);padding:0.2rem 0.5rem;text-align:center;">0</td><td style="border:1px solid var(--line);padding:0.2rem 0.5rem;text-align:center;">0</td></tr>
+        <tr><td style="border:1px solid var(--line);padding:0.2rem 0.5rem;text-align:center;">1</td><td style="border:1px solid var(--line);padding:0.2rem 0.5rem;text-align:center;">0</td></tr>
+      </table>
     </div>
-  </div>
-  <div class="mstep">
-    <div class="mstep-label">Security relies on:</div>
-    <div class="mstep-body">
-      If an attacker can factor n, they recover p and q and break the encryption.
-      Classically, the best known algorithm requires O(e<sup>b<sup>1/3</sup></sup>) steps for a b-bit number — <strong>sub-exponential but not polynomial</strong>.
+    <div>
+      <div style="background:var(--accent);color:white;padding:0.2rem;border-radius:3px 3px 0 0;font-size:0.7rem;letter-spacing:0.08em;">CONSTANT 1</div>
+      <table style="width:100%;border-collapse:collapse;">
+        <tr><th style="border:1px solid var(--line);padding:0.2rem 0.5rem;background:#f5f2ea;">x</th><th style="border:1px solid var(--line);padding:0.2rem 0.5rem;background:#f5f2ea;">f(x)</th></tr>
+        <tr><td style="border:1px solid var(--line);padding:0.2rem 0.5rem;text-align:center;">0</td><td style="border:1px solid var(--line);padding:0.2rem 0.5rem;text-align:center;">1</td></tr>
+        <tr><td style="border:1px solid var(--line);padding:0.2rem 0.5rem;text-align:center;">1</td><td style="border:1px solid var(--line);padding:0.2rem 0.5rem;text-align:center;">1</td></tr>
+      </table>
+    </div>
+    <div>
+      <div style="background:var(--green);color:white;padding:0.2rem;border-radius:3px 3px 0 0;font-size:0.7rem;letter-spacing:0.08em;">BALANCED (ID)</div>
+      <table style="width:100%;border-collapse:collapse;">
+        <tr><th style="border:1px solid var(--line);padding:0.2rem 0.5rem;background:#f5f2ea;">x</th><th style="border:1px solid var(--line);padding:0.2rem 0.5rem;background:#f5f2ea;">f(x)</th></tr>
+        <tr><td style="border:1px solid var(--line);padding:0.2rem 0.5rem;text-align:center;">0</td><td style="border:1px solid var(--line);padding:0.2rem 0.5rem;text-align:center;">0</td></tr>
+        <tr><td style="border:1px solid var(--line);padding:0.2rem 0.5rem;text-align:center;">1</td><td style="border:1px solid var(--line);padding:0.2rem 0.5rem;text-align:center;">1</td></tr>
+      </table>
+    </div>
+    <div>
+      <div style="background:var(--green);color:white;padding:0.2rem;border-radius:3px 3px 0 0;font-size:0.7rem;letter-spacing:0.08em;">BALANCED (NOT)</div>
+      <table style="width:100%;border-collapse:collapse;">
+        <tr><th style="border:1px solid var(--line);padding:0.2rem 0.5rem;background:#f5f2ea;">x</th><th style="border:1px solid var(--line);padding:0.2rem 0.5rem;background:#f5f2ea;">f(x)</th></tr>
+        <tr><td style="border:1px solid var(--line);padding:0.2rem 0.5rem;text-align:center;">0</td><td style="border:1px solid var(--line);padding:0.2rem 0.5rem;text-align:center;">1</td></tr>
+        <tr><td style="border:1px solid var(--line);padding:0.2rem 0.5rem;text-align:center;">1</td><td style="border:1px solid var(--line);padding:0.2rem 0.5rem;text-align:center;">0</td></tr>
+      </table>
     </div>
   </div>
 </div>
 
 <div class="note-box">
-  <strong>Trivial approach:</strong> Try all primes less than √n. For n with b bits, √n ≈ 2<sup>b/2</sup>, so this needs ~2<sup>b/2</sup> trials. For b = 1024, this is ~2<sup>512</sup> — utterly infeasible.
+  <strong>Classical approach:</strong> You must call f <strong>twice</strong> — once with input 0, once with input 1 — and compare the results. There is no shortcut: after a single call, you simply don't have enough information to decide.
 </div>
 
-<h3>Special easy cases</h3>
+<h3>The Quantum Oracle U<sub>f</sub></h3>
+<p>The quantum version of the black box acts on <strong>two qubits</strong>: an input register |x⟩ and an ancilla register |y⟩. It computes:</p>
 
-<p>Not all factoring problems are hard. Two cases have efficient classical solutions:</p>
+<div class="math-block">
+  <div class="eq">U_f |x⟩|y⟩ = |x⟩|y ⊕ f(x)⟩</div>
+  <div class="eq-note">&nbsp;&nbsp;where ⊕ is addition modulo 2 (XOR)</div>
+  <hr class="math-sep">
+  <div style="display:grid;grid-template-columns:80px 1fr 1fr;gap:0.3rem 1rem;font-size:0.82rem;font-family:'IBM Plex Mono',monospace;align-items:center;">
+    <strong>x y</strong><strong>x</strong><strong>y ⊕ f(x)</strong>
+    <span>0 0</span><span>0</span><span>0 ⊕ f(0) = f(0)</span>
+    <span>0 1</span><span>0</span><span>1 ⊕ f(0) = f̄(0)</span>
+    <span>1 0</span><span>1</span><span>0 ⊕ f(1) = f(1)</span>
+    <span>1 1</span><span>1</span><span>1 ⊕ f(1) = f̄(1)</span>
+  </div>
+  <hr class="math-sep">
+  <div class="mstep"><div class="mstep-label">Invertible?</div><div class="mstep-body">Yes! Apply U_f twice: |x⟩|y⟩ → |x⟩|y⊕f(x)⟩ → |x⟩|y⊕f(x)⊕f(x)⟩ = |x⟩|y⟩ ✓ (since a⊕a = 0)</div></div>
+</div>
+
+<h3>The Deutsch Circuit</h3>
+<p>The circuit uses a clever trick: if we put the ancilla qubit in the state |−⟩ = (|0⟩−|1⟩)/√2, the oracle "kicks back" the phase of f(x) into the input register — without ever collapsing it.</p>
+
+<div class="circuit">
+  <div class="circuit-row">
+    <span class="circuit-label">|0⟩</span>
+    <div class="circuit-line"></div>
+    <div class="circuit-gate h">H</div>
+    <div class="circuit-line"></div>
+    <div class="circuit-gate" style="border-color:#6b21a8;color:#6b21a8;min-width:3rem;">U_f</div>
+    <div class="circuit-line"></div>
+    <div class="circuit-gate h">H</div>
+    <div class="circuit-line"></div>
+    <div class="circuit-meas">M</div>
+    <div class="circuit-line"></div>
+    <span class="circuit-out" style="color:var(--accent);">"0" if f(0)=f(1)<br>"1" if f(0)≠f(1)</span>
+  </div>
+  <div class="circuit-row" style="margin-top:0.3rem;">
+    <span class="circuit-label">|1⟩</span>
+    <div class="circuit-line"></div>
+    <div class="circuit-gate h">H</div>
+    <div class="circuit-line"></div>
+    <div class="circuit-gate" style="border-color:#6b21a8;color:#6b21a8;min-width:3rem;">U_f</div>
+    <div class="circuit-line"></div>
+    <div class="circuit-line" style="width:4rem;"></div>
+    <span class="circuit-out">(ancilla, not measured)</span>
+  </div>
+</div>
+
+<h3>Step-by-Step Calculation</h3>
 
 <div class="math-block">
   <div class="mstep">
-    <div class="mstep-label">Case 1:</div>
-    <div class="mstep-body">n is even → immediately factor out 2 repeatedly</div>
+    <div class="mstep-label">Initial state:</div>
+    <div class="mstep-body">|0⟩|1⟩</div>
   </div>
   <div class="mstep">
-    <div class="mstep-label">Case 2:</div>
-    <div class="mstep-body">n = a<sup>b</sup> for some integers → use binary search on b and Newton's method</div>
+    <div class="mstep-label">After H⊗H:</div>
+    <div class="mstep-body">|+⟩|−⟩ = <span class="scalar">1/2</span>(|0⟩+|1⟩)(|0⟩−|1⟩) = <span class="scalar">1/2</span>(|00⟩−|01⟩+|10⟩−|11⟩)</div>
+  </div>
+  <hr class="math-sep">
+  <div class="mstep">
+    <div class="mstep-label">After U_f:</div>
+    <div class="mstep-body">
+      |0,f(0)⟩ + |1,f(1)⟩ − |0,f̄(0)⟩ − |1,f̄(1)⟩ (unnorm.)
+    </div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label">Regroup:</div>
+    <div class="mstep-body">= |0⟩(|f(0)⟩−|f̄(0)⟩) + |1⟩(|f(1)⟩−|f̄(1)⟩)</div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label">Key trick:</div>
+    <div class="mstep-body">
+      Note |f(x)⟩−|f̄(x)⟩ = ±(|0⟩−|1⟩) = ±|−⟩·√2, so the sign is (−1)<sup>f(x)</sup>.
+      Therefore state ∝ <span class="c-b">(−1)<sup>f(0)</sup></span>|0⟩ + <span class="c-g">(−1)<sup>f(1)</span>sup></span>|1⟩, times |−⟩.
+    </div>
+  </div>
+  <hr class="math-sep">
+  <div class="mstep">
+    <div class="mstep-label" style="color:var(--accent);">If f(0)=f(1):</div>
+    <div class="mstep-body">First register ∝ (−1)<sup>f(0)</sup>(|0⟩+|1⟩) = <span class="c-b">|+⟩</span> &nbsp;→ After H: <strong>|0⟩</strong> → measure "0"</div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label" style="color:var(--red);">If f(0)≠f(1):</div>
+    <div class="mstep-body">First register ∝ (−1)<sup>f(0)</sup>(|0⟩−|1⟩) = <span class="c-n">|−⟩</span> &nbsp;→ After H: <strong>|1⟩</strong> → measure "1"</div>
   </div>
 </div>
 
 <div class="insight">
-  <strong>The key insight of Shor's algorithm:</strong> for the general case, we can reduce factoring to a completely different problem — <em>finding the order</em> of an element in modular arithmetic — and the QFT solves this efficiently.
+  <strong>The quantum advantage in one sentence:</strong> By putting the input into superposition, U_f evaluates f(0) and f(1) <em>simultaneously</em>. The subsequent Hadamard gate <em>interferes</em> these two evaluations: they add constructively for the correct answer and cancel for the wrong one. This is the blueprint for every quantum algorithm that follows — including Shor's.
 </div>
 
-<!-- Exercise 1.1 -->
+<div class="note-box">
+  <strong>One oracle call vs two:</strong> Classically, you need 2 calls. Quantum: exactly 1 call suffices. This is a <em>provable</em> quantum advantage — not just a speedup in practice, but a fundamental difference in query complexity.
+</div>
+
+<!-- Interactive Deutsch simulator -->
+<canvas id="cvDeutsch" width="560" height="200"></canvas>
+<div class="canvas-caption">Select a function f and see what happens at each step of the circuit.</div>
+<div class="controls" style="gap:0.5rem;flex-wrap:wrap;">
+  <span style="font-size:0.8rem;color:var(--muted);">Choose f:</span>
+  <button class="btn sm" id="df0" onclick="runDeutsch('c0')">f≡0 (const)</button>
+  <button class="btn sm" id="df1" onclick="runDeutsch('c1')">f≡1 (const)</button>
+  <button class="btn sm" id="df2" onclick="runDeutsch('id')">f=id (bal.)</button>
+  <button class="btn sm" id="df3" onclick="runDeutsch('not')">f=NOT (bal.)</button>
+</div>
+<div id="deutschResult" style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem;margin-top:0.5rem;min-height:1.5rem;color:var(--accent);"></div>
+
+<!-- Exercises -->
 <div class="ex-block">
-  <div class="ex-header"><span class="ex-tag">Ex 1.1</span><span class="ex-title">Trivial trial division</span></div>
+  <div class="ex-header"><span class="ex-tag">Ex 1.1</span><span class="ex-title">Phase kickback</span></div>
   <div class="ex-body">
-    <p>To factor n = 15 by trial division, you need to try primes up to √15 ≈ 3.87. What primes must you try? And what is 15 = ? × ?</p>
+    <p>When the ancilla is in state |−⟩ and we apply U<sub>f</sub>, the result is (−1)<sup>f(x)</sup>|x⟩|−⟩. This is called "phase kickback." What is the phase when f(x) = 1?</p>
   </div>
   <div class="answer-area">
     <div class="answer-row">
-      <span class="ans-label">15 =</span>
-      <input class="answer-input" id="a11" placeholder="a" style="width:60px;" type="number">
-      <span class="ans-label">×</span>
-      <input class="answer-input" id="a12" placeholder="b" style="width:60px;" type="number">
-      <button class="btn sm" onclick="chkMult('a11','a12',15,'fb11')">Check</button>
+      <span class="ans-label">Phase factor:</span>
+      <input class="answer-input" id="a11" placeholder="e.g. +1">
+      <button class="btn sm" onclick="chk('a11','-1','fb11')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h11')">show hint</button>
     </div>
+    <div class="feedback hint" id="h11">(−1)<sup>f(x)</sup>. If f(x)=1 then (−1)<sup>1</sup> = −1.</div>
     <div class="feedback" id="fb11"></div>
+  </div>
+</div>
+
+<div class="ex-block">
+  <div class="ex-header"><span class="ex-tag">Ex 1.2</span><span class="ex-title">How many oracle calls?</span></div>
+  <div class="ex-body">
+    <p>Classically, how many evaluations of f are needed in the <em>worst case</em> to determine if f is constant or balanced?</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">Answer:</span>
+      <input class="answer-input" id="a12" placeholder="number" style="width:80px;">
+      <button class="btn sm" onclick="chk('a12','2','fb12')">Check</button>
+    </div>
+    <div class="feedback" id="fb12"></div>
   </div>
 </div>
 </section>
 
-<!-- ══════════════════════════════════════════════════════ -->
-<!-- SECTION 2 — REDUCTION TO ORDER-FINDING -->
-<!-- ══════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════ -->
+<!-- SECTION 2 — FACTORIZATION = ORDER FINDING -->
+<!-- ══════════════════════════════════════ -->
 <section class="section" id="s2">
 <div class="section-num">Section 02</div>
-<h2>Reducing Factoring to Order-Finding</h2>
+<h2>Factorization = Order Finding</h2>
 
-<p>Shor's brilliant insight is to reduce the factoring problem to a very different problem in number theory called <em>order finding</em>. Let us first define what we mean by "order".</p>
-
-<div class="def">
-  <div class="def-title">Definition — Order in Modular Arithmetic</div>
-  Given integers x and n with gcd(x, n) = 1 (they share no common factor), the <strong>order</strong> of x modulo n is the smallest positive integer r such that:
-  <div class="math-block" style="margin-top:0.4rem;">
-    <div class="eq"><span>x<sup>r</sup> mod n = 1</span></div>
-  </div>
-</div>
+<p>Shor's algorithm (1994) is the most famous quantum algorithm. Its primary application: <strong>factor large integers efficiently</strong>. This threatens RSA encryption, which relies on the difficulty of factoring numbers that are products of two large primes.</p>
 
 <div class="note-box">
-  <strong>Modular arithmetic reminder:</strong> "a mod n" means the remainder when a is divided by n. For example, 7 mod 5 = 2, because 7 = 1·5 + 2. And ab mod n = (a mod n)(b mod n), which we use extensively.
+  <strong>Why factoring is hard classically:</strong> To factor n, the naive approach tries all primes less than n — roughly √n candidates. For a 1024-bit RSA number, that's about 2<sup>>512</sup> trials. The best known classical algorithm still runs in sub-exponential but super-polynomial time — impractical for large n.
 </div>
 
-<h3>The Shor algorithm — overview</h3>
+<h3>The Key Insight: Reduction to Order Finding</h3>
+<p>Shor's brilliant observation is that <strong>factoring reduces to finding the "order"</strong> of an element in modular arithmetic. This connection transforms an apparently number-theoretic problem into a signal processing problem.</p>
 
-<p>Here is the complete algorithm. Steps ①, ③, ④ are easy classically. Only step ② is hard classically but easy quantumly.</p>
+<div class="def">
+  <div class="def-title">The Algorithm (4 steps)</div>
+  <ol style="padding-left:1.2rem;line-height:2.2;font-size:0.9rem;">
+    <li><strong>Choose</strong> a random x ∈ ℤ, x &lt; n.<br>
+      &nbsp;&nbsp;&nbsp;&nbsp; If gcd(x,n) &gt; 1 → x is already a factor of n! (Lucky stop.)</li>
+    <li><strong>Find the order</strong> r: the smallest r such that x<sup>r</sup> mod n = 1. &nbsp;&nbsp;<span style="color:var(--red);font-size:0.8rem;">(⟵ THE HARD STEP)</span></li>
+    <li>If r is odd, or if (x<sup>r/2</sup>+1) mod n = 0 → go back to step 1.</li>
+    <li><strong>Compute</strong> gcd(x<sup>r/2</sup>−1, n) and gcd(x<sup>r/2</sup>+1, n). These are non-trivial factors of n!</li>
+  </ol>
+</div>
+
+<h3>Why Does This Work?</h3>
 
 <div class="math-block">
-  <div class="mstep">
-    <div class="mstep-label" style="color:var(--accent);">① Pick x</div>
-    <div class="mstep-body">
-      Choose a random x ∈ &#123;2, 3, …, n−1&#125;.<br>
-      Compute gcd(x, n). If gcd(x, n) > 1: we got lucky — x itself is a factor of n. <strong>STOP.</strong><br>
-      Otherwise proceed.
-    </div>
-  </div>
-  <div class="mstep">
-    <div class="mstep-label" style="color:var(--red);">② Order-finding</div>
-    <div class="mstep-body">
-      Find the smallest r > 0 such that <strong>x<sup>r</sup> mod n = 1</strong>.<br>
-      This is the hard step — solved by the QFT.
-    </div>
-  </div>
-  <div class="mstep">
-    <div class="mstep-label" style="color:var(--orange);">③ Check</div>
-    <div class="mstep-body">
-      If r is odd → go back to ①.<br>
-      If (x<sup>r/2</sup> + 1) mod n = 0 → go back to ①.<br>
-      Otherwise proceed to ④.
-    </div>
-  </div>
-  <div class="mstep">
-    <div class="mstep-label" style="color:var(--green);">④ Extract factors</div>
-    <div class="mstep-body">
-      <span style="color:var(--green);font-weight:600;">gcd(x<sup>r/2</sup> − 1, n)</span> and <span style="color:var(--green);font-weight:600;">gcd(x<sup>r/2</sup> + 1, n)</span> are non-trivial factors of n.
-    </div>
-  </div>
+  <div class="mstep"><div class="mstep-label">Start:</div><div class="mstep-body">x<sup>r</sup> mod n = 1 &nbsp;⟹&nbsp; x<sup>r</sup> = q·n + 1 &nbsp;⟹&nbsp; x<sup>r</sup> − 1 = q·n</div></div>
+  <div class="mstep"><div class="mstep-label">If r even:</div><div class="mstep-body">(x<sup>(r/2)</sup> − 1)(x<sup>(r/2)</sup> + 1) = q·n</div></div>
+  <div class="mstep"><div class="mstep-label">Therefore:</div><div class="mstep-body">n divides the product (x<sup>(r/2)</sup> -1)(x<sup>(r/2)</sup> +1).<br>
+    If neither factor is divisible by all of n, then <strong>gcd</strong> extracts the factor we want.</div></div>
+  <hr class="math-sep">
+  <div class="mstep"><div class="mstep-label" style="color:var(--orange);">Why not trivial?</div><div class="mstep-body">
+    n cannot have all its factors inside x<sup>r/2</sup>−1 alone, because that would mean x<sup>r/2</sup> mod n = 1,
+    contradicting r being the <em>smallest</em> such integer (by definition of order).
+    Similarly for x<sup>(r/2)</sup>+1 (the step ③ condition eliminates this case).
+  </div></div>
 </div>
 
-<h3>Example: factor n = 15</h3>
-
-<div class="math-block">
-  <div class="mstep">
-    <div class="mstep-label">① Pick x=2:</div>
-    <div class="mstep-body">gcd(2, 15) = 1 ✓ (continue)</div>
-  </div>
-  <div class="mstep">
-    <div class="mstep-label">② Order of 2 mod 15:</div>
-    <div class="mstep-body">
-      2¹ mod 15 = 2<br>
-      2² mod 15 = 4<br>
-      2³ mod 15 = 8<br>
-      2⁴ mod 15 = <span class="c-g">16 mod 15 = 1</span> ✓ → r = 4
-    </div>
-  </div>
-  <div class="mstep">
-    <div class="mstep-label">③ Check:</div>
-    <div class="mstep-body">
-      r = 4 is even ✓<br>
-      (x<sup>r/2</sup> + 1) mod n = (2² + 1) mod 15 = 5 ≠ 0 ✓
-    </div>
-  </div>
-  <div class="mstep">
-    <div class="mstep-label">④ Factors:</div>
-    <div class="mstep-body">
-      gcd(x<sup>r/2</sup> − 1, n) = gcd(2² − 1, 15) = gcd(3, 15) = <span class="c-g">3</span><br>
-      gcd(x<sup>r/2</sup> + 1, n) = gcd(2² + 1, 15) = gcd(5, 15) = <span class="c-g">5</span><br>
-      So 15 = 3 × 5 ✓
-    </div>
-  </div>
+<div class="insight">
+  <strong>gcd is cheap!</strong> The Euclidean algorithm computes gcd(a,b) in O(log²(n)) time — polynomial. So steps ①, ③, ④ are all easy. The <em>entire difficulty</em> concentrates in step ②: finding the order r. That's exactly what Shor's quantum algorithm solves.
 </div>
 
-<!-- Exercise 2.1 -->
+<!-- Interactive factoring demo -->
+<canvas id="cvFactor" width="560" height="180"></canvas>
+<div class="canvas-caption">Enter n and x to trace through the factoring algorithm. (Works for small numbers.)</div>
+<div class="controls" style="flex-wrap:wrap;gap:0.5rem;">
+  <span style="font-size:0.8rem;color:var(--muted);">n:</span>
+  <input type="number" id="fnN" value="15" style="width:70px;font-family:'IBM Plex Mono',monospace;font-size:0.8rem;padding:0.2rem 0.4rem;border:1px solid var(--line);border-radius:var(--border-r);">
+  <span style="font-size:0.8rem;color:var(--muted);">x:</span>
+  <input type="number" id="fnX" value="7" style="width:70px;font-family:'IBM Plex Mono',monospace;font-size:0.8rem;padding:0.2rem 0.4rem;border:1px solid var(--line);border-radius:var(--border-r);">
+  <button class="btn sm" onclick="runFactor()">Trace Algorithm</button>
+</div>
+<div id="factorResult" style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:var(--ink2);margin-top:0.5rem;min-height:2rem;line-height:1.8;"></div>
+
+<!-- Exercises -->
 <div class="ex-block">
-  <div class="ex-header"><span class="ex-tag">Ex 2.1</span><span class="ex-title">Computing the order</span></div>
+  <div class="ex-header"><span class="ex-tag">Ex 2.1</span><span class="ex-title">Why is step ③ needed?</span></div>
   <div class="ex-body">
-    <p>Find the order of x=7 modulo n=15. Compute 7<sup>k</sup> mod 15 for k=1,2,3,4 until you get 1.</p>
+    <p>Step ③ says: if r is odd, restart. Why can't we use an odd r in step ④?</p>
   </div>
   <div class="answer-area">
     <div class="answer-row">
-      <span class="ans-label">7¹ mod 15 =</span>
-      <input class="answer-input" id="a21a" style="width:55px;" type="number">
-      <span class="ans-label">7² mod 15 =</span>
-      <input class="answer-input" id="a21b" style="width:55px;" type="number">
-      <button class="btn sm" onclick="chk2Shor('a21a',7,'a21b',4,'fb21')">Check (first 2)</button>
+      <input class="answer-input" id="a21" placeholder="..." style="width:280px;">
+      <button class="btn sm" onclick="chkContains('a21',['r/2','half','integer','x^(r/2'],'fb21')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h21')">show hint</button>
     </div>
-    <div class="answer-row" style="margin-top:0.3rem;">
-      <span class="ans-label">Order r =</span>
-      <input class="answer-input" id="a21c" style="width:55px;" type="number">
-      <button class="btn sm" onclick="chkNumShor('a21c',4,'fb21c')">Check order</button>
-    </div>
-    <button class="hint-toggle" onclick="showHintShor('h21')">show hint</button>
-    <div class="feedback hint" id="h21">7¹=7, 7²=49=3·15+4 so 49 mod 15=4, 7³=7·4=28 mod 15=13, 7⁴=7·13=91 mod 15=1 (since 91=6·15+1). So r=4.</div>
+    <div class="feedback hint" id="h21">Because x<sup>(r/2)</sup> needs to be an integer. If r is odd, r/2 is not an integer and x<sup>(r/2)</sup> mod n is undefined. We need r to be even so that x<sup>(r/2)</sup> ∈ ℤ.</div>
     <div class="feedback" id="fb21"></div>
-    <div class="feedback" id="fb21c"></div>
   </div>
 </div>
 
-<!-- Exercise 2.2 -->
 <div class="ex-block">
-  <div class="ex-header"><span class="ex-tag">Ex 2.2</span><span class="ex-title">Applying step ④</span></div>
+  <div class="ex-header"><span class="ex-tag">Ex 2.2</span><span class="ex-title">Verify the factoring of 15</span></div>
   <div class="ex-body">
-    <p>Using x=7, r=4, n=15: compute the two candidate factors gcd(7² − 1, 15) and gcd(7² + 1, 15). Recall 7² = 49, so 7²−1 = 48, 7²+1 = 50.</p>
+    <p>For n=15 and x=7: the order is r=4 (meaning 7<sup>4</sup> mod 15 = 1). Compute gcd(7²−1, 15) = gcd(48, 15). What factor do you get?</p>
   </div>
   <div class="answer-area">
     <div class="answer-row">
-      <span class="ans-label">gcd(48, 15) =</span>
-      <input class="answer-input" id="a22a" style="width:55px;" type="number">
-      <span class="ans-label">gcd(50, 15) =</span>
-      <input class="answer-input" id="a22b" style="width:55px;" type="number">
-      <button class="btn sm" onclick="chk2Shor('a22a',3,'a22b',5,'fb22')">Check</button>
+      <span class="ans-label">gcd(48,15) =</span>
+      <input class="answer-input" id="a22" placeholder="?" style="width:80px;">
+      <button class="btn sm" onclick="chk('a22','3','fb22')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h22')">show hint</button>
     </div>
-    <button class="hint-toggle" onclick="showHintShor('h22')">show hint</button>
-    <div class="feedback hint" id="h22">48 = 3·16 = 3·(15+1), so gcd(48,15)=gcd(3,15)=3. For 50: 50=3·15+5, so gcd(50,15)=gcd(15,5)=5.</div>
+    <div class="feedback hint" id="h22">48 = 3×16, 15 = 3×5. gcd(48,15) = 3. And gcd(50,15) = 5. So factors of 15 are 3 and 5. ✓</div>
     <div class="feedback" id="fb22"></div>
   </div>
 </div>
 </section>
 
-<!-- ══════════════════════════════════════════════════════ -->
-<!-- SECTION 3 — WHY IT WORKS (PROOF) -->
-<!-- ══════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════ -->
+<!-- SECTION 3 — ORDER FINDING = PERIOD FINDING -->
+<!-- ══════════════════════════════════════ -->
 <section class="section" id="s3">
 <div class="section-num">Section 03</div>
-<h2>Why the Algorithm Works — The Proof</h2>
+<h2>Order Finding = Period Finding</h2>
 
-<p>Why do gcd(x<sup>r/2</sup> ± 1, n) give factors of n? This requires a careful argument. Let us go through it step by step.</p>
+<p>The order problem has a beautiful signal-processing interpretation. Let's define the function:</p>
 
-<h3>Setting up the algebra</h3>
-
-<div class="math-block">
-  <div class="mstep">
-    <div class="mstep-label">Start from:</div>
-    <div class="mstep-body">x<sup>r</sup> mod n = 1 means x<sup>r</sup> = q·n + 1 for some integer q</div>
+<div class="def">
+  <div class="def-title">The Modular Exponentiation Function</div>
+  <div class="math-block">
+    <div class="eq">f(ℓ) = x<sup>ℓ</sup> mod n &nbsp;&nbsp;&nbsp; ℓ = 0, 1, 2, ...</div>
   </div>
-  <div class="mstep">
-    <div class="mstep-label">Rearrange:</div>
-    <div class="mstep-body">x<sup>r</sup> − 1 = q·n &nbsp;&nbsp; so <strong>n divides (x<sup>r</sup> − 1)</strong></div>
-  </div>
-  <div class="mstep">
-    <div class="mstep-label">Factor (r even):</div>
-    <div class="mstep-body">
-      x<sup>r</sup> − 1 = (x<sup>r/2</sup> + 1)(x<sup>r/2</sup> − 1) = q·n<br>
-      <span class="eq-note">So the product (x<sup>r/2</sup>+1)(x<sup>r/2</sup>−1) is divisible by n.</span>
-    </div>
-  </div>
-</div>
-
-<h3>Where are the factors of n?</h3>
-
-<p>We want to show that n splits its factors between (x<sup>r/2</sup>−1) and (x<sup>r/2</sup>+1). We argue by ruling out the alternatives:</p>
-
-<div class="math-block">
-  <div class="mstep">
-    <div class="mstep-label" style="color:var(--red);">Argument 1:</div>
-    <div class="mstep-body">
-      <strong>n cannot divide (x<sup>r/2</sup> − 1) entirely.</strong><br>
-      If it did, then (x<sup>r/2</sup> − 1) mod n = 0, meaning x<sup>r/2</sup> mod n = 1.<br>
-      But r was defined as the <em>smallest</em> positive integer with x<sup>r</sup> mod n = 1.<br>
-      If x<sup>r/2</sup> mod n = 1, then r/2 would work as a smaller order — contradiction!
-    </div>
-  </div>
-  <div class="mstep">
-    <div class="mstep-label" style="color:var(--red);">Argument 2:</div>
-    <div class="mstep-body">
-      <strong>n cannot divide (x<sup>r/2</sup> + 1) entirely.</strong><br>
-      We explicitly check this in step ③ and restart if (x<sup>r/2</sup> + 1) mod n = 0.
-    </div>
-  </div>
-  <div class="mstep">
-    <div class="mstep-label" style="color:var(--green);">Conclusion:</div>
-    <div class="mstep-body">
-      Some factors of n go into (x<sup>r/2</sup> − 1) and the remaining factors go into (x<sup>r/2</sup> + 1).<br>
-      Therefore: <strong>gcd(x<sup>r/2</sup> ± 1, n) are non-trivial factors of n</strong>. □
-    </div>
+  This function is <strong>periodic with period r</strong>:
+  <div class="math-block" style="margin-top:0.4rem;">
+    <div class="eq">f(ℓ) = x<sup>ℓ</sup> mod n = x<sup>(ℓ+r)</sup> mod n = f(ℓ+r) &nbsp;&nbsp; for all ℓ</div>
+    <div class="eq-note">&nbsp;&nbsp;Because x<sup>r</sup> mod n = 1, so multiplying by x<sup>r</sup> changes nothing.</div>
   </div>
 </div>
 
 <div class="insight">
-  <strong>Why gcd?</strong> The greatest common divisor gcd(a, n) extracts exactly the factors that a and n share. If a = x<sup>r/2</sup>−1 contains some (but not all) prime factors of n, then gcd(a, n) returns exactly those shared factors — a non-trivial factorization of n.
+  <strong>The chain of reductions:</strong>
+  <div class="math-block" style="margin-top:0.5rem;">
+    <div class="mstep"><div class="mstep-label" style="font-size:1rem;">Factoring n</div><div class="mstep-body c-b">≡ &nbsp;Order finding of x mod n (for random x)</div></div>
+    <div class="mstep"><div class="mstep-label" style="font-size:1rem;">Order finding</div><div class="mstep-body c-g">≡ &nbsp;Period finding of f(ℓ) = x<sup>ℓ</sup> mod n</div></div>
+    <div class="mstep"><div class="mstep-label" style="font-size:1rem;">Period finding</div><div class="mstep-body c-o">≡ &nbsp;Finding peaks in the Fourier transform of f</div></div>
+  </div>
 </div>
 
-<h3>How often does the algorithm succeed?</h3>
-
-<div class="note-box">
-  <strong>Probability of success:</strong> For a random x, the probability that the order r is even AND (x<sup>r/2</sup>+1) mod n ≠ 0 is at least 1 − 1/2<sup>k−1</sup> where k is the number of distinct prime factors of n. For n = p·q (RSA), the success probability per trial is at least 1/2. On average, only 2–3 rounds are needed.
+<canvas id="cvPeriod" width="560" height="180"></canvas>
+<div class="canvas-caption">Modular exponentiation f(ℓ) = x<sup>ℓ</sup> mod n — observe the periodic pattern.</div>
+<div class="controls" style="flex-wrap:wrap;gap:0.5rem;">
+  <span style="font-size:0.8rem;color:var(--muted);">n:</span>
+  <input type="number" id="pN" value="15" style="width:60px;font-family:'IBM Plex Mono',monospace;font-size:0.8rem;padding:0.2rem 0.4rem;border:1px solid var(--line);border-radius:var(--border-r);">
+  <span style="font-size:0.8rem;color:var(--muted);">x:</span>
+  <input type="number" id="pX" value="7" style="width:60px;font-family:'IBM Plex Mono',monospace;font-size:0.8rem;padding:0.2rem 0.4rem;border:1px solid var(--line);border-radius:var(--border-r);">
+  <button class="btn sm" onclick="drawPeriodCanvas()">Show</button>
+  <button class="btn sm" onclick="pX.value=2;pN.value=21;drawPeriodCanvas()">x=2,n=21</button>
+  <button class="btn sm" onclick="pX.value=3;pN.value=35;drawPeriodCanvas()">x=3,n=35</button>
 </div>
 
-<!-- Exercise 3.1 -->
+<!-- Exercises -->
 <div class="ex-block">
-  <div class="ex-header"><span class="ex-tag">Ex 3.1</span><span class="ex-title">Verifying the contradiction</span></div>
+  <div class="ex-header"><span class="ex-tag">Ex 3.1</span><span class="ex-title">Find the period</span></div>
   <div class="ex-body">
-    <p>For x=2, n=15, r=4: verify that x<sup>r/2</sup> mod n = 4 ≠ 1. This confirms that n does NOT divide (x<sup>r/2</sup>−1) = 3, consistent with our proof.</p>
+    <p>Compute f(ℓ) = 2<sup>ℓ</sup> mod 7 for ℓ = 0,1,2,3,4,5. What is the period r?</p>
   </div>
   <div class="answer-area">
     <div class="answer-row">
-      <span class="ans-label">2² mod 15 =</span>
-      <input class="answer-input" id="a31" style="width:55px;" type="number">
-      <button class="btn sm" onclick="chkNumShor('a31',4,'fb31')">Check</button>
+      <span class="ans-label">r =</span>
+      <input class="answer-input" id="a31" placeholder="?" style="width:80px;">
+      <button class="btn sm" onclick="chk('a31','3','fb31')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h31')">show hint</button>
     </div>
+    <div class="feedback hint" id="h31">2<sup>0</sup> =1, 2<sup>1</sup> =2, 2<sup>2</sup> =4, 2<sup>3</sup> =1 (mod 7). So r=3 (the sequence 1,2,4 repeats).</div>
     <div class="feedback" id="fb31"></div>
   </div>
 </div>
 </section>
 
-<!-- ══════════════════════════════════════════════════════ -->
-<!-- SECTION 4 — ORDER → PERIOD FINDING -->
-<!-- ══════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════ -->
+<!-- SECTION 4 — PERIOD FINDING WITH FT    -->
+<!-- ══════════════════════════════════════ -->
 <section class="section" id="s4">
 <div class="section-num">Section 04</div>
-<h2>Reformulating as Period Finding</h2>
+<h2>Period Finding with Fourier Transforms</h2>
 
-<p>The order-finding problem has an elegant reformulation as a period-finding problem — and this is where the Fourier transform becomes the natural tool.</p>
+<p>You already know this idea from signal processing: <strong>a periodic signal has a spectrum with sharp lines</strong>. We'll use the Discrete Fourier Transform (DFT) to detect the period.</p>
 
-<h3>The function f(ℓ)</h3>
-
-<p>Define the function:</p>
+<h3>Continuous time analogy</h3>
+<p>A continuous signal with period T has a Fourier transform with lines at frequencies f<sub>0</sub> = 1/T, 2f<sub>0</sub>, 3f<sub>0</sub>, ... This is the Fourier series. For a discrete signal of length N with period P (where P &lt; N):</p>
 
 <div class="def">
-  <div class="def-title">The modular exponentiation function</div>
-  <div class="math-block">
-    <div class="eq"><span>f(ℓ) = x<sup>ℓ</sup> mod n &nbsp;&nbsp;&nbsp; ℓ = 0, 1, 2, …</span></div>
+  <div class="def-title">Key DFT Result</div>
+  If x<sub>k</sub> = x<sub>k+P</sub> (periodic with period P), and N = P·M (P divides N exactly), then the DFT has peaks exactly at:
+  <div class="math-block" style="margin-top:0.5rem;">
+    <div class="eq">m = 0, &nbsp; M, &nbsp; 2M, &nbsp; 3M, &nbsp; ..., &nbsp; (P−1)M</div>
+    <div class="eq-note">&nbsp;&nbsp;i.e. m = ℓ · (N/P) &nbsp; for ℓ ∈ ℤ</div>
   </div>
-  Note that x<sup>r</sup> mod n = 1 implies that x<sup>ℓ+r</sup> mod n = x<sup>ℓ</sup> · x<sup>r</sup> mod n = x<sup>ℓ</sup> mod n = f(ℓ).<br>
-  Therefore <strong>f is periodic with period r</strong>: f(ℓ + r) = f(ℓ) for all ℓ.
-</div>
-
-<div class="math-block">
-  <div class="mstep">
-    <div class="mstep-label">Proof of periodicity:</div>
-    <div class="mstep-body">
-      f(ℓ + r) = x<sup>ℓ+r</sup> mod n = (x<sup>ℓ</sup> · x<sup>r</sup>) mod n<br>
-      = (x<sup>ℓ</sup> mod n) · (x<sup>r</sup> mod n) mod n &nbsp;&nbsp; <span class="eq-note">[product rule for mod]</span><br>
-      = (x<sup>ℓ</sup> mod n) · 1 = f(ℓ) &nbsp;&nbsp; ✓
-    </div>
+  So if we observe a peak at position m, we know:
+  <div class="math-block" style="margin-top:0.4rem;">
+    <div class="eq">m/N ≈ ℓ/P &nbsp;&nbsp;⟹&nbsp;&nbsp; P ≈ N·ℓ/m</div>
   </div>
+  By simplifying the fraction m/N we can recover P (= the denominator after simplification)!
 </div>
-
-<h3>Example: x=2, n=15</h3>
-
-<canvas id="cvPeriod" width="560" height="160"></canvas>
-<div class="canvas-caption">The function f(ℓ) = 2<sup>ℓ</sup> mod 15 is periodic with period r=4. Click to see different x values.</div>
-<div class="controls" style="gap:0.5rem;flex-wrap:wrap;">
-  <span style="font-size:0.8rem;color:var(--muted);">x =</span>
-  <button class="btn sm active" id="px2" onclick="setPeriodX(2)">x=2</button>
-  <button class="btn sm" id="px4" onclick="setPeriodX(4)">x=4</button>
-  <button class="btn sm" id="px7" onclick="setPeriodX(7)">x=7</button>
-  <button class="btn sm" id="px11" onclick="setPeriodX(11)">x=11</button>
-</div>
-<div id="periodInfo" style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:var(--ink2);margin-top:0.4rem;min-height:1.2rem;"></div>
 
 <div class="note-box">
-  <strong>The reformulation:</strong> Order-finding (find smallest r with x<sup>r</sup> mod n = 1) is equivalent to <strong>period-finding</strong> (find the smallest r such that f(ℓ+r) = f(ℓ)). Period-finding is exactly what the Fourier transform is designed for!
+  <strong>What if P does not divide N exactly?</strong> The peaks appear near ℓ·N/P but are slightly broadened (like a sinc function). In that case, we find an approximation m/N ≈ ℓ/P, and use the <strong>continued fraction algorithm</strong> to extract the exact denominator P from the rational approximation.
 </div>
 
-<!-- Exercise 4.1 -->
-<div class="ex-block">
-  <div class="ex-header"><span class="ex-tag">Ex 4.1</span><span class="ex-title">Period of f(ℓ) = 4<sup>ℓ</sup> mod 15</span></div>
-  <div class="ex-body">
-    <p>Compute f(ℓ) = 4<sup>ℓ</sup> mod 15 for ℓ = 0, 1, 2. What is the period r? (Hint: 4¹=4, 4²=16 mod 15=1.)</p>
-  </div>
-  <div class="answer-area">
-    <div class="answer-row">
-      <span class="ans-label">Period r =</span>
-      <input class="answer-input" id="a41" style="width:55px;" type="number">
-      <button class="btn sm" onclick="chkNumShor('a41',2,'fb41')">Check</button>
-    </div>
-    <button class="hint-toggle" onclick="showHintShor('h41')">show hint</button>
-    <div class="feedback hint" id="h41">f(0)=1, f(1)=4, f(2)=16 mod 15=1=f(0). The pattern (1,4,1,4,…) has period r=2.</div>
-    <div class="feedback" id="fb41"></div>
-  </div>
+<h3>Multiple measurements to handle common factors</h3>
+<p>When we simplify m/N, we might lose factors. For example, if N=240, P=20, and we see m=12 (corresponding to ℓ=1), then m/N = 12/240 = 1/20 ✓. But if ℓ=2 we'd see m=24, and 24/240 = 1/10 — we recover only a factor of P=20, not P itself.</p>
+
+<div class="insight">
+  <strong>Solution: collect multiple measurements m₁, m₂, ...</strong> Each gives a (possibly partial) factor of P. The true period P = lcm(P₁, P₂, ...) where P<sub>i</sub> is the denominator after simplifying m<sub>i</sub>/N. After a few measurements we recover P with high probability.
 </div>
+
+<canvas id="cvDFT" width="560" height="220"></canvas>
+<div class="canvas-caption">DFT of the periodic sequence f(ℓ) = x<sup>ℓ</sup> mod n. The peaks reveal the period.</div>
+<div class="controls" style="flex-wrap:wrap;gap:0.5rem;">
+  <span style="font-size:0.8rem;color:var(--muted);">n:</span>
+  <input type="number" id="dN" value="15" style="width:60px;font-family:'IBM Plex Mono',monospace;font-size:0.8rem;padding:0.2rem 0.4rem;border:1px solid var(--line);border-radius:var(--border-r);">
+  <span style="font-size:0.8rem;color:var(--muted);">x:</span>
+  <input type="number" id="dX" value="7" style="width:60px;font-family:'IBM Plex Mono',monospace;font-size:0.8rem;padding:0.2rem 0.4rem;border:1px solid var(--line);border-radius:var(--border-r);">
+  <span style="font-size:0.8rem;color:var(--muted);">N:</span>
+  <input type="number" id="dNFT" value="64" style="width:60px;font-family:'IBM Plex Mono',monospace;font-size:0.8rem;padding:0.2rem 0.4rem;border:1px solid var(--line);border-radius:var(--border-r);">
+  <button class="btn sm" onclick="drawDFTCanvas()">Show DFT</button>
+</div>
+<div id="dftInfo" style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:var(--ink2);margin-top:0.4rem;min-height:1.5rem;"></div>
 </section>
 
-<!-- ══════════════════════════════════════════════════════ -->
-<!-- SECTION 5 — CLASSICAL PERIOD FINDING -->
-<!-- ══════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════ -->
+<!-- SECTION 5 — CLASSICAL PERIOD FINDING  -->
+<!-- ══════════════════════════════════════ -->
 <section class="section" id="s5">
 <div class="section-num">Section 05</div>
-<h2>Classical Period Finding with FFT</h2>
+<h2>Classical Period Finding — Why It Fails</h2>
 
-<p>Since f is periodic with period P, its Fourier transform has peaks at multiples of N/P (where N is the length of the sequence we analyse). This is the classical approach to period finding — and it fails for large n.</p>
-
-<h3>Why the Fourier transform reveals the period</h3>
-
-<p>For continuous signals: a periodic signal x(t) with period T has a Fourier spectrum with peaks at frequencies f₀ = 1/T and its harmonics 2f₀, 3f₀, …. For discrete signals with N points and period P (where P divides N):</p>
+<p>The algorithm using DFT to find the period looks promising. But let's check its <strong>classical complexity</strong>.</p>
 
 <div class="def">
-  <div class="def-title">FFT of a Periodic Sequence</div>
-  If x<sub>k</sub> = x<sub>k+P</sub> for all k (periodic with period P), then the FFT of x<sub>0</sub>, …, x<sub>N−1</sub> has peaks exactly at positions:
-  <div class="math-block" style="margin-top:0.4rem;">
-    <div class="eq"><span>m = ℓ · N/P &nbsp;&nbsp; for ℓ = 0, 1, …, P−1</span> &nbsp;&nbsp; (when N mod P = 0)</div>
-    <div class="eq"><span>m ≈ ℓ · N/P &nbsp;&nbsp; for ℓ = 0, 1, …, P−1</span> &nbsp;&nbsp; (when N mod P ≠ 0)</div>
-  </div>
+  <div class="def-title">Classical Period Finding Algorithm</div>
+  Given a sequence x<sub>k</sub> with period P &lt; Q (where Q is a known upper bound on P):
+  <ol style="padding-left:1.2rem;line-height:2;font-size:0.88rem;">
+    <li>Choose N &gt; Q² (for the continued fraction step to work reliably).</li>
+    <li>Compute the DFT of the length-N sequence.</li>
+    <li>Find a peak at position m; compute m/N and extract P via continued fractions.</li>
+    <li>Verify: if x<sub>k+P</sub> = x<sub>k</sub> for all k, stop. Otherwise collect more measurements and take the lcm.</li>
+  </ol>
 </div>
 
-<h3>Classical algorithm for period finding</h3>
+<h3>Why it's exponential classically</h3>
 
 <div class="math-block">
-  <div class="mstep">
-    <div class="mstep-label">① Choose N:</div>
-    <div class="mstep-body">Select N &gt; Q where P &lt; Q is a known upper bound (suggest N &gt; Q² for the continued fraction step)</div>
-  </div>
-  <div class="mstep">
-    <div class="mstep-label">② Compute:</div>
-    <div class="mstep-body">Build the sequence x₀, x₁, …, x<sub>N−1</sub> where x<sub>k</sub> = f(k). Then compute FFT(x).</div>
-  </div>
-  <div class="mstep">
-    <div class="mstep-label">③ Find peaks:</div>
-    <div class="mstep-body">Identify peak locations M<sub>i</sub> in the spectrum and estimate candidate periods P<sub>i</sub>.</div>
-  </div>
-  <div class="mstep">
-    <div class="mstep-label">④ Verify:</div>
-    <div class="mstep-body">Check if x<sub>k</sub> = x<sub>k+P<sub>i</sub></sub> for some i.</div>
-  </div>
-  <div class="mstep">
-    <div class="mstep-label">⑤ Repeat:</div>
-    <div class="mstep-body">If P<sub>i</sub> = P, stop. Otherwise try again.</div>
-  </div>
+  <div class="mstep"><div class="mstep-label" style="color:var(--red);">Step ②:</div><div class="mstep-body">Classical DFT costs O(N log₂N). If N is b bits → N ≈ 2<sup>b</sup> → cost = O(b · 2<sup>b</sup>). <strong>Exponential in b!</strong></div></div>
+  <div class="mstep"><div class="mstep-label" style="color:var(--red);">Step ③:</div><div class="mstep-body">Even finding the peak requires examining N entries. Again exponential.</div></div>
+  <hr class="math-sep">
+  <div class="mstep"><div class="mstep-label" style="color:var(--accent);">Example:</div><div class="mstep-body">For RSA n = 1024 bits, we need N ≈ 2<sup>2048</sup>. Storing the sequence alone requires 2<sup>2048</sup> entries. That's more atoms than in the observable universe!</div></div>
 </div>
 
 <div class="warning">
-  <strong>Classical complexity:</strong> Step ② requires computing x<sub>k</sub> = f(k) for all k = 0, …, N−1, and then running the FFT. With N ≈ n² (where n is the number of bits of the input), this requires O(N log N) = O(n² log n) operations just for the FFT. But we also need N evaluations of f(k), each costing ~n multiplications modulo n. Total: O(n³) or worse. Crucially, N itself grows as 2<sup>b</sup> (the size of n), making this exponential in b.
+  <strong>Period finding with classical FT is completely impractical.</strong> The exponential blowup from having to store and process N ≈ 2<sup>2b</sup> values makes this approach useless for large inputs. <em>This is precisely where the Quantum Fourier Transform saves the day.</em>
 </div>
 
-<canvas id="cvFFTperiod" width="560" height="200"></canvas>
-<div class="canvas-caption">Classical period finding: the FFT of f(ℓ) = x<sup>ℓ</sup> mod 15 reveals the period through its peak structure.</div>
-<div class="controls" style="gap:0.5rem;">
-  <span style="font-size:0.8rem;color:var(--muted);">x mod 15 =</span>
-  <button class="btn sm active" id="fft2" onclick="setFFTx(2)">x=2 (P=4)</button>
-  <button class="btn sm" id="fft7" onclick="setFFTx(7)">x=7 (P=4)</button>
-  <button class="btn sm" id="fft4" onclick="setFFTx(4)">x=4 (P=2)</button>
-  <button class="btn sm" id="fft11" onclick="setFFTx(11)">x=11 (P=2)</button>
+<div class="insight">
+  <strong>The QFT costs only O(b²) gates on b qubits.</strong> Instead of computing N = 2<sup>b</sup> amplitudes explicitly, the quantum circuit <em>implicitly</em> operates on a superposition encoding all 2<sup>b</sup> values simultaneously. The cost is polynomial, not exponential.
 </div>
 </section>
 
-<!-- ══════════════════════════════════════════════════════ -->
-<!-- SECTION 6 — QUANTUM PERIOD FINDING -->
-<!-- ══════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════ -->
+<!-- SECTION 6 — ORDER FINDING WITH QFT    -->
+<!-- ══════════════════════════════════════ -->
 <section class="section" id="s6">
 <div class="section-num">Section 06</div>
-<h2>Quantum Period Finding with QFT</h2>
+<h2>Order Finding with QFT — Shor's Algorithm</h2>
 
-<p>The quantum approach uses superposition to evaluate f at all inputs simultaneously, then the QFT to extract the period — using only O(n²) quantum gates total.</p>
+<p>Here is the actual quantum circuit. It has three stages, labeled ①②③ in the notes.</p>
 
-<h3>The quantum circuit</h3>
-
-<p>We need two registers. We know P &lt; n, so we choose N &gt; n² to ensure the continued fraction step works. The upper register uses log₂ N qubits and the lower register uses ⌈log₂ n⌉ qubits.</p>
-
-<div class="math-block" style="padding:1.2rem;">
-  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem;line-height:2.3;">
-    <div style="display:grid;grid-template-columns:90px 1fr;gap:0.2rem 0.5rem;align-items:center;">
-      <div style="color:var(--muted);">log₂N qubits</div>
-      <div style="display:flex;align-items:center;gap:0;">
-        <div style="border:1px solid var(--line);padding:0.15rem 0.3rem;border-radius:2px;color:var(--muted);">|0⟩</div>
-        <div style="height:2px;width:0.3rem;background:#ccc;"></div>
-        <div style="border:2px solid var(--accent);padding:0.2rem 0.5rem;border-radius:3px;color:var(--accent);font-weight:700;">H<sup>⊗n</sup></div>
-        <div style="height:2px;width:0.5rem;background:#ccc;"></div>
-        <div style="border:2px solid var(--purple);padding:0.2rem 0.7rem;border-radius:3px;color:var(--purple);font-weight:700;min-width:2rem;text-align:center;">U<sub>f</sub></div>
-        <div style="height:2px;width:0.5rem;background:#ccc;"></div>
-        <div style="border:2px solid var(--green);padding:0.2rem 0.7rem;border-radius:3px;color:var(--green);font-weight:700;">QFT<sub>N</sub></div>
-        <div style="height:2px;width:0.5rem;background:#ccc;"></div>
-        <div style="border:2px solid var(--red);padding:0.2rem 0.4rem;border-radius:3px;color:var(--red);">M</div>
-        <div style="height:2px;width:0.5rem;background:#ccc;"></div>
-        <span style="color:var(--green);font-weight:600;">M</span>
-      </div>
-      <div style="color:var(--muted);">⌈log₂n⌉ qubits</div>
-      <div style="display:flex;align-items:center;gap:0;">
-        <div style="border:1px solid var(--line);padding:0.15rem 0.3rem;border-radius:2px;color:var(--muted);">|0⟩</div>
-        <div style="height:2px;width:1.3rem;background:#ccc;"></div>
-        <div style="height:2px;width:calc(2rem + 0.5rem + 1px);background:#ccc;"></div>
-        <span style="font-size:0.7rem;color:var(--muted);">f(ℓ) = x<sup>ℓ</sup> mod n</span>
-        <div style="height:2px;width:0.5rem;background:#ccc;"></div>
-        <div style="border:2px solid var(--red);padding:0.2rem 0.4rem;border-radius:3px;color:var(--red);">M</div>
-        <div style="height:2px;width:0.5rem;background:#ccc;"></div>
-        <span style="color:var(--orange);font-weight:600;">f(a)</span>
-      </div>
-    </div>
-  </div>
-  <div style="margin-top:0.5rem;font-size:0.72rem;color:var(--muted);">Upper register: stores superposition of all ℓ values. Lower register: stores f(ℓ) = x<sup>ℓ</sup> mod n.</div>
+<div class="def">
+  <div class="def-title">Setup</div>
+  Given x and n, choose N &gt; n² (so that N has at least log₂(n²) = 2b bits, where b = ⌈log₂n⌉).
+  We need ≈ log₂N ≈ 2b qubits for the <strong>first register</strong> (the frequency register).
+  We need ⌈log₂n⌉ = b qubits for the <strong>second register</strong> (to store x<sup>ℓ</sup> mod n).
 </div>
 
-<h3>State evolution — step by step</h3>
+<h3>The Circuit</h3>
+<div style="background:#f5f2ea;border:1px solid var(--line);border-radius:6px;padding:1rem;margin:1rem 0;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;line-height:2;">
+<div style="display:grid;grid-template-columns:auto 1fr;gap:0.2rem 0.5rem;align-items:center;">
+  <span style="color:var(--muted);">log₂N qubits</span>
+  <span>|0⟩ −[H]⊗…⊗[H]−−−−−[ U<sub>f</sub> ]−−−−−[ QFT ]−−−[ M ]→ m</span>
+  <span style="color:var(--muted);">b qubits</span>
+  <span>|0⟩ −−−−−−−−−−−−−−−[ U<sub>f</sub> ]−−[ M ]→ x<sup>a</sup> mod n</span>
+  <span></span>
+  <span style="color:var(--muted);font-size:0.7rem;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;① &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;② &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;③</span>
+</div>
+</div>
+
+<h3>Stage ① — Create Superposition and Apply Oracle</h3>
 
 <div class="math-block">
   <div class="mstep">
-    <div class="mstep-label" style="color:var(--accent);">|ψ₀⟩:</div>
-    <div class="mstep-body">
-      Both registers start at |0⟩:<br>
-      |ψ₀⟩ = |0⟩ ⊗ |0⟩
-    </div>
+    <div class="mstep-label">Start:</div>
+    <div class="mstep-body">|0⟩<sup>⊗log₂N</sup> ⊗ |0⟩<sup>⊗b</sup></div>
   </div>
   <div class="mstep">
-    <div class="mstep-label" style="color:var(--accent);">After H<sup>⊗n</sup>:</div>
-    <div class="mstep-body">
-      Apply Hadamard to every qubit of the upper register:<br>
-      |ψ₀⟩ = <span class="c-b">|0⟩</span> ⊗ <span class="scalar">1/√N</span> Σ<sub>k=0</sub><sup>N−1</sup>|k⟩ &nbsp;&nbsp; <span class="eq-note">(uniform superposition of all k)</span>
-    </div>
+    <div class="mstep-label">Apply H<sup>⊗log₂N</sup></div><div class="mstep-body"></div>
+    <div class="mstep-label">on register 1:</div>
+    <div class="mstep-body"><span class="scalar">1/√N</span> Σ<sub>k=0</sub><sup>N−1</sup> |k⟩|0⟩</div>
   </div>
   <div class="mstep">
-    <div class="mstep-label" style="color:var(--purple);">After U<sub>f</sub>:</div>
-    <div class="mstep-body">
-      The oracle U<sub>f</sub> computes f(k) = x<sup>k</sup> mod n and stores it in the lower register:<br>
-      |ψ₁⟩ = <span class="scalar">1/√N</span> Σ<sub>k=0</sub><sup>N−1</sup> |f(k)⟩|k⟩
-      &nbsp;&nbsp; = <span class="scalar">1/√N</span> Σ<sub>k</sub> |x<sup>k</sup> mod n⟩|k⟩
-    </div>
+    <div class="mstep-label">Apply U_f:</div>
+    <div class="mstep-body c-g"><span class="scalar">1/√N</span> Σ<sub>k=0</sub><sup>N−1</sup> |k⟩|x<sup>k</sup> mod n⟩ &nbsp;&nbsp;<span class="eq-note">(quantum parallelism: all values computed at once!)</span></div>
+  </div>
+</div>
+
+<p>The function f(k) = x<sup>k</sup> mod n is periodic with period r (the order we want to find). So the second register cycles through the values 1, x, x², ..., x<sup>r−1</sup>, 1, x, ... repeatedly.</p>
+
+<h3>Stage ② — Measure the Second Register</h3>
+
+<div class="math-block">
+  <div class="mstep">
+    <div class="mstep-label">Measure 2nd</div><div class="mstep-body"></div>
+    <div class="mstep-label">register:</div>
+    <div class="mstep-body">Say we get result f(a) = x<sup>a</sup> mod n (for some random a ∈ [0, r)).</div>
   </div>
   <div class="mstep">
-    <div class="mstep-label" style="color:var(--orange);">Measure lower register:</div>
-    <div class="mstep-body">
-      Suppose we measure f(a) for some 0 ≤ a &lt; P. The state collapses to: <br>
-      |ψ₂⟩ ∝ Σ<sub>ℓ</sub> |f(a)⟩|a + ℓP⟩<br>
-      <span class="eq-note">The upper register now contains a superposition of <em>only those k values where f(k) = f(a)</em>, i.e. k = a, a+P, a+2P, … — a uniform superposition over an arithmetic progression with step P!</span>
-    </div>
+    <div class="mstep-label">Collapse:</div>
+    <div class="mstep-body">The first register collapses to <em>all</em> k compatible with f(k) = f(a), i.e. k = a, a+r, a+2r, ..., a+(M-1)r. (M ≈ N/r terms)</div>
   </div>
   <div class="mstep">
-    <div class="mstep-label" style="color:var(--green);">After QFT:</div>
-    <div class="mstep-body">
-      Apply QFT<sub>N</sub> to the upper register. A periodic state with period P transforms to peaks at multiples of N/P:<br>
-      |ψ₃⟩ → peaks at 0, N/P, 2N/P, …, (P−1)N/P
-    </div>
+    <div class="mstep-label">First register:</div>
+    <div class="mstep-body"><span class="scalar">1/√M</span> (|a⟩ + |a+r⟩ + |a+2r⟩ + ... + |a+(M-1)r⟩)</div>
+  </div>
+</div>
+
+<div class="note-box">
+  <strong>This is a periodic quantum state!</strong> The first register is now a uniform superposition of arithmetic progression &#123;a, a+r, a+2r, ...&#125;. We can't read r directly because a is unknown. But its Fourier transform has peaks at multiples of N/r — that's stage ③.
+</div>
+
+<h3>Stage ③ — Apply QFT and Measure</h3>
+
+<div class="math-block">
+  <div class="mstep">
+    <div class="mstep-label">Apply QFT:</div>
+    <div class="mstep-body">QFT maps the periodic state in the first register to a state concentrated near m = ℓ·N/r for integer ℓ.</div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label">Measure m:</div>
+    <div class="mstep-body">Read an integer m ≈ ℓ·N/r with high probability.</div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label">Extract r:</div>
+    <div class="mstep-body">m/N ≈ ℓ/r. Use the <strong>continued fraction algorithm</strong> to find the best rational approximation with denominator ≤ Q ≈ n → this gives the denominator r.</div>
   </div>
 </div>
 
 <div class="insight">
-  <strong>The magic:</strong> Even though we don't know P, the QFT automatically picks it out! The measurement on the lower register (which we don't even need to know the result of!) collapses the state into a periodic superposition with the exact period P we're looking for. The QFT then turns that period into frequency peaks that we can measure.
+  <strong>Why N &gt; n² = Q²?</strong> The continued fraction algorithm is guaranteed to recover the exact fraction ℓ/r from a rational approximation p/q if |p/q − ℓ/r| &lt; 1/(2r²). Choosing N &gt; r² ≤ n² ensures the approximation m/N is close enough for this to work.
 </div>
 
-<!-- Exercise 6.1 -->
+<!-- Exercises -->
 <div class="ex-block">
-  <div class="ex-header"><span class="ex-tag">Ex 6.1</span><span class="ex-title">Superposition before U_f</span></div>
+  <div class="ex-header"><span class="ex-tag">Ex 6.1</span><span class="ex-title">Why measure the second register?</span></div>
   <div class="ex-body">
-    <p>Before U<sub>f</sub>, the upper register is in the state H<sup>⊗n</sup>|0⟩ with N = 2<sup>n</sup>. How many basis states are in this superposition, and what is the amplitude of each?</p>
+    <p>After the oracle U_f, we have a superposition of all |k⟩|f(k)⟩. Why do we measure the second register before applying the QFT?</p>
   </div>
   <div class="answer-area">
     <div class="answer-row">
-      <span class="ans-label">Number of states =</span>
-      <input class="answer-input" id="a61" placeholder="?" style="width:80px;">
-      <span class="ans-label">Amplitude =</span>
-      <input class="answer-input" id="a62" placeholder="1/√?" style="width:80px;">
-      <button class="btn sm" onclick="chkSuperposQFT('a61','a62','fb61')">Check</button>
+      <input class="answer-input" id="a61" placeholder="..." style="width:320px;">
+      <button class="btn sm" onclick="chkContains('a61',['periodic','collapse','entangle','period'],'fb61')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h61')">show hint</button>
     </div>
-    <button class="hint-toggle" onclick="showHintShor('h61')">show hint</button>
-    <div class="feedback hint" id="h61">H<sup>⊗n</sup>|0⟩ = (1/√N)Σ|k⟩. N basis states, each with amplitude 1/√N.</div>
+    <div class="feedback hint" id="h61">Measuring the second register collapses the first register to a purely periodic state — a uniform superposition of &#123;a, a+r, a+2r, ...&#125;. Without this collapse, the first register is entangled with the second and the QFT would not give clean peaks at multiples of N/r.</div>
     <div class="feedback" id="fb61"></div>
   </div>
 </div>
 </section>
 
-<!-- ══════════════════════════════════════════════════════ -->
-<!-- SECTION 7 — READING THE PERIOD -->
-<!-- ══════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════ -->
+<!-- SECTION 7 — QFT OF FIRST REGISTER     -->
+<!-- ══════════════════════════════════════ -->
 <section class="section" id="s7">
 <div class="section-num">Section 07</div>
-<h2>Reading the Period from the Measurement</h2>
+<h2>QFT of the First Register — The Calculation</h2>
 
-<p>After measuring the upper register, we get some value M. We need to extract P from M. There are two cases depending on whether N is divisible by P.</p>
+<p>Let's work out what the QFT produces when applied to the periodic state from stage ②.</p>
 
-<h3>Case 1: N mod P = 0 (exact case)</h3>
-
-<p>The QFT produces peaks exactly at positions 0, N/P, 2N/P, …, (P−1)·N/P. If we measure position M, we know:</p>
+<h3>Case 1: P divides N exactly (N = P·M)</h3>
 
 <div class="math-block">
   <div class="mstep">
-    <div class="mstep-label">From M:</div>
-    <div class="mstep-body">M = ℓ · N/P for some integer ℓ, so M/N = ℓ/P</div>
+    <div class="mstep-label">Input state:</div>
+    <div class="mstep-body"><span class="scalar">1/√M</span>(|a⟩ + |a+r⟩ + |a+2r⟩ + ... + |a+(M−1)r⟩) = <span class="scalar">1/√M</span> Σ<sub>d=0</sub><sup>M−1</sup> |a+dr⟩</div>
   </div>
   <div class="mstep">
-    <div class="mstep-label">Compute C:</div>
-    <div class="mstep-body">C = M/N = ℓ/P &nbsp;&nbsp; (a fraction we can compute)</div>
+    <div class="mstep-label">QFT output:</div>
+    <div class="mstep-body">Σ<sub>q=0</sub><sup>N−1</sup> X<sub>q</sub> |q⟩ &nbsp; where &nbsp; X<sub>q</sub> = <span class="scalar">1/√N</span> Σ<sub>k=0</sub><sup>N−1</sup> x<sub>k</sub> ω<sub>N</sub><sup>−kq</sup></div>
   </div>
   <div class="mstep">
-    <div class="mstep-label">Extract P:</div>
+    <div class="mstep-label">Compute X<sub>q</sub>:</div>
     <div class="mstep-body">
-      If gcd(P, ℓ) = 1: reduce C to lowest terms → denominator = P<br>
-      Otherwise: need another measurement and take lcm of denominators.
+      X<sub>q</sub> = <span class="scalar">1/√(NM)</span> Σ<sub>d=0</sub><sup>M−1</sup> ω<sub>N</sub><sup>(a+dr)q</sup> = <span class="scalar">1/√(NM)</span> ω<sub>N</sub><sup>aq</sup> Σ<sub>d=0</sub><sup>M−1</sup> (ω<sub>N</sub><sup>rq</sup>)<sup>d</sup>
+    </div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label">Let α = ω<sub>N</sub><sup>rq</sup>:</div>
+    <div class="mstep-body">
+      where ω<sub>N</sub> = e<sup>j2π/N</sup>, &nbsp; ω<sub>N</sub><sup>rq</sup> = e<sup>j2πrq/N</sup>.
+      <br>If r = N/P = M (i.e. q is a multiple of M), then α = e<sup>j2πq/M</sup> = e<sup>j2π·integer</sup> = 1.
+    </div>
+  </div>
+  <hr class="math-sep">
+  <div class="mstep">
+    <div class="mstep-label" style="color:var(--green);">Result:</div>
+    <div class="mstep-body">
+      |X<sub>q</sub>| = <span class="scalar">1/√P</span> if q = ℓ·(N/P) for some integer ℓ, and |X<sub>q</sub>| = 0 otherwise.
+      <br><span class="eq-note">⟹ exactly P peaks of equal height 1/√P, at positions 0, N/P, 2N/P, ..., (P−1)·N/P</span>
     </div>
   </div>
 </div>
 
-<div class="math-block" style="background:var(--blue-hl);border:1px solid #bcd0e8;">
-  <div class="mx-label" style="color:var(--accent);font-weight:600;margin-bottom:0.5rem;">Example: N = 240, P = 20, N/P = 12</div>
-  <div class="mstep">
-    <div class="mstep-label">Suppose M = 96:</div>
-    <div class="mstep-body">ℓ = M/(N/P) = 96/12 = 8, so M/N = 8/20 = 2/5</div>
-  </div>
-  <div class="mstep">
-    <div class="mstep-label">But gcd(20,8) = 4 ≠ 1:</div>
-    <div class="mstep-body">2/5 is not P — the denominator gives P/gcd(P,ℓ) = 20/4 = 5, not 20. Need another measurement!</div>
-  </div>
-  <div class="mstep">
-    <div class="mstep-label">With two measurements M₁, M₂:</div>
-    <div class="mstep-body">P = lcm(denominators of M₁/N and M₂/N in lowest terms)</div>
-  </div>
+<div class="insight">
+  <strong>The QFT perfectly separates the P peaks</strong> when P | N. Each peak has amplitude 1/√P, so measurement probability 1/P for each — a uniform distribution over P possible outcomes. Any outcome m = ℓ·N/P gives m/N = ℓ/P, from which we recover P.
 </div>
 
-<h3>Case 2: N mod P ≠ 0 (approximate case)</h3>
-
-<p>The peaks are no longer exactly at integer positions. We measure M ≈ ℓ · N/P + ε, so M/N ≈ ℓ/P + ε/N. We need to find a fraction with small denominator P &lt; N that approximates M/N well.</p>
-
-<div class="def">
-  <div class="def-title">Continued Fraction Method</div>
-  Any rational number can be written as a continued fraction:
-  <div class="math-block" style="margin-top:0.4rem;">
-    <div class="eq">
-      M/N = q₀ + 1/(q₁ + 1/(q₂ + 1/…))
-    </div>
-  </div>
-  where q₀ = ⌊M/N⌋ and the q<sub>i</sub> are computed by the Euclidean algorithm. Truncating this expansion at some point gives a rational approximation with a small denominator. The denominator of that approximation is our estimate of P.
-</div>
-
-<h3>Continued fraction algorithm</h3>
+<h3>Case 2: P does not divide N</h3>
+<p>In general, N/P is not an integer. The peaks are broadened by a sinc-like envelope:</p>
 
 <div class="math-block">
   <div class="mstep">
-    <div class="mstep-label">Start:</div>
-    <div class="mstep-body">Set r₀ = M (numerator), r₁ = N (denominator)</div>
-  </div>
-  <div class="mstep">
-    <div class="mstep-label">Step i:</div>
-    <div class="mstep-body">q<sub>i</sub> = ⌊r<sub>i</sub>/r<sub>i+1</sub>⌋ and r<sub>i+2</sub> = r<sub>i</sub> mod r<sub>i+1</sub></div>
-  </div>
-  <div class="mstep">
-    <div class="mstep-label">Stop when:</div>
-    <div class="mstep-body">r<sub>n</sub>/r<sub>n+1</sub> is very small (the remainder becomes negligible) — truncate there</div>
-  </div>
-</div>
-
-<div class="math-block" style="background:var(--green-hl);border:1px solid #6ee7b7;">
-  <div class="mx-label" style="color:var(--green);font-weight:600;margin-bottom:0.5rem;">Example: N = 256, P = 10, M = 77</div>
-  <div class="mstep">
-    <div class="mstep-label">Compute M/N:</div>
-    <div class="mstep-body">77/256 = 0 + 1/(256/77)</div>
-  </div>
-  <div class="mstep">
-    <div class="mstep-label">256/77:</div>
-    <div class="mstep-body">q₀=0, q₁=⌊256/77⌋=3, remainder r₂=256 mod 77=25</div>
-  </div>
-  <div class="mstep">
-    <div class="mstep-label">77/25:</div>
-    <div class="mstep-body">q₂=⌊77/25⌋=3, remainder r₃=77 mod 25=2</div>
-  </div>
-  <div class="mstep">
-    <div class="mstep-label">25/2:</div>
-    <div class="mstep-body">q₃=12, remainder 1 — and 2/25 is tiny, so we stop here</div>
-  </div>
-  <div class="mstep">
-    <div class="mstep-label">Result:</div>
+    <div class="mstep-label">|X<sub>q</sub>| ≈</div>
     <div class="mstep-body">
-      Truncating at q₁: 1/(3 + 1/3) = 1/(10/3) = 3/10 &nbsp;&nbsp; <span style="color:var(--green);font-weight:600;">→ P = 10 ✓</span>
+      <span class="scalar">1/√(NM)</span> |Σ<sub>d=0</sub><sup>M−1</sup> α<sup>d</sup>| = <span class="scalar">1/√(NM)</span> |1 − α<sup>M</sup>|/|1 − α|
+      &nbsp; where α = e<sup>j2πrq/N</sup>
+    </div>
+  </div>
+  <div class="mstep">
+    <div class="mstep-label">= ratio of sinc:</div>
+    <div class="mstep-body">
+      ≈ <span class="scalar">1/√N</span> |sin(πMrq/N)| / |sin(πrq/N)|
     </div>
   </div>
 </div>
 
-<!-- Exercise 7.1 -->
+<p>This still has peaks near q = ℓ·N/P, and measurement gives m ≈ ℓ·N/P with high probability. The continued fraction method recovers r from the rational approximation m/N ≈ ℓ/r.</p>
+
+<canvas id="cvQFTPeaks" width="560" height="200"></canvas>
+<div class="canvas-caption">QFT output |X<sub>q</sub>|² for periodic f(ℓ) = x<sup>ℓ</sup> mod n. Red lines mark the ideal peak positions ℓ·N/P.</div>
+<div class="controls" style="flex-wrap:wrap;gap:0.5rem;">
+  <span style="font-size:0.8rem;color:var(--muted);">x:</span>
+  <input type="number" id="qN2" value="7" style="width:55px;font-family:'IBM Plex Mono',monospace;font-size:0.8rem;padding:0.2rem 0.4rem;border:1px solid var(--line);border-radius:var(--border-r);">
+  <span style="font-size:0.8rem;color:var(--muted);">n:</span>
+  <input type="number" id="qN3" value="15" style="width:55px;font-family:'IBM Plex Mono',monospace;font-size:0.8rem;padding:0.2rem 0.4rem;border:1px solid var(--line);border-radius:var(--border-r);">
+  <span style="font-size:0.8rem;color:var(--muted);">N:</span>
+  <input type="number" id="qN4" value="1024" style="width:70px;font-family:'IBM Plex Mono',monospace;font-size:0.8rem;padding:0.2rem 0.4rem;border:1px solid var(--line);border-radius:var(--border-r);">
+  <button class="btn sm" onclick="drawQFTPeaks()">Show QFT</button>
+</div>
+<div id="qftPeakInfo" style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:var(--ink2);margin-top:0.4rem;min-height:1.2rem;"></div>
+
+<!-- Exercises -->
 <div class="ex-block">
-  <div class="ex-header"><span class="ex-tag">Ex 7.1</span><span class="ex-title">Reading P from M/N</span></div>
+  <div class="ex-header"><span class="ex-tag">Ex 7.1</span><span class="ex-title">Number of peaks</span></div>
   <div class="ex-body">
-    <p>N = 1024, P = 4. We measure M = 768. Compute M/N in lowest terms and identify P.</p>
+    <p>If the order of x mod n is r = P = 4 and we choose N = 1024 (so that P | N), how many distinct peaks appear in the QFT output? At what positions?</p>
   </div>
   <div class="answer-area">
     <div class="answer-row">
-      <span class="ans-label">M/N (lowest terms) =</span>
-      <input class="answer-input" id="a71" placeholder="p/q" style="width:80px;">
-      <span class="ans-label">→ P =</span>
-      <input class="answer-input" id="a72" placeholder="?" style="width:55px;" type="number">
-      <button class="btn sm" onclick="chk2Shor('a71','3/4','a72',4,'fb71')">Check</button>
+      <span class="ans-label"># peaks:</span>
+      <input class="answer-input" id="a71" placeholder="?" style="width:70px;">
+      <button class="btn sm" onclick="chk('a71','4','fb71')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h71')">show hint</button>
     </div>
-    <button class="hint-toggle" onclick="showHintShor('h71')">show hint</button>
-    <div class="feedback hint" id="h71">M/N = 768/1024 = 3/4 in lowest terms (gcd(768,1024)=256). Denominator = 4 = P.</div>
+    <div class="feedback hint" id="h71">There are P=4 peaks, at q = 0, N/4=256, 2N/4=512, 3N/4=768. Each with amplitude 1/√P = 1/2 and probability 1/P = 25%.</div>
     <div class="feedback" id="fb71"></div>
   </div>
 </div>
 </section>
 
-<!-- ══════════════════════════════════════════════════════ -->
-<!-- SECTION 8 — COMPLETE EXAMPLE n=15 -->
-<!-- ══════════════════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════ -->
+<!-- SECTION 8 — COMPLEXITY               -->
+<!-- ══════════════════════════════════════ -->
 <section class="section" id="s8">
 <div class="section-num">Section 08</div>
-<h2>Complete Example: Factorize n = 15</h2>
+<h2>Complexity of Shor's Algorithm</h2>
 
-<p>Let us trace through the complete Shor algorithm for n = 15, using x = 7.</p>
+<div class="def">
+  <div class="def-title">Summary of Resources</div>
+  Let b = ⌈log₂n⌉ (number of bits to represent n). Then:
+  <div class="math-block" style="margin-top:0.5rem;">
+    <div style="display:grid;grid-template-columns:180px 1fr 1fr;gap:0.4rem 1rem;font-size:0.83rem;align-items:center;">
+      <strong>Component</strong><strong>Qubits</strong><strong>Gates</strong>
+      <span>QFT (register 1)</span><span>log₂N ≈ 2b (linear in b)</span><span>(log₂N)² ≈ 4b² (poly in b)</span>
+      <span>Modular exp U<sub>f</sub></span><span>log₂n = b + ancilla</span><span>O((log₂n)³) = O(b³) (poly in b)</span>
+      <span><strong>Total</strong></span><span><strong>≈ 2b qubits</strong></span><span><strong>O(b³) gates</strong></span>
+    </div>
+  </div>
+</div>
+
+<h3>Modular Exponentiation — how it's implemented</h3>
+<p>Computing f(a) = x<sup>a</sup> mod n for a superposition of a values requires an efficient quantum circuit. We write a in binary: a = a<sub>0</sub> + a<sub>1</sub>·2 + a<sub>2</sub>·4 + ... and precompute:</p>
+
+<div class="math-block">
+  <div class="mstep"><div class="mstep-label">Precompute:</div><div class="mstep-body">C<sub>i</sub> = x<sup>2<sup>i</sup></sup> mod n &nbsp; for i = 0, 1, ..., b−1 &nbsp; (classical precomputation)</div></div>
+  <div class="mstep"><div class="mstep-label">Then:</div><div class="mstep-body">x<sup>a</sup> = C<sub>0</sub><sup>a₀</sup> · C<sub>1</sub><sup>a₁</sup> · ... · C<sub>b−1</sub><sup>a<sub>b−1</sub></sup> (mod n)</div></div>
+  <div class="mstep"><div class="mstep-label">Circuit:</div><div class="mstep-body">A sequence of b <em>controlled modular multipliers</em>, each conditioned on one bit a<sub>i</sub>.</div></div>
+</div>
+
+<div class="note-box">
+  <strong>Each controlled modular multiplier</strong> costs O(b²) operations (using binary multiplication), so the total U_f circuit costs O(b · b²) = O(b³). This dominates the QFT cost of O(b²).
+</div>
+
+<h3>Comparison with Classical Algorithms</h3>
+
+<div class="math-block">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;font-size:0.85rem;">
+    <div>
+      <div style="background:var(--red-hl);border-radius:4px;padding:0.6rem;border-left:3px solid var(--red);">
+        <strong style="color:var(--red);">Classical — Best Known</strong><br>
+        General Number Field Sieve:<br>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem;">exp(O(b<sup>1/3</sup> (log b)<sup>2/3</sup>))</span><br>
+        <span style="color:var(--muted);font-size:0.78rem;">Sub-exponential but still super-polynomial</span>
+      </div>
+    </div>
+    <div>
+      <div style="background:var(--green-hl);border-radius:4px;padding:0.6rem;border-left:3px solid var(--green);">
+        <strong style="color:var(--green);">Shor's Quantum Algorithm</strong><br>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:0.82rem;">O(b³)</span><br>
+        <span style="color:var(--muted);font-size:0.78rem;">Polynomial! &nbsp; ~2b qubits needed</span>
+      </div>
+    </div>
+  </div>
+  <hr class="math-sep">
+  <div class="mstep"><div class="mstep-label">Example:</div><div class="mstep-body">
+    RSA-1024 (b=1024 bits):<br>
+    Classical: ~2<sup>(30 to 50)</sup> operations (impractical)<br>
+    Shor's: ~b³ ≈ 10⁹ operations with 2048 qubits (feasible with fault-tolerant hardware)
+  </div></div>
+</div>
+
+<div class="insight">
+  <strong>This is an exponential speedup.</strong> Not just a constant or polynomial improvement — a genuine exponential gap. If cryptographically relevant quantum computers are built, RSA and related systems would be broken. This has driven massive investment in post-quantum cryptography.
+</div>
+
+<canvas id="cvComplexity" width="560" height="200"></canvas>
+<div class="canvas-caption">Complexity comparison: classical O(2<sup>b</sup>) vs Shor's O(b³). Drag the slider to see how they diverge.</div>
+<div class="controls">
+  <label>b (bits): <input type="range" id="slB" min="4" max="40" value="10" oninput="drawComplexity()"></label>
+  <span class="ctrl-val" id="bVal">10</span>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════ -->
+<!-- SECTION 9 — FULL EXAMPLE: FACTOR 15   -->
+<!-- ══════════════════════════════════════ -->
+<section class="section" id="s9">
+<div class="section-num">Section 09</div>
+<h2>Full Example: Factoring n = 15</h2>
+
+<p>Let's trace through Shor's algorithm step by step for n = 15, x = 7.</p>
 
 <h3>Setup</h3>
 
 <div class="math-block">
-  <div class="mstep">
-    <div class="mstep-label">f(ℓ):</div>
-    <div class="mstep-body">f(ℓ) = 7<sup>ℓ</sup> mod 15 ∈ &#123;0, 1, …, 15&#125; → values need 4 bits</div>
-  </div>
-  <div class="mstep">
-    <div class="mstep-label">Choose N:</div>
-    <div class="mstep-body">N > n² = 225, and N must be a power of 2 → <strong>N = 1024 = 2¹⁰</strong>, so log₂ N = 10 qubits</div>
-  </div>
-  <div class="mstep">
-    <div class="mstep-label">Pick x=7:</div>
-    <div class="mstep-body">gcd(7, 15) = 1 ✓ (so 7 shares no factor with 15)</div>
+  <div class="mstep"><div class="mstep-label">n = 15:</div><div class="mstep-body">4 bits to represent 15 → b = 4</div></div>
+  <div class="mstep"><div class="mstep-label">Choose N:</div><div class="mstep-body">N &gt; n² = 225 → choose N = 1024 = 2<sup>10</sup> → log₂N = 10 qubits for register 1</div></div>
+  <div class="mstep"><div class="mstep-label">Choose x:</div><div class="mstep-body">x = 7, gcd(7, 15) = 1 ✓ (not a factor yet)</div></div>
+  <div class="mstep"><div class="mstep-label">Register 2:</div><div class="mstep-body">⌈log₂15⌉ = 4 qubits (to store values 0–14)</div></div>
+</div>
+
+<h3>Stage ① — The Periodic Function</h3>
+
+<table class="tele-table" style="max-width:360px;">
+  <tr><th>ℓ</th><th>7<sup>ℓ</sup> mod 15</th></tr>
+  <tr><td>0</td><td>1</td></tr>
+  <tr><td>1</td><td>7</td></tr>
+  <tr><td>2</td><td>4</td></tr>
+  <tr><td>3</td><td>13</td></tr>
+  <tr><td>4</td><td>1 ← period!</td></tr>
+  <tr><td>5</td><td>7</td></tr>
+  <tr><td>⋮</td><td>⋮</td></tr>
+</table>
+
+<p>The period is <strong>r = 4</strong>. The sequence 1, 7, 4, 13 repeats every 4 steps.</p>
+
+<p>After applying H<sup>⊗10</sup> and then U<sub>f</sub>, the state is:</p>
+<div class="math-block">
+  <div class="eq">
+    <span class="scalar">1/√1024</span> Σ<sub>k=0</sub><sup>1023</sup> |k⟩|7<sup>k</sup> mod 15⟩ = <span class="scalar">1/√1024</span> (|0⟩|1⟩ + |1⟩|7⟩ + |2⟩|4⟩ + |3⟩|13⟩ + |4⟩|1⟩ + ...)
   </div>
 </div>
 
-<h3>① Building the initial superposition</h3>
+<h3>Stage ② — Measure Second Register</h3>
+<p>Say we measure f(·) = 4. The first register collapses to all k where 7<sup>k</sup> mod 15 = 4, i.e. k = 2, 6, 10, 14, ..., (2 + 4j):</p>
 
 <div class="math-block">
-  <div class="mstep">
-    <div class="mstep-label">Initial state:</div>
-    <div class="mstep-body">|ψ₀⟩ = |0⟩ ⊗ |0⟩ ⊗ … ⊗ |0⟩ &nbsp; (10 qubits + 4 qubits)</div>
-  </div>
-  <div class="mstep">
-    <div class="mstep-label">After H<sup>⊗10</sup>:</div>
-    <div class="mstep-body">|ψ₀⟩ = |0⟩ ⊗ <span class="scalar">1/√1024</span> (|0⟩ + |1⟩ + |2⟩ + … + |1023⟩)</div>
+  <div class="eq">
+    <span class="scalar">1/√256</span>(|2⟩ + |6⟩ + |10⟩ + |14⟩ + ... + |1022⟩) &nbsp; (M = 1024/4 = 256 terms)
   </div>
 </div>
 
-<h3>② Evaluating f and its period</h3>
+<h3>Stage ③ — QFT and Measure</h3>
+<p>Since P = 4 divides N = 1024 exactly, M = 256 and the peaks are at q = 0, 256, 512, 768.</p>
 
 <div class="math-block">
-  <div class="mstep">
-    <div class="mstep-label">f(0) = 1</div>
-    <div class="mstep-body">f(1) = 7 &nbsp;&nbsp; f(2) = 4 &nbsp;&nbsp; f(3) = 13 &nbsp;&nbsp; f(4) = 1 &nbsp;&nbsp; f(5) = 7 &nbsp;&nbsp; …</div>
-  </div>
-  <div class="mstep">
-    <div class="mstep-label">Period:</div>
-    <div class="mstep-body"><span class="c-g">P = 4</span> &nbsp;&nbsp; (since f(4) = f(0) = 1)</div>
-  </div>
+  <div class="mstep"><div class="mstep-label">Peaks at:</div><div class="mstep-body">m = 0, 256, 512, 768 &nbsp; (each with probability 1/4 = 25%)</div></div>
+  <div class="mstep"><div class="mstep-label">Assume m = 768:</div><div class="mstep-body">m/N = 768/1024 = 3/4 → ℓ/r = 3/4 → r = 4 ✓</div></div>
 </div>
 
-<h3>③ State after U_f</h3>
+<h3>Extract Factors</h3>
 
 <div class="math-block">
-  <div class="mstep">
-    <div class="mstep-label">|ψ₁⟩ =</div>
-    <div class="mstep-body">
-      <span class="scalar">1/√1024</span> (|1⟩|0⟩ + |7⟩|1⟩ + |4⟩|2⟩ + |13⟩|3⟩ + |1⟩|4⟩ + |7⟩|5⟩ + …)
+  <div class="mstep"><div class="mstep-label">r = 4 (even ✓):</div><div class="mstep-body"></div></div>
+  <div class="mstep"><div class="mstep-label">x<sup>r/2</sup> = 7² = 49:</div><div class="mstep-body">49 mod 15 = 4 &nbsp; (so (x<sup>r/2</sup>+1) mod 15 = 5 ≠ 0 ✓)</div></div>
+  <div class="mstep"><div class="mstep-label">gcd(49−1, 15):</div><div class="mstep-body">gcd(48, 15) = gcd(15, 48 mod 15) = gcd(15, 3) = <span class="c-g" style="font-weight:700;">3</span></div></div>
+  <div class="mstep"><div class="mstep-label">gcd(49+1, 15):</div><div class="mstep-body">gcd(50, 15) = gcd(15, 50 mod 15) = gcd(15, 5) = <span class="c-g" style="font-weight:700;">5</span></div></div>
+  <hr class="math-sep">
+  <div class="mstep"><div class="mstep-label" style="color:var(--green);">Result:</div><div class="mstep-body" style="color:var(--green);font-weight:600;">15 = 3 × 5 ✓</div></div>
+</div>
+
+<!-- Interactive full example -->
+<div style="border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:1.2rem 0;">
+  <div style="background:#1a1a2e;color:white;padding:0.5rem 1rem;font-family:'IBM Plex Mono',monospace;font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;">Interactive: Run Shor's Algorithm</div>
+  <div style="padding:0.8rem 1rem;background:#fdfcf8;">
+    <div style="display:flex;gap:0.8rem;flex-wrap:wrap;align-items:center;margin-bottom:0.6rem;">
+      <span style="font-size:0.8rem;color:var(--muted);">n:</span>
+      <input type="number" id="sn" value="15" style="width:70px;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;padding:0.25rem 0.5rem;border:1px solid var(--line);border-radius:var(--border-r);">
+      <span style="font-size:0.8rem;color:var(--muted);">x:</span>
+      <input type="number" id="sx" value="7" style="width:70px;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;padding:0.25rem 0.5rem;border:1px solid var(--line);border-radius:var(--border-r);">
+      <button class="btn sm" onclick="runShortSim()" style="background:var(--accent);color:white;border-color:var(--accent);">▶ Simulate</button>
+      <button class="btn sm ghost" onclick="sn.value=21;sx.value=2;runShortSim()">n=21, x=2</button>
+      <button class="btn sm ghost" onclick="sn.value=35;sx.value=3;runShortSim()">n=35, x=3</button>
     </div>
+    <canvas id="cvShor" height="240" style="width:100%;border:1px solid var(--line);border-radius:4px;background:#f8f6f0;"></canvas>
+    <div id="shorLog" style="font-family:'IBM Plex Mono',monospace;font-size:0.74rem;color:var(--ink2);background:#f3f0e8;border-radius:4px;padding:0.5rem 0.7rem;margin-top:0.5rem;white-space:pre-wrap;min-height:2rem;line-height:1.8;"></div>
   </div>
 </div>
 
-<h3>④ Measure lower register: suppose we get |4⟩ (= f(2))</h3>
-
-<div class="math-block">
-  <div class="mstep">
-    <div class="mstep-label">Collapse:</div>
-    <div class="mstep-body">
-      State becomes: |ψ₂⟩ ∝ |4⟩(|2⟩ + |6⟩ + |10⟩ + |14⟩ + …)<br>
-      Upper register is uniform over &#123;2, 6, 10, 14, …&#125; — arithmetic sequence with step P=4.
-    </div>
-  </div>
-</div>
-
-<canvas id="cvShorState" width="560" height="170"></canvas>
-<div class="canvas-caption">Upper register after measuring f(a)=4: non-zero amplitudes at positions 2, 6, 10, 14, … (step P=4). The QFT will reveal this period.</div>
-
-<h3>⑤ Apply QFT₁₀₂₄ to upper register</h3>
-
-<div class="math-block">
-  <div class="mstep">
-    <div class="mstep-label">QFT reveals:</div>
-    <div class="mstep-body">
-      Peaks at positions 0, N/P, 2N/P, 3N/P = 0, 256, 512, 768<br>
-      (since N = 1024, P = 4, N/P = 256)
-    </div>
-  </div>
-  <div class="mstep">
-    <div class="mstep-label">Measurement:</div>
-    <div class="mstep-body">Suppose we measure M = 768</div>
-  </div>
-</div>
-
-<canvas id="cvShorQFT" width="560" height="160"></canvas>
-<div class="canvas-caption">After QFT₁₀₂₄: peaks at 0, 256, 512, 768. Each has equal probability 1/P = 1/4 = 25%.</div>
-
-<h3>⑥ Extract P from M = 768</h3>
-
-<div class="math-block">
-  <div class="mstep">
-    <div class="mstep-label">Compute M/N:</div>
-    <div class="mstep-body">M/N = 768/1024 = 3/4 &nbsp;&nbsp; (in lowest terms)</div>
-  </div>
-  <div class="mstep">
-    <div class="mstep-label">Read off P:</div>
-    <div class="mstep-body">Denominator = 4 = <span class="c-g">P</span> ✓</div>
-  </div>
-</div>
-
-<h3>⑦ Check and extract factors</h3>
-
-<div class="math-block">
-  <div class="mstep">
-    <div class="mstep-label">r = P = 4:</div>
-    <div class="mstep-body">r is even ✓</div>
-  </div>
-  <div class="mstep">
-    <div class="mstep-label">Check:</div>
-    <div class="mstep-body">(x<sup>r/2</sup> + 1) mod n = (7² + 1) mod 15 = 50 mod 15 = 5 ≠ 0 ✓</div>
-  </div>
-  <div class="mstep">
-    <div class="mstep-label">Factors:</div>
-    <div class="mstep-body">
-      gcd(7² − 1, 15) = gcd(48, 15) = gcd(3, 15) = <span class="c-g">3</span><br>
-      gcd(7² + 1, 15) = gcd(50, 15) = gcd(5, 15) = <span class="c-g">5</span><br>
-      <strong>15 = 3 × 5</strong> ✓ 🎉
-    </div>
-  </div>
-</div>
-
-<!-- Interactive factorizer -->
-<div style="border:1px solid var(--line);border-radius:6px;padding:1rem;margin:1.2rem 0;background:#fdfcf8;">
-  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.6rem;">Interactive: trace Shor's algorithm step by step</div>
-  <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin-bottom:0.6rem;">
-    <span style="font-size:0.85rem;color:var(--ink2);">n =</span>
-    <select id="shorN" class="answer-input" style="width:70px;">
-      <option value="15">15</option>
-      <option value="21">21</option>
-      <option value="35">35</option>
-    </select>
-    <span style="font-size:0.85rem;color:var(--ink2);">x =</span>
-    <input id="shorX" class="answer-input" type="number" value="7" style="width:60px;" min="2">
-    <button class="btn sm" onclick="runShor()">Run Shor Steps</button>
-  </div>
-  <div id="shorOutput" style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem;color:var(--ink2);line-height:2;min-height:4rem;"></div>
-</div>
-
-<!-- Exercise 8.1 -->
+<!-- Final exercise -->
 <div class="ex-block">
-  <div class="ex-header"><span class="ex-tag">Ex 8.1</span><span class="ex-title">How many qubits are needed?</span></div>
+  <div class="ex-header"><span class="ex-tag">Ex 9.1</span><span class="ex-title">Interpreting the measurement result</span></div>
   <div class="ex-body">
-    <p>To factor n = 15 with N = 1024 = 2¹⁰, how many qubits are in the upper register? And how many bits are needed for the lower register (to store values 0–15)?</p>
+    <p>For n=15, x=7, r=4, N=1024, suppose we measure m = 256 from the QFT. What fraction m/N simplifies to, and what is r?</p>
   </div>
   <div class="answer-area">
     <div class="answer-row">
-      <span class="ans-label">Upper qubits =</span>
-      <input class="answer-input" id="a81a" type="number" style="width:55px;">
-      <span class="ans-label">Lower qubits =</span>
-      <input class="answer-input" id="a81b" type="number" style="width:55px;">
-      <button class="btn sm" onclick="chk2Shor('a81a',10,'a81b',4,'fb81')">Check</button>
+      <span class="ans-label">m/N = 256/1024 =</span>
+      <input class="answer-input" id="a91" placeholder="a/b" style="width:80px;">
+      <span class="ans-label">→ r =</span>
+      <input class="answer-input" id="a92" placeholder="?" style="width:60px;">
+      <button class="btn sm" onclick="chk2('a91','a92','1/4','4','fb91')">Check</button>
     </div>
-    <button class="hint-toggle" onclick="showHintShor('h81')">show hint</button>
-    <div class="feedback hint" id="h81">Upper: log₂(1024) = 10 qubits. Lower: ⌈log₂(16)⌉ = 4 qubits (to store 0..15).</div>
-    <div class="feedback" id="fb81"></div>
-  </div>
-</div>
-
-<!-- Exercise 8.2 -->
-<div class="ex-block">
-  <div class="ex-header"><span class="ex-tag">Ex 8.2</span><span class="ex-title">What if we measure M=512?</span></div>
-  <div class="ex-body">
-    <p>In the n=15 example with N=1024, if the final measurement gives M = 512, what is M/N in lowest terms, and what P does this suggest?</p>
-  </div>
-  <div class="answer-area">
-    <div class="answer-row">
-      <span class="ans-label">M/N =</span>
-      <input class="answer-input" id="a82a" placeholder="p/q" style="width:80px;">
-      <span class="ans-label">P =</span>
-      <input class="answer-input" id="a82b" type="number" style="width:55px;">
-      <button class="btn sm" onclick="chk2Shor('a82a','1/2','a82b',2,'fb82')">Check</button>
-    </div>
-    <button class="hint-toggle" onclick="showHintShor('h82')">show hint</button>
-    <div class="feedback hint" id="h82">512/1024 = 1/2. Denominator = 2. But the actual period is 4, not 2 — we'd need another measurement and take lcm(2, denominator of next measurement) to get 4.</div>
-    <div class="feedback" id="fb82"></div>
-  </div>
-</div>
-</section>
-
-<!-- ══════════════════════════════════════════════════════ -->
-<!-- SECTION 9 — COMPLEXITY -->
-<!-- ══════════════════════════════════════════════════════ -->
-<section class="section" id="s9">
-<div class="section-num">Section 09</div>
-<h2>Complexity of Shor's Algorithm</h2>
-
-<p>Let b = log₂ n be the number of bits of the number we want to factor. We analyze each component.</p>
-
-<h3>Component analysis</h3>
-
-<div class="math-block">
-  <div class="mstep">
-    <div class="mstep-label">QFT size:</div>
-    <div class="mstep-body">
-      log₂ N ≈ log₂ n² = 2 log₂ n = 2b qubits<br>
-      QFT gates: O((log₂ N)²) = O((2b)²) = O(b²)
-    </div>
-  </div>
-  <div class="mstep">
-    <div class="mstep-label">Oracle U<sub>f</sub>:</div>
-    <div class="mstep-body">
-      Computes f(k) = x<sup>k</sup> mod n via repeated squaring.<br>
-      Each multiplication mod n takes ~b² classical operations → quantum gates.<br>
-      We need ~log₂ N = 2b multiplications.<br>
-      Total: O(b²) · O(b) = O(b³) gates for U<sub>f</sub>
-    </div>
-  </div>
-  <div class="mstep">
-    <div class="mstep-label">Continued fractions:</div>
-    <div class="mstep-body">O(b²) classical post-processing (Euclidean algorithm)</div>
-  </div>
-</div>
-
-<div class="def">
-  <div class="def-title">Total Complexity of Shor's Algorithm</div>
-  <div class="math-block">
-    <div class="mstep">
-      <div class="mstep-label">Shor (quantum):</div>
-      <div class="mstep-body" style="color:var(--green);font-weight:600;">O(b³) = O((log₂ n)³) gates — polynomial!</div>
-    </div>
-    <div class="mstep">
-      <div class="mstep-label">Best classical:</div>
-      <div class="mstep-body" style="color:var(--red);">O(e<sup>b<sup>1/3</sup>(log b)<sup>2/3</sup></sup>) — sub-exponential, NOT polynomial</div>
-    </div>
-  </div>
-  For RSA-1024: classical requires >2<sup>80</sup> operations (infeasible for any classical computer), while Shor's requires ~10⁹ quantum gate operations — feasible for a sufficiently large quantum computer.
-</div>
-
-<canvas id="cvShorComp" width="560" height="230"></canvas>
-<div class="canvas-caption">Complexity comparison: Shor's algorithm O(b³) vs classical sub-exponential O(e^(b^(1/3))). Drag to see at different bit sizes b.</div>
-<div class="controls">
-  <label>b (bits) = <input type="range" id="slBits" min="10" max="100" value="30" oninput="updateShorComp()"></label>
-  <span class="ctrl-val" id="bitsVal">30</span>
-</div>
-<div id="shorCompInfo" style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem;color:var(--ink2);margin-top:0.4rem;min-height:1.5rem;"></div>
-
-<div class="insight">
-  <strong>The quantum advantage is not just polynomial vs exponential — it breaks cryptography:</strong>
-  RSA-2048, the current security standard, would take ~10⁷⁰ operations classically but ~10¹² quantum gate operations with Shor's algorithm. A fault-tolerant quantum computer with ~4000 logical qubits could factor RSA-2048 in hours. This is why post-quantum cryptography (lattice-based, code-based schemes) is actively being standardized.
-</div>
-
-<!-- Exercise 9.1 -->
-<div class="ex-block">
-  <div class="ex-header"><span class="ex-tag">Ex 9.1</span><span class="ex-title">Qubit count for RSA</span></div>
-  <div class="ex-body">
-    <p>To factor an RSA-1024 number (b=1024 bits), Shor's algorithm needs approximately 2b qubits for the upper register. What is that qubit count?</p>
-  </div>
-  <div class="answer-area">
-    <div class="answer-row">
-      <span class="ans-label">Qubits ≈</span>
-      <input class="answer-input" id="a91" type="number" style="width:100px;">
-      <button class="btn sm" onclick="chkNumShor('a91',2048,'fb91')">Check</button>
-    </div>
+    <button class="hint-toggle" onclick="showHint('h91')">show hint</button>
+    <div class="feedback hint" id="h91">256/1024 = 1/4 (simplify by dividing both by 256). So m/N = ℓ/r = 1/4 → r = 4.</div>
     <div class="feedback" id="fb91"></div>
   </div>
 </div>
-
-<!-- Exercise 9.2 -->
-<div class="ex-block">
-  <div class="ex-header"><span class="ex-tag">Ex 9.2</span><span class="ex-title">Why not just use QFT alone?</span></div>
-  <div class="ex-body">
-    <p>If the QFT can factor numbers in polynomial time, why can't we just apply QFT directly to a classical list of numbers on a classical computer to break RSA? (hint: what is the bottleneck?)</p>
-  </div>
-  <div class="answer-area">
-    <div class="answer-row">
-      <input class="answer-input" id="a92" placeholder="the bottleneck is..." style="width:280px;">
-      <button class="btn sm" onclick="chkBottleneck('a92','fb92')">Check</button>
-    </div>
-    <button class="hint-toggle" onclick="showHintShor('h92')">show hint</button>
-    <div class="feedback hint" id="h92">Building the list x₀, x₁, …, x<sub>N−1</sub> requires evaluating f(k) = x<sup>k</sup> mod n for all k. For N ~ n², this requires ~n² evaluations — each taking ~b operations. Total: ~b·2<sup>2b</sup> = exponential in b. The quantum speedup comes from using H<sup>⊗n</sup> to create this superposition with n gates, then using U_f to compute all f(k) simultaneously.</div>
-    <div class="feedback" id="fb92"></div>
-  </div>
-</div>
 </section>
 
+<!-- ══════════════ SCRIPTS ══════════════ -->
 <script is:inline>
-/* ── HELPERS ── */
-function goTo(id){ const el=document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth',block:'start'}); }
-function showHintShor(id){ document.getElementById(id).classList.toggle('show'); }
-function setFb(id, ok, msg){ const el=document.getElementById(id); el.className='feedback show '+(ok?'ok':'no'); el.textContent=msg; }
+/* ── Helpers ───────────────────────────────────────────────────── */
+function goTo(id){const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});}
+function showHint(id){document.getElementById(id).classList.toggle('show');}
+function setFb(id,ok,msg){const el=document.getElementById(id);if(!el)return;el.className='feedback show '+(ok?'ok':'no');el.textContent=msg;}
+function norm(s){return s.trim().toLowerCase().replace(/\s/g,'').replace('−','-').replace('√','√');}
+function chk(iid,exp,fb){const v=norm(document.getElementById(iid).value);const ok=v===norm(exp)||(!isNaN(v)&&!isNaN(exp)&&Math.abs(parseFloat(v)-parseFloat(exp))<0.01);document.getElementById(iid).className='answer-input '+(ok?'ok':'no');setFb(fb,ok,ok?'✓ Correct!':'✗ Not quite — try again or show hint.');}
+function chk2(i1,i2,e1,e2,fb){const ok1=norm(document.getElementById(i1).value)===norm(e1)||(!isNaN(document.getElementById(i1).value)&&Math.abs(parseFloat(document.getElementById(i1).value)-parseFloat(e1))<0.01);const ok2=norm(document.getElementById(i2).value)===norm(e2)||(!isNaN(document.getElementById(i2).value)&&Math.abs(parseFloat(document.getElementById(i2).value)-parseFloat(e2))<0.01);document.getElementById(i1).className='answer-input '+(ok1?'ok':'no');document.getElementById(i2).className='answer-input '+(ok2?'ok':'no');setFb(fb,ok1&&ok2,ok1&&ok2?'✓ Both correct!':'✗ Not quite.');}
+function chkContains(iid,kws,fb){const v=document.getElementById(iid).value.toLowerCase();const ok=kws.some(k=>v.includes(k));document.getElementById(iid).className='answer-input '+(ok?'ok':'no');setFb(fb,ok,ok?'✓ Correct!':'✗ Not quite — check the hint.');}
 
-function chkNumShor(id,target,fbId){
-  const v=parseInt(document.getElementById(id).value);
-  const ok=v===target;
-  document.getElementById(id).className='answer-input '+(ok?'ok':'no');
-  setFb(fbId, ok, ok?`✓ Correct! = ${target}.`:`✗ Got ${v}, expected ${target}.`);
-}
-function chkMult(id1,id2,product,fbId){
-  const a=parseInt(document.getElementById(id1).value), b=parseInt(document.getElementById(id2).value);
-  const ok = a*b===product && a>1 && b>1;
-  document.getElementById(id1).className='answer-input '+(ok?'ok':'no');
-  document.getElementById(id2).className='answer-input '+(ok?'ok':'no');
-  setFb(fbId, ok, ok?`✓ Correct! ${a} × ${b} = ${product}.`:`✗ Not quite — find two factors > 1.`);
-}
-function chk2Shor(id1,t1,id2,t2,fbId){
-  const v1=document.getElementById(id1).value.trim(), v2=parseInt(document.getElementById(id2).value);
-  const ok1 = typeof t1==='string' ? v1.replace(/\s/g,'')===t1.replace(/\s/g,'') : parseInt(v1)===t1;
-  const ok2 = v2===t2;
-  document.getElementById(id1).className='answer-input '+(ok1?'ok':'no');
-  document.getElementById(id2).className='answer-input '+(ok2?'ok':'no');
-  setFb(fbId, ok1&&ok2, (ok1&&ok2)?'✓ Correct!':`✗ Expected ${t1} and ${t2}.`);
-}
-function chkSuperposQFT(id1,id2,fbId){
-  const v1=document.getElementById(id1).value.trim().toUpperCase().replace(/\s/g,'');
-  const v2=document.getElementById(id2).value.trim().toLowerCase().replace(/\s/g,'');
-  const ok1 = v1==='N' || v1==='2^N' || v1==='2N';
-  const ok2 = ['1/√n','1/sqrtn','1/√n'].includes(v2) || v2.includes('1/');
-  const ok = ok1 && ok2;
-  setFb(fbId, ok, ok?'✓ Correct! N states each with amplitude 1/√N.':`✗ N states, amplitude 1/√N each.`);
-}
-function chkBottleneck(id,fbId){
-  const v=document.getElementById(id).value.toLowerCase();
-  const ok = v.includes('eval') || v.includes('list') || v.includes('exponen') || v.includes('f(k)') || v.includes('compute');
-  setFb(fbId, ok, ok?'✓ Right! Computing all f(k) = x^k mod n requires N evaluations — that list-building is exponential classically.':`✗ Hint: what prevents a classical computer from evaluating f on N = 2^{2b} inputs?`);
-}
+/* ── GCD (Euclidean) ────────────────────────────────────────────── */
+function gcd(a,b){a=Math.abs(a);b=Math.abs(b);while(b){let t=b;b=a%b;a=t;}return a;}
+function modpow(base,exp,mod){let result=1;base=base%mod;while(exp>0){if(exp%2===1)result=(result*base)%mod;exp=Math.floor(exp/2);base=(base*base)%mod;}return result;}
+function findOrder(x,n){for(let r=1;r<=n;r++){if(modpow(x,r,n)===1)return r;}return null;}
 
-function modexp(x, exp, n) {
-  let result = 1, base = x % n;
-  while (exp > 0) {
-    if (exp & 1) result = result * base % n;
-    base = base * base % n;
-    exp >>= 1;
-  }
-  return result;
-}
-function gcd(a, b) { while(b){ let t=b; b=a%b; a=t; } return a; }
-
-/* ── PERIOD CANVAS ── */
-let periodX = 2;
-function setPeriodX(x) {
-  periodX = x;
-  ['2','4','7','11'].forEach(k => {
-    const b=document.getElementById('px'+k); if(b) b.classList.toggle('active', parseInt(k)===x);
-  });
-  drawPeriod(x);
-}
-function drawPeriod(x) {
-  const cv=document.getElementById('cvPeriod'); if(!cv) return;
-  const ctx=cv.getContext('2d'), W=cv.width, H=cv.height;
-  ctx.clearRect(0,0,W,H); ctx.fillStyle='#fafaf8'; ctx.fillRect(0,0,W,H);
-  const n=15, maxL=20;
-  const vals = Array.from({length:maxL},(_,l)=>modexp(x,l,n));
-  // Find period
-  let P=0;
-  for(let r=1;r<n;r++){if(modexp(x,r,n)===1){P=r;break;}}
-  const bw=Math.floor((W-60)/(maxL))-2, pad=40, maxV=15;
-  const barH = (H-50)/maxV;
-  ctx.fillStyle='#888'; ctx.font="10px 'IBM Plex Mono',monospace"; ctx.textAlign='center';
-  ctx.fillText(`f(ℓ) = ${x}^ℓ mod 15  —  Period P = ${P}`, W/2, 15);
-  vals.forEach((v,l)=>{
-    const bx=pad+l*(bw+2), h=v*barH;
-    ctx.fillStyle = v===1?'#c0392b':'#2c5282';
-    ctx.fillRect(bx, H-30-h, bw, h);
-    ctx.fillStyle='#888'; ctx.font="8px 'IBM Plex Mono',monospace";
-    ctx.fillText(l, bx+bw/2, H-14);
-    if(l<16){ ctx.fillStyle='#444'; ctx.font="8px 'IBM Plex Mono',monospace"; ctx.fillText(v, bx+bw/2, H-32-h); }
-    // mark period boundaries
-    if(l>0 && l%P===0){
-      ctx.strokeStyle='#c0392b'; ctx.lineWidth=1; ctx.setLineDash([3,2]);
-      ctx.beginPath(); ctx.moveTo(bx,15); ctx.lineTo(bx,H-25); ctx.stroke(); ctx.setLineDash([]);
-    }
-  });
-  document.getElementById('periodInfo').textContent =
-    `x=${x}, n=15 → period P=${P}. Red bars: f(ℓ)=1. Dashed lines: period boundaries.`;
-}
-setPeriodX(2);
-
-/* ── FFT PERIOD CANVAS ── */
-let fftX = 2;
-function setFFTx(x) {
-  fftX = x;
-  [2,4,7,11].forEach(k=>{ const b=document.getElementById('fft'+k); if(b) b.classList.toggle('active',k===x); });
-  drawFFTperiod(x);
-}
-function drawFFTperiod(x) {
-  const cv=document.getElementById('cvFFTperiod'); if(!cv) return;
-  const ctx=cv.getContext('2d'), W=cv.width, H=cv.height;
-  ctx.clearRect(0,0,W,H); ctx.fillStyle='#fafaf8'; ctx.fillRect(0,0,W,H);
-  const n=15, N=64;
-  const seq = Array.from({length:N},(_,k)=>modexp(x,k,n));
-  // DFT magnitudes
-  const mags = Array.from({length:N},(_,q)=>{
-    let re=0,im=0;
-    seq.forEach((v,k)=>{ re+=v*Math.cos(2*Math.PI*k*q/N); im-=v*Math.sin(2*Math.PI*k*q/N); });
-    return Math.sqrt(re*re+im*im)/Math.sqrt(N);
-  });
-  const maxMag = Math.max(...mags);
-  const bw = Math.floor((W-60)/N)-1, pad=30, maxH=H-55;
-  ctx.fillStyle='#888'; ctx.font="10px 'IBM Plex Mono',monospace"; ctx.textAlign='center';
-  ctx.fillText(`FFT of f(ℓ) = ${x}^ℓ mod 15  (N=64)`, W/2, 14);
-  mags.forEach((m,q)=>{
-    const h=maxMag>0?m/maxMag*maxH*0.85:0;
-    const bx=pad+q*(bw+1);
-    ctx.fillStyle = h>maxH*0.6 ? '#b7530a' : h>maxH*0.2 ? '#2c5282' : '#dedad0';
-    ctx.fillRect(bx,H-30-h,bw,h);
-  });
-  ctx.strokeStyle='#ccc8ba'; ctx.lineWidth=1;
-  ctx.beginPath(); ctx.moveTo(pad,H-30); ctx.lineTo(W-10,H-30); ctx.stroke();
-  ctx.fillStyle='#888'; ctx.font="9px 'IBM Plex Mono',monospace"; ctx.textAlign='center';
-  [0,16,32,48,63].forEach(q=>ctx.fillText(q, pad+q*(bw+1)+bw/2, H-14));
-}
-setFFTx(2);
-
-/* ── SHOR STATE CANVAS ── */
-function drawShorState() {
-  const cv=document.getElementById('cvShorState'); if(!cv) return;
-  const ctx=cv.getContext('2d'), W=cv.width, H=cv.height;
-  ctx.clearRect(0,0,W,H); ctx.fillStyle='#fafaf8'; ctx.fillRect(0,0,W,H);
-  // show positions 0..20 with peaks at 2,6,10,14
-  const N=20, pad=30, bw=Math.floor((W-2*pad)/N)-2;
-  ctx.fillStyle='#888'; ctx.font="10px 'IBM Plex Mono',monospace"; ctx.textAlign='center';
-  ctx.fillText('Upper register after measuring f(a)=4: amplitudes at ℓ=2,6,10,14,…', W/2, 14);
-  for(let k=0;k<N;k++){
-    const active=[2,6,10,14,18].includes(k);
-    const bx=pad+k*(bw+2), h=active?(H-50):0;
-    ctx.fillStyle=active?'#2c5282':'#e8e4d8';
-    ctx.fillRect(bx,H-30-h,bw,Math.max(h,2));
-    if(k%2===0){ctx.fillStyle='#888';ctx.font="8px 'IBM Plex Mono',monospace";ctx.fillText(k,bx+bw/2,H-14);}
-    if(active){ctx.fillStyle='white';ctx.font="bold 8px 'IBM Plex Mono',monospace";ctx.fillText('1/√⌈N/P⌉',bx+bw/2,H-33-h);}
-  }
-}
-drawShorState();
-
-function drawShorQFT() {
-  const cv=document.getElementById('cvShorQFT'); if(!cv) return;
-  const ctx=cv.getContext('2d'), W=cv.width, H=cv.height;
-  ctx.clearRect(0,0,W,H); ctx.fillStyle='#fafaf8'; ctx.fillRect(0,0,W,H);
-  const peaks=[0,256,512,768], N=1024, display=1023;
-  const scale=W-60, pad=30;
-  ctx.fillStyle='#888'; ctx.font="10px 'IBM Plex Mono',monospace"; ctx.textAlign='center';
-  ctx.fillText('After QFT₁₀₂₄: peaks at M = 0, 256, 512, 768 (each 25%)', W/2, 14);
-  // draw thin baseline
-  ctx.strokeStyle='#ccc'; ctx.lineWidth=1;
-  ctx.beginPath(); ctx.moveTo(pad,H-30); ctx.lineTo(W-10,H-30); ctx.stroke();
-  peaks.forEach(m=>{
-    const x=pad+(m/display)*scale;
-    const h=H-55;
-    ctx.fillStyle='#b7530a';
-    ctx.fillRect(x-5,H-30-h,10,h);
-    ctx.fillStyle='#555'; ctx.font="9px 'IBM Plex Mono',monospace";
-    ctx.fillText(m, x, H-14);
-    ctx.fillText('25%', x, H-33-h);
-  });
-}
-drawShorQFT();
-
-/* ── SHOR INTERACTIVE ── */
-function runShor() {
-  const n=parseInt(document.getElementById('shorN').value);
-  const x=parseInt(document.getElementById('shorX').value);
-  const out=document.getElementById('shorOutput');
-  let lines=[];
-  if(x<=1||x>=n){out.innerHTML='⚠ x must be in (1, n).';return;}
-  const g=gcd(x,n);
-  lines.push(`① x=${x}, n=${n}  →  gcd(${x},${n}) = ${g}`);
-  if(g>1){lines.push(`   Lucky! gcd=${g} is already a factor of ${n}. DONE.`);out.innerHTML=lines.join('<br>');return;}
-  // find order
-  let r=0;
-  for(let k=1;k<n*4;k++){if(modexp(x,k,n)===1){r=k;break;}}
-  if(!r){out.innerHTML='Could not find order (x and n may not be coprime).';return;}
-  lines.push(`② Order of ${x} mod ${n}: ${x}^${r} mod ${n} = 1  →  r = ${r}`);
-  if(r%2!==0){lines.push(`③ r=${r} is odd → restart.`);out.innerHTML=lines.join('<br>');return;}
-  const half=modexp(x,r/2,n);
-  lines.push(`   x^(r/2) = ${x}^${r/2} mod ${n} = ${half}`);
-  const check=(half+1)%n;
-  lines.push(`   (x^(r/2)+1) mod n = (${half}+1) mod ${n} = ${check}`);
-  if(check===0){lines.push(`③ Check failed (x^(r/2)+1) mod n = 0 → restart.`);out.innerHTML=lines.join('<br>');return;}
-  lines.push(`③ r even ✓, check passed ✓`);
-  const f1=gcd(half-1,n), f2=gcd(half+1,n);
-  lines.push(`④ gcd(x^(r/2)-1, n) = gcd(${half-1}, ${n}) = ${f1}`);
-  lines.push(`   gcd(x^(r/2)+1, n) = gcd(${half+1}, ${n}) = ${f2}`);
-  if(f1>1&&f1<n) lines.push(`   ✓ Factor found: ${f1}`);
-  if(f2>1&&f2<n) lines.push(`   ✓ Factor found: ${f2}`);
-  lines.push(`   → ${n} = ${f1} × ${n/f1}`);
-  out.innerHTML=lines.join('<br>');
-}
-
-/* ── SHOR COMPLEXITY CANVAS ── */
-function updateShorComp(){
-  const b=parseInt(document.getElementById('slBits').value);
-  document.getElementById('bitsVal').textContent=b;
-  drawShorComp(b);
-  const shor=Math.pow(b,3), classical=Math.exp(Math.pow(b,1/3)*Math.pow(Math.log(b),2/3));
-  document.getElementById('shorCompInfo').textContent=
-    `b=${b}: Shor O(b³) ≈ ${shor.toFixed(0)} · Classical O(e^(b^1/3·(ln b)^2/3)) ≈ 10^${(Math.log10(classical)).toFixed(1)}`;
-}
-function drawShorComp(bCur){
-  const cv=document.getElementById('cvShorComp'); if(!cv) return;
-  const ctx=cv.getContext('2d'), W=cv.width, H=cv.height;
-  ctx.clearRect(0,0,W,H); ctx.fillStyle='#fafaf8'; ctx.fillRect(0,0,W,H);
-  const PL=60, PR=20, PT=20, PB=50, pW=W-PL-PR, pH=H-PT-PB;
-  const bMax=100;
-  // compute log values
-  function logShor(b){ return 3*Math.log10(b); }
-  function logClass(b){ return Math.pow(b,1/3)*Math.pow(Math.log(b),2/3)*Math.log10(Math.E); }
-  const maxLog = logClass(bMax);
-  const toY = l => PT+pH - Math.min(l/maxLog,1)*pH;
-  // grid
-  [5,10,15,20].forEach(e=>{
-    const y=toY(e); if(y<PT) return;
-    ctx.strokeStyle='#eee'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(PL,y); ctx.lineTo(W-PR,y); ctx.stroke();
-    ctx.fillStyle='#aaa'; ctx.font="9px 'IBM Plex Mono',monospace"; ctx.textAlign='right';
-    ctx.fillText('10^'+e, PL-5, y+3);
-  });
-  // draw curves
-  function curve(fn, col, lw){
-    ctx.strokeStyle=col; ctx.lineWidth=lw;
-    ctx.beginPath();
-    for(let b=5;b<=bMax;b++){
-      const x=PL+(b-5)/(bMax-5)*pW, y=toY(fn(b));
-      b===5?ctx.moveTo(x,y):ctx.lineTo(x,y);
-    }
-    ctx.stroke();
-  }
-  curve(logClass,'#c0392b',2);
-  curve(logShor,'#2c5282',2);
-  // current b marker
-  const bx=PL+(bCur-5)/(bMax-5)*pW;
-  ctx.strokeStyle='#888'; ctx.setLineDash([3,3]); ctx.lineWidth=1;
-  ctx.beginPath(); ctx.moveTo(bx,PT); ctx.lineTo(bx,PT+pH); ctx.stroke(); ctx.setLineDash([]);
-  ctx.fillStyle='#888'; ctx.font="10px 'IBM Plex Mono',monospace"; ctx.textAlign='center';
-  ctx.fillText('b='+bCur, bx, PT+pH+14);
+/* ── Deutsch Simulator ─────────────────────────────────────────── */
+const fDefs={c0:[0,0],c1:[1,1],id:[0,1],not:[1,0]};
+function runDeutsch(type){
+  const cv=document.getElementById('cvDeutsch');if(!cv)return;
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#fafaf8';ctx.fillRect(0,0,W,H);
+  const [f0,f1]=fDefs[type];
+  const isConst=f0===f1;
+  const accent='#2c5282',red='#c0392b',green='#1a6b3a',muted='#888877';
   // labels
-  ctx.textAlign='left';
-  ctx.fillStyle='#c0392b'; ctx.font="10px 'IBM Plex Mono',monospace";
-  ctx.fillText('Classical: O(e^(b^(1/3)·(ln b)^(2/3)))', PL+5, PT+14);
-  ctx.fillStyle='#2c5282';
-  ctx.fillText("Shor: O(b³)", PL+5, PT+28);
-  // x axis
-  [10,20,40,60,80,100].forEach(b=>{
-    const x=PL+(b-5)/(bMax-5)*pW;
-    ctx.fillStyle='#888'; ctx.font="9px 'IBM Plex Mono',monospace"; ctx.textAlign='center';
-    ctx.fillText(b, x, PT+pH+28);
-  });
-  ctx.fillStyle='#888'; ctx.textAlign='center';
-  ctx.fillText('b (bits)', PL+pW/2, PT+pH+44);
+  const stages=['|0⟩','after H','after U_f','after H','measure'];
+  const xPos=[45,150,280,380,490];
+  stages.forEach((s,i)=>{ctx.fillStyle=muted;ctx.font="9px 'IBM Plex Mono',monospace";ctx.textAlign='center';ctx.fillText(s,xPos[i],14);});
+  // wires
+  ctx.strokeStyle='#dedad0';ctx.lineWidth=1.5;
+  [70,130].forEach(y=>{ctx.beginPath();ctx.moveTo(20,y);ctx.lineTo(W-20,y);ctx.stroke();});
+  // gate boxes
+  const drawGate=(x,y,label,col)=>{ctx.fillStyle='white';ctx.strokeStyle=col;ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(x-18,y-18,36,36,3);ctx.fill();ctx.stroke();ctx.fillStyle=col;ctx.font="bold 14px 'IBM Plex Mono',monospace";ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(label,x,y);};
+  drawGate(110,70,'H',accent);drawGate(110,130,'H',accent);
+  const uf_x=255;ctx.fillStyle='#f0e8ff';ctx.strokeStyle='#6b21a8';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(uf_x-30,50,60,100,4);ctx.fill();ctx.stroke();ctx.fillStyle='#6b21a8';ctx.font="bold 14px 'IBM Plex Mono',monospace";ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('U_f',uf_x,100);
+  drawGate(375,70,'H',accent);
+  // state labels
+  const stateLabel=(x,y,text,col)=>{ctx.fillStyle=col;ctx.font="11px 'IBM Plex Mono',monospace";ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,x,y);};
+  stateLabel(45,70,'|0⟩',accent);stateLabel(45,130,'|1⟩',accent);
+  stateLabel(175,70,'|+⟩',accent);stateLabel(175,130,'|−⟩',accent);
+  const reg1after=isConst?'±|+⟩':'±|−⟩';
+  stateLabel(325,70,reg1after,isConst?green:red);stateLabel(325,130,'|−⟩',muted);
+  stateLabel(430,70,isConst?'±|+⟩':'±|−⟩',isConst?green:red);
+  // measurement result
+  const mBox_x=480,mBox_y=70;
+  ctx.fillStyle=isConst?green:red;ctx.beginPath();ctx.roundRect(mBox_x-22,mBox_y-18,44,36,4);ctx.fill();
+  ctx.fillStyle='white';ctx.font="bold 16px 'IBM Plex Mono',monospace";ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(isConst?'"0"':'"1"',mBox_x,mBox_y);
+  // info text
+  ctx.fillStyle=isConst?green:red;ctx.font="12px 'IBM Plex Sans',sans-serif";ctx.textAlign='center';ctx.textBaseline='top';
+  ctx.fillText(`f(0)=${f0}, f(1)=${f1} → ${isConst?'Constant: measure 0':'Balanced: measure 1'}`,W/2,165);
+  const el=document.getElementById('deutschResult');if(el)el.textContent=`f(0)=${f0}, f(1)=${f1} → f is ${isConst?'CONSTANT':'BALANCED'} → measure "${isConst?0:1}" on first register`;el.style.color=isConst?green:red;
+  // activate button
+  ['c0','c1','id','not'].forEach(k=>{const b=document.getElementById('df'+['c0','c1','id','not'].indexOf(k));if(b)b.classList.remove('active');});
 }
-updateShorComp();
+runDeutsch('c0');
+
+/* ── Factoring tracer ──────────────────────────────────────────── */
+function runFactor(){
+  const n=parseInt(document.getElementById('fnN').value);
+  const x=parseInt(document.getElementById('fnX').value);
+  const cv=document.getElementById('cvFactor');
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#fafaf8';ctx.fillRect(0,0,W,H);
+  const lines=[];
+  if(isNaN(n)||isNaN(x)||n<2||x<1){lines.push('Invalid input.');return;}
+  const g=gcd(x,n);
+  if(g>1){lines.push(`① gcd(${x},${n}) = ${g} > 1 → ${g} is already a factor! (Lucky stop)`);renderLines(ctx,lines,W,H);return;}
+  lines.push(`① gcd(${x},${n}) = 1 ✓ — continue`);
+  const r=findOrder(x,n);
+  if(!r){lines.push(`② Could not find order for x=${x}, n=${n}`);renderLines(ctx,lines,W,H);return;}
+  lines.push(`② Order r = ${r} &nbsp; (${x}^${r} mod ${n} = ${modpow(x,r,n)} = 1)`);
+  if(r%2!==0){lines.push(`③ r = ${r} is odd → restart (go to step ①)`);renderLines(ctx,lines,W,H);return;}
+  const xhalf=modpow(x,r/2,n);
+  if((xhalf+1)%n===0){lines.push(`③ (x^(r/2)+1) mod n = ${(xhalf+1)%n} = 0 → restart`);renderLines(ctx,lines,W,H);return;}
+  lines.push(`③ r = ${r} is even ✓ &nbsp; x^(r/2) = ${x}^${r/2} mod ${n} = ${xhalf}`);
+  const f1=gcd(xhalf-1,n);
+  const f2=gcd(xhalf+1,n);
+  lines.push(`④ gcd(${xhalf}-1, ${n}) = gcd(${xhalf-1}, ${n}) = ${f1}`);
+  lines.push(`   gcd(${xhalf}+1, ${n}) = gcd(${xhalf+1}, ${n}) = ${f2}`);
+  if(f1!==1&&f1!==n)lines.push(`✓ Non-trivial factor: ${f1}`);
+  if(f2!==1&&f2!==n)lines.push(`✓ Non-trivial factor: ${f2}`);
+  if((f1===1||f1===n)&&(f2===1||f2===n))lines.push('⚠ No non-trivial factor found — choose different x');
+  renderLines(ctx,lines,W,H);
+  const el=document.getElementById('factorResult');if(el)el.textContent=lines.join('\n');
+}
+function renderLines(ctx,lines,W,H){
+  ctx.fillStyle='#1a1a14';ctx.font="11.5px 'IBM Plex Mono',monospace";ctx.textBaseline='top';
+  lines.forEach((l,i)=>ctx.fillText(l,10,10+i*22));
+}
+runFactor();
+
+/* ── Period canvas ─────────────────────────────────────────────── */
+function drawPeriodCanvas(){
+  const n=parseInt(document.getElementById('pN').value)||15;
+  const x=parseInt(document.getElementById('pX').value)||7;
+  const cv=document.getElementById('cvPeriod');if(!cv)return;
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#fafaf8';ctx.fillRect(0,0,W,H);
+  const L=Math.min(4*n,64);
+  const seq=[];for(let i=0;i<L;i++)seq.push(modpow(x,i,n));
+  const bw=Math.max(4,Math.floor((W-40)/(L)));
+  const maxVal=Math.max(...seq,1);
+  const r=findOrder(x,n);
+  // grid
+  ctx.strokeStyle='#f0ede6';ctx.lineWidth=1;
+  for(let v=0;v<=maxVal;v+=Math.ceil(maxVal/5)){const y=H-30-(v/maxVal)*(H-50);ctx.beginPath();ctx.moveTo(30,y);ctx.lineTo(W-10,y);ctx.stroke();ctx.fillStyle='#bbb';ctx.font="9px 'IBM Plex Mono',monospace";ctx.textAlign='right';ctx.fillText(v,27,y+3);}
+  // bars
+  seq.forEach((v,i)=>{
+    const hue=r?((i%r)/r*120):200;
+    const col=`hsl(${hue+180},55%,45%)`;
+    const bh=(v/maxVal)*(H-50);
+    const bx=30+i*bw;
+    const by=H-30-bh;
+    ctx.fillStyle=col;ctx.fillRect(bx,by,bw-1,bh);
+    if(bw>12&&i<30){ctx.fillStyle='#555';ctx.font="8px 'IBM Plex Mono',monospace";ctx.textAlign='center';ctx.fillText(i,bx+bw/2,H-15);}
+  });
+  // period marker
+  if(r){ctx.strokeStyle='#c0392b';ctx.lineWidth=2;ctx.setLineDash([4,3]);ctx.beginPath();ctx.moveTo(30+r*bw,5);ctx.lineTo(30+r*bw,H-30);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#c0392b';ctx.font="bold 10px 'IBM Plex Mono',monospace";ctx.textAlign='left';ctx.fillText('r='+r,30+r*bw+3,12);}
+  ctx.fillStyle='#888';ctx.font="10px 'IBM Plex Mono',monospace";ctx.textAlign='left';ctx.fillText(`f(ℓ) = ${x}^ℓ mod ${n}  (period r=${r||'?'})`,35,H-2);
+}
+drawPeriodCanvas();
+
+/* ── DFT canvas ────────────────────────────────────────────────── */
+function computeDFT(seq,N){
+  const n=seq.length;
+  const Re=new Array(N).fill(0),Im=new Array(N).fill(0);
+  for(let k=0;k<N;k++){for(let j=0;j<n;j++){const ang=-2*Math.PI*k*j/N;Re[k]+=seq[j]*Math.cos(ang);Im[k]+=seq[j]*Math.sin(ang);}}
+  return Re.map((r,i)=>Math.sqrt(r*r+Im[i]*Im[i])/N);
+}
+function drawDFTCanvas(){
+  const n=parseInt(document.getElementById('dN').value)||15;
+  const x=parseInt(document.getElementById('dX').value)||7;
+  const N=Math.min(parseInt(document.getElementById('dNFT').value)||64,256);
+  const cv=document.getElementById('cvDFT');if(!cv)return;
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#fafaf8';ctx.fillRect(0,0,W,H);
+  const seq=[];for(let i=0;i<N;i++)seq.push(modpow(x,i,n));
+  const mag=computeDFT(seq,N);
+  const maxMag=Math.max(...mag,0.01);
+  const r=findOrder(x,n);
+  const bw=Math.max(1,Math.floor((W-40)/N));
+  mag.forEach((v,i)=>{const h=(v/maxMag)*(H-50);const bx=30+i*bw;ctx.fillStyle='#3b6ca8aa';ctx.fillRect(bx,H-35-h,bw,h);});
+  // theoretical peak positions
+  if(r){ctx.strokeStyle='#c0392b';ctx.lineWidth=1.5;ctx.setLineDash([3,3]);
+    for(let l=0;l*N/r<N;l++){const px=30+Math.round(l*N/r)*bw;ctx.beginPath();ctx.moveTo(px,5);ctx.lineTo(px,H-35);ctx.stroke();}
+    ctx.setLineDash([]);}
+  ctx.strokeStyle='#ccc';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(30,H-35);ctx.lineTo(W-10,H-35);ctx.stroke();
+  ctx.fillStyle='#888';ctx.font="9px 'IBM Plex Mono',monospace";ctx.textAlign='left';ctx.fillText(`DFT of ${x}^ℓ mod ${n}, N=${N}, r=${r||'?'}  (red lines = peaks at ℓ·N/r)`,30,H-3);
+  const el=document.getElementById('dftInfo');if(el)el.textContent=`Period r=${r}, N=${N}, ideal peaks at m = 0, ${r?Math.round(N/r):'?'}, ${r?Math.round(2*N/r):'?'}, ... (multiples of N/r = ${r?Math.round(N/r):'?'})`;
+}
+drawDFTCanvas();
+
+/* ── QFT peaks canvas ──────────────────────────────────────────── */
+function drawQFTPeaks(){
+  const x=parseInt(document.getElementById('qN2').value)||7;
+  const n=parseInt(document.getElementById('qN3').value)||15;
+  const N=Math.min(parseInt(document.getElementById('qN4').value)||1024,2048);
+  const cv=document.getElementById('cvQFTPeaks');if(!cv)return;
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#fafaf8';ctx.fillRect(0,0,W,H);
+  const r=findOrder(x,n);if(!r){ctx.fillStyle='#c0392b';ctx.font="12px 'IBM Plex Mono',monospace";ctx.textAlign='center';ctx.fillText('gcd(x,n)≠1 or order not found',W/2,H/2);return;}
+  // compute unnormalized |X_q|^2 for displaying
+  // X_q for periodic state |a⟩+|a+r⟩+... summed over M terms
+  const a=0,M=Math.floor(N/r);
+  const probs=new Array(N).fill(0);
+  for(let q=0;q<N;q++){
+    let re=0,im=0;
+    for(let d=0;d<M;d++){const ang=2*Math.PI*(a+d*r)*q/N;re+=Math.cos(ang);im+=Math.sin(ang);}
+    probs[q]=(re*re+im*im)/(N*M);
+  }
+  const maxP=Math.max(...probs,1e-9);
+  const step=Math.max(1,Math.floor(N/W));
+  // bars
+  ctx.fillStyle='#3b6ca888';
+  for(let q=0;q<N;q+=step){const h=(probs[q]/maxP)*(H-50);ctx.fillRect(30+q*(W-40)/N,H-35-h,Math.max(1,(W-40)/N*step),h);}
+  // theoretical peak markers
+  ctx.strokeStyle='#c0392b';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
+  for(let l=0;l<r;l++){const qp=Math.round(l*N/r);const px=30+qp*(W-40)/N;ctx.beginPath();ctx.moveTo(px,5);ctx.lineTo(px,H-35);ctx.stroke();}
+  ctx.setLineDash([]);
+  ctx.strokeStyle='#ccc';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(30,H-35);ctx.lineTo(W-10,H-35);ctx.stroke();
+  ctx.fillStyle='#888';ctx.font="9px 'IBM Plex Mono',monospace";ctx.textAlign='left';ctx.fillText(`QFT: x=${x}, n=${n}, N=${N}, r=${r}   peaks at ℓ·${Math.round(N/r)}`,30,H-3);
+  const el=document.getElementById('qftPeakInfo');if(el)el.textContent=`Order r=${r}. Peaks at m = ${Array.from({length:r},(_,l)=>l*Math.round(N/r)).join(', ')}. Each prob ≈ 1/r = ${(100/r).toFixed(1)}%`;
+}
+drawQFTPeaks();
+
+/* ── Complexity canvas ─────────────────────────────────────────── */
+function drawComplexity(){
+  const b=parseInt(document.getElementById('slB').value);
+  document.getElementById('bVal').textContent=b;
+  const cv=document.getElementById('cvComplexity');if(!cv)return;
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#fafaf8';ctx.fillRect(0,0,W,H);
+  const PL=50,PR=20,PT=20,PB=40,pW=W-PL-PR,pH=H-PT-PB;
+  const maxb=40;
+  // axes
+  ctx.strokeStyle='#ccc';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(PL,PT);ctx.lineTo(PL,PT+pH);ctx.lineTo(PL+pW,PT+pH);ctx.stroke();
+  ctx.fillStyle='#888';ctx.font="9px 'IBM Plex Mono',monospace";ctx.textAlign='center';ctx.fillText('b (bits)',PL+pW/2,H-3);
+  // curves
+  const maxShor=Math.pow(maxb,3);
+  const maxClass=Math.pow(2,maxb);
+  // Shor O(b³)
+  ctx.strokeStyle='#1a6b3a';ctx.lineWidth=2;ctx.beginPath();
+  for(let bi=1;bi<=maxb;bi++){const px=PL+(bi-1)/(maxb-1)*pW;const py=PT+pH-Math.min(Math.pow(bi,3)/maxShor,1)*pH;if(bi===1)ctx.moveTo(px,py);else ctx.lineTo(px,py);}
+  ctx.stroke();
+  // Classical O(2^b) — clamped
+  ctx.strokeStyle='#c0392b';ctx.lineWidth=2;ctx.beginPath();let moved=false;
+  for(let bi=1;bi<=maxb;bi++){const px=PL+(bi-1)/(maxb-1)*pW;const v=Math.pow(2,bi)/maxClass;if(v>1)break;const py=PT+pH-v*pH;if(!moved){ctx.moveTo(px,py);moved=true;}else ctx.lineTo(px,py);}
+  ctx.stroke();
+  // current b marker
+  const curPx=PL+(b-1)/(maxb-1)*pW;
+  ctx.strokeStyle='#2c5282';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(curPx,PT);ctx.lineTo(curPx,PT+pH);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='#2c5282';ctx.font="9px 'IBM Plex Mono',monospace";ctx.textAlign='center';ctx.fillText('b='+b,curPx,PT-5);
+  // labels
+  ctx.fillStyle='#1a6b3a';ctx.fillText('Shor O(b³)',PL+pW*0.25,PT+pH*0.08);
+  ctx.fillStyle='#c0392b';ctx.fillText('Classical O(2^b)',PL+pW*0.15,PT+pH*0.5);
+  // values at current b
+  const shorOps=Math.pow(b,3);
+  const classOps=Math.pow(2,b);
+  ctx.fillStyle='#555';ctx.font="10px 'IBM Plex Mono',monospace";ctx.textAlign='left';
+  ctx.fillText(`b=${b}: Shor~${shorOps.toLocaleString()} ops, Classical~2^${b}=${classOps.toLocaleString()} ops`,PL+5,PT+pH+25);
+}
+drawComplexity();
+
+/* ── Shor full simulator ────────────────────────────────────────── */
+function runShortSim(){
+  const n=parseInt(document.getElementById('sn').value)||15;
+  const x=parseInt(document.getElementById('sx').value)||7;
+  const N=Math.min(n*n*4,4096);
+  let log='';
+  const cv=document.getElementById('cvShor');if(!cv)return;
+  cv.width=cv.parentElement.clientWidth-2;
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#fafaf8';ctx.fillRect(0,0,W,H);
+
+  log+=`n=${n}, x=${x}, N=${N}\n`;
+  const g=gcd(x,n);
+  if(g>1){log+=`gcd(${x},${n})=${g}>1 — ${g} is a factor (lucky)!`;document.getElementById('shorLog').textContent=log;ctx.fillStyle='#1a6b3a';ctx.font="12px 'IBM Plex Mono',monospace";ctx.textAlign='center';ctx.fillText(`Factor found immediately: ${g}`,W/2,H/2);return;}
+
+  const r=findOrder(x,n);
+  if(!r){log+=`Could not find order.`;document.getElementById('shorLog').textContent=log;return;}
+  log+=`Order r=${r} (${x}^${r} mod ${n} = ${modpow(x,r,n)})\n`;
+
+  // Show periodic function
+  const M=Math.floor(N/r);
+  const seq=[];for(let i=0;i<Math.min(N,64);i++)seq.push(modpow(x,i,n));
+  const maxVal=Math.max(...seq,1);
+  const halfH=H/2-10;
+  // panel 1: f(ℓ)
+  const bw=Math.max(2,Math.floor((W/2-20)/seq.length));
+  seq.forEach((v,i)=>{const hue=(i%r)/r*120+180;const h=(v/maxVal)*halfH*0.8;const bx=10+i*bw;ctx.fillStyle=`hsl(${hue},55%,45%)`;ctx.fillRect(bx,halfH-h,bw-1,h);});
+  ctx.fillStyle='#888';ctx.font="9px 'IBM Plex Mono',monospace";ctx.textAlign='left';ctx.fillText(`f(ℓ)=${x}^ℓ mod ${n} (period=${r})`,8,halfH+12);
+
+  // QFT peaks
+  const probs=new Array(Math.min(N,512)).fill(0);
+  const NQ=probs.length;
+  for(let q=0;q<NQ;q++){let re=0,im=0;for(let d=0;d<M;d++){const ang=2*Math.PI*(d*r)*q/N;re+=Math.cos(ang);im+=Math.sin(ang);}probs[q]=(re*re+im*im)/(NQ*M);}
+  const maxP=Math.max(...probs,1e-9);
+  const pw=Math.max(1,Math.floor((W/2-20)/NQ));
+  probs.forEach((v,i)=>{const h=(v/maxP)*halfH*0.8;const bx=W/2+10+i*pw;ctx.fillStyle='#2c5282aa';ctx.fillRect(bx,H-30-h,pw,h);});
+  for(let l=0;l<r;l++){const qp=Math.round(l*NQ/r);ctx.strokeStyle='#c0392b';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(W/2+10+qp*pw,H-100);ctx.lineTo(W/2+10+qp*pw,H-30);ctx.stroke();}
+  ctx.setLineDash([]);
+  ctx.fillStyle='#888';ctx.font="9px 'IBM Plex Mono',monospace";ctx.textAlign='left';ctx.fillText(`QFT output (${r} peaks)`,W/2+12,H-12);
+
+  // Compute factors
+  if(r%2===0){
+    const xhalf=modpow(x,r/2,n);
+    const f1=gcd(xhalf-1,n),f2=gcd(xhalf+1,n);
+    log+=`r=${r} is even ✓, x^(r/2)=${xhalf}\n`;
+    log+=`gcd(${xhalf-1},${n})=${f1}, gcd(${xhalf+1},${n})=${f2}\n`;
+    const factors=[];
+    if(f1!==1&&f1!==n)factors.push(f1);
+    if(f2!==1&&f2!==n)factors.push(f2);
+    if(factors.length)log+=`✓ Factors of ${n}: ${factors.join(' and ')}`;
+    else log+=`⚠ No non-trivial factor found with this x. Try a different x.`;
+  } else {
+    log+=`r=${r} is odd → would need to restart. For this demo, r is odd.`;
+  }
+  document.getElementById('shorLog').textContent=log;
+}
+runShortSim();
+
+/* ── init all on load ───────────────────────────────────────────── */
+window.addEventListener('load',()=>{
+  setTimeout(()=>{drawPeriodCanvas();drawDFTCanvas();drawQFTPeaks();drawComplexity();runShortSim();},100);
+});
 </script>
