@@ -1,0 +1,821 @@
+---
+import type { NoteMeta } from '../../lib/notes';
+
+export const meta: NoteMeta = {
+  title: "Quantum Error Correction",
+  order: 8,
+  slug: "8-quantum-error-correction",
+  description: "Classical vs quantum error correction, the quantum repetition code, stabilizer formalism, syndrome extraction — how to protect quantum information without ever measuring it directly.",
+  sections: [
+    { id: "s1", label: "Classical Error Correction" },
+    { id: "s2", label: "QEC Challenges" },
+    { id: "s3", label: "Quantum Repetition Code" },
+    { id: "s4", label: "Stabilizer Formalism" },
+    { id: "s5", label: "Syndrome Extraction" },
+  ]
+}
+---
+
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-label">Interactive Notes · Note 08</div>
+  <h1>Quantum Error<br><em>Correction</em></h1>
+  <p>How to protect a qubit from noise without ever measuring it — the surprising solution using entanglement and the stabilizer formalism.</p>
+  <div class="cover-meta">
+    <span>Repetition Code</span>
+    <span>Stabilizer Groups</span>
+    <span>Syndrome Extraction</span>
+  </div>
+</div>
+
+<!-- TOC -->
+<div class="toc">
+  <div class="toc-title">Contents</div>
+  <ul class="toc-list">
+    <li><a onclick="goTo('s1')" href="javascript:void(0)">1 · Classical Error Correction</a></li>
+    <li><a onclick="goTo('s2')" href="javascript:void(0)">2 · QEC Challenges</a></li>
+    <li><a onclick="goTo('s3')" href="javascript:void(0)">3 · Quantum Repetition Code</a></li>
+    <li><a onclick="goTo('s4')" href="javascript:void(0)">4 · Stabilizer Formalism</a></li>
+    <li><a onclick="goTo('s5')" href="javascript:void(0)">5 · Syndrome Extraction</a></li>
+  </ul>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 1 — CLASSICAL ERROR CORRECTION -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section id="s1" class="section">
+<div class="section-num">Section 01</div>
+<h2>Classical Error Correction</h2>
+
+<p>Whenever we send information through a channel — be it fiber optic cable, radio, or the internet — noise can flip bits. Error correction codes add <em>redundancy</em> to detect and fix these errors. Before tackling the quantum case, let's understand the classical approach.</p>
+
+<div class="def">
+  <div class="def-title">The Channel Model</div>
+  We send a codeword c through a noisy channel. The receiver gets r = c &oplus; n, where n is the noise vector. Each bit n&#7522; = 1 (error) with probability p and n&#7522; = 0 (no error) with probability 1&minus;p.
+  <div class="math-block" style="margin-top:0.5rem;">
+    <div class="eq">c &nbsp; → &nbsp; [Channel] &nbsp; → &nbsp; r = c ⊕ n</div>
+  </div>
+</div>
+
+<h3>The Repetition Code — The Simplest Code</h3>
+
+<p>The simplest idea: repeat each bit multiple times. To transmit message bit m = 0, send the codeword c = (000). To transmit m = 1, send c = (111).</p>
+
+<p>At the receiver, apply a <strong>majority rule</strong>: whatever value appears most often among the three received bits is the decoded message.</p>
+
+<div class="math-block">
+  <style>
+  .dec-table { border-collapse: collapse; font-family: 'IBM Plex Mono', monospace; font-size: 0.82rem; margin: 0.5rem 0; }
+  .dec-table th { background: var(--ink); color: white; padding: 0.3rem 0.8rem; font-weight: 600; }
+  .dec-table td { border: 1px solid var(--line); padding: 0.25rem 0.8rem; text-align: center; }
+  .dec-table .ok { color: var(--green); font-weight: 700; }
+  .dec-table .err { color: var(--red); font-weight: 700; }
+  </style>
+  <table class="dec-table">
+    <tr><th>Received r</th><th>Decoded</th><th>Correct?</th><th>Probability</th></tr>
+    <tr><td>000</td><td>0</td><td class="ok">✓</td><td>(1&minus;p)&sup3;</td></tr>
+    <tr><td>001</td><td>0</td><td class="ok">✓</td><td>(1&minus;p)&sup2;p</td></tr>
+    <tr><td>010</td><td>0</td><td class="ok">✓</td><td>(1&minus;p)&sup2;p</td></tr>
+    <tr><td>011</td><td>1</td><td class="err">✗</td><td>(1&minus;p)p&sup2;</td></tr>
+    <tr><td>100</td><td>0</td><td class="ok">✓ (1 error corrected!)</td><td>(1&minus;p)&sup2;p</td></tr>
+    <tr><td>101</td><td>1</td><td class="err">✗</td><td>(1&minus;p)p&sup2;</td></tr>
+    <tr><td>110</td><td>1</td><td class="err">✗</td><td>(1&minus;p)p&sup2;</td></tr>
+    <tr><td>111</td><td>1</td><td class="err">✗ (3 errors)</td><td>p&sup3;</td></tr>
+  </table>
+</div>
+
+<div class="math-block">
+  <div class="mstep"><div class="mstep-label">P<sub>err</sub> with code:</div><div class="mstep-body">= 3p&sup2;(1&minus;p) + p&sup3; &asymp; 3p&sup2; &nbsp;&nbsp; (for small p)</div></div>
+  <div class="mstep"><div class="mstep-label">P<sub>err</sub> without:</div><div class="mstep-body">= p</div></div>
+  <div class="mstep"><div class="mstep-label" style="color:var(--green);">Improvement when:</div><div class="mstep-body">3p&sup2; &lt; p &nbsp;&hArr;&nbsp; p &lt; 1/3 &nbsp; &rarr; &nbsp; The code always helps if p &lt; 1/2!</div></div>
+</div>
+
+<div class="def">
+  <div class="def-title">Code Notation [n, k, d]</div>
+  A code that encodes k information bits into n physical bits and can correct up to t = &lfloor;(d&minus;1)/2&rfloor; errors is denoted [n, k, d]. The repetition code is a <strong>[3, 1, 3]</strong> code: n=3 bits, k=1 info bit, minimum distance d=3 (corrects t=1 error).
+  <div class="math-block" style="margin-top:0.4rem;">
+    <div class="eq">Rate &nbsp; R<sub>c</sub> = k/n &nbsp;&nbsp; (repetition code: R<sub>c</sub> = 1/3)</div>
+    <div class="eq-note">&nbsp;&nbsp;Low rate is the cost of protection &mdash; 3 physical bits for 1 logical bit</div>
+  </div>
+</div>
+
+<!-- Interactive repetition code simulator -->
+<canvas id="cvRepCode" width="560" height="200"></canvas>
+<div class="canvas-caption">Classical repetition code — error probability comparison. Drag slider to change channel error rate p.</div>
+<div class="controls">
+  <label>Channel error rate p = <input type="range" id="slP" min="0" max="50" value="10" oninput="updateRepCode()"></label>
+  <span class="ctrl-val" id="vP">0.10</span>
+</div>
+<div id="repInfo" style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem;color:var(--accent);margin-top:0.4rem;"></div>
+
+<!-- Exercise 1.1 -->
+<div class="ex-block">
+  <div class="ex-header"><span class="ex-tag">Ex 1.1</span><span class="ex-title">Error probability with the repetition code</span></div>
+  <div class="ex-body">
+    <p>The channel error probability is p = 0.1. What is the decoding error probability with the [3,1,3] repetition code? (Use P<sub>err</sub> = 3p&sup2;(1&minus;p) + p&sup3;.)</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">P<sub>err</sub> &asymp;</span>
+      <input class="answer-input" id="a11" placeholder="e.g. 0.028" style="width:100px">
+      <button class="btn sm" onclick="chkApprox('a11', 3*0.01*0.9+0.001, 'fb11')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h11')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h11">3 × (0.1)² × (0.9) + (0.1)³ = 3 × 0.01 × 0.9 + 0.001 = 0.027 + 0.001 = 0.028.</div>
+    <div class="feedback" id="fb11"></div>
+  </div>
+</div>
+
+<!-- Exercise 1.2 -->
+<div class="ex-block">
+  <div class="ex-header"><span class="ex-tag">Ex 1.2</span><span class="ex-title">When does the code help?</span></div>
+  <div class="ex-body">
+    <p>For what values of p does the repetition code actually reduce error probability? (Compare 3p² < p.)</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">p &lt;</span>
+      <input class="answer-input" id="a12" placeholder="fraction" style="width:80px">
+      <button class="btn sm" onclick="chkApprox('a12', 1/3, 'fb12')">Check</button>
+    </div>
+    <div class="feedback hint" id="h12">3p² &lt; p → 3p &lt; 1 → p &lt; 1/3.</div>
+    <div class="feedback" id="fb12"></div>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 2 — QEC CHALLENGES -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section id="s2" class="section">
+<div class="section-num">Section 02</div>
+<h2>Three Challenges for Quantum Error Correction</h2>
+
+<p>Naively, we might try to apply classical error correction to qubits. But there are three fundamental obstacles that make this impossible without new ideas.</p>
+
+<div class="warning">
+  <strong>The challenge:</strong> quantum information is fragile in ways that classical information is not. Three quantum-specific obstacles must be overcome.
+</div>
+
+<h3>Challenge 1 — A Continuum of Errors</h3>
+
+<div class="math-block">
+  <div class="mx-cols">
+    <div>
+      <div class="mx-label">Classical channel</div>
+      0 &rarr; 0 with prob. 1&minus;p<br>
+      0 &rarr; 1 with prob. p<br>
+      <span class="eq-note">(only 1 type of error: bit-flip)</span>
+    </div>
+    <div>
+      <div class="mx-label">Quantum channel</div>
+      |ψ⟩ = α|0⟩ + β|1⟩ → |ψ̃⟩ = α|0⟩ + βe<sup>iΔ</sup>|1⟩<br>
+      <span class="eq-note">(continuous parameter Δ — infinitely many errors)</span>
+    </div>
+  </div>
+</div>
+
+<div class="insight">
+  <strong>Surprisingly, this is NOT a real obstacle.</strong> Quantum error correction works by discretizing errors. When we perform syndrome measurement (Section 5), the continuous error collapses into one of a discrete set of Pauli errors (I, X, Y, Z). We only need to correct those!
+</div>
+
+<h3>Challenge 2 — No-Cloning Theorem</h3>
+
+<div class="math-block">
+  <div class="mx-cols">
+    <div>
+      <div class="mx-label">Classical (easy)</div>
+      b → bbb &nbsp;&nbsp; (copy a bit 3 times)<br>
+      [3,1] repetition code ✓
+    </div>
+    <div>
+      <div class="mx-label">Quantum (impossible)</div>
+      |ψ⟩ → |ψ⟩|ψ⟩|ψ⟩ &nbsp;&nbsp; FORBIDDEN!<br>
+      No-Cloning Theorem ✗
+    </div>
+  </div>
+</div>
+
+<div class="note-box">
+  <strong>No-Cloning Theorem:</strong> There is no unitary operation U such that U|ψ⟩|0⟩ = |ψ⟩|ψ⟩ for all states |ψ⟩. It is fundamentally impossible to copy an unknown quantum state. So the classical "just repeat it" strategy cannot be directly applied.
+</div>
+
+<div class="insight">
+  <strong>The quantum solution:</strong> instead of copying, we use <em>entanglement</em>. The quantum repetition code does not clone |ψ⟩ — it creates a specific entangled 3-qubit state that encodes the same information in a distributed way.
+</div>
+
+<h3>Challenge 3 — Measurement Collapses the State</h3>
+
+<div class="math-block">
+  <div class="mx-cols">
+    <div>
+      <div class="mx-label">Classical decoder</div>
+      Reads r = c ⊕ n directly → decides which error occurred
+    </div>
+    <div>
+      <div class="mx-label">Quantum decoder</div>
+      If we measure |ψ̃⟩ → state collapses! We lose α and β forever.
+    </div>
+  </div>
+</div>
+
+<div class="insight">
+  <strong>The quantum solution:</strong> We never measure the data qubits directly. Instead, we perform <em>syndrome measurement</em> using ancilla qubits. This extracts information about the <em>error</em> without revealing anything about the actual data (α and β).
+</div>
+
+<!-- Exercise 2.1 -->
+<div class="ex-block">
+  <div class="ex-header"><span class="ex-tag">Ex 2.1</span><span class="ex-title">Why can't we copy a qubit?</span></div>
+  <div class="ex-body">
+    <p>Suppose we could clone: U|ψ⟩|0⟩ = |ψ⟩|ψ⟩. Apply U to |+⟩|0⟩ and expand using superposition. Does the result equal |+⟩|+⟩? (Hint: expand |+⟩ = (|0⟩+|1⟩)/√2 and see what linearity gives.)</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <input class="answer-input wide" id="a21" placeholder="yes / no — explain...">
+      <button class="btn sm" onclick="chkContains('a21',['no','linear','different','entangled','not equal'],'fb21')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h21')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h21">By linearity, U|+⟩|0⟩ = (U|0⟩|0⟩ + U|1⟩|0⟩)/√2 = (|00⟩ + |11⟩)/√2. But |+⟩|+⟩ = (|00⟩ + |01⟩ + |10⟩ + |11⟩)/2. These are different — the "cloner" gives an entangled state, not a product state. Contradiction!</div>
+    <div class="feedback" id="fb21"></div>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 3 — QUANTUM REPETITION CODE -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section id="s3" class="section">
+<div class="section-num">Section 03</div>
+<h2>The Quantum Repetition Code</h2>
+
+<p>We want to protect the qubit |φ⟩ = α|0⟩ + β|1⟩. We cannot copy it, but we can <em>encode</em> it into an entangled 3-qubit state.</p>
+
+<h3>Encoding</h3>
+
+<p>Use two CNOT gates (with |φ⟩ as control) to create the codeword:</p>
+
+<div class="circuit">
+  <div class="circuit-row">
+    <span class="circuit-label">|φ⟩</span>
+    <div class="circuit-line"></div>
+    <div style="width:2px;height:2.5rem;background:var(--ink2);display:inline-block;vertical-align:middle;margin:0 0.2rem;"></div>
+    <div class="circuit-line"></div>
+    <div style="width:2px;height:2.5rem;background:var(--ink2);display:inline-block;vertical-align:middle;margin:0 0.2rem;"></div>
+    <div class="circuit-line" style="width:3rem;"></div>
+    <span class="circuit-out">─────</span>
+  </div>
+  <div class="circuit-row" style="margin-top:0.2rem;">
+    <span class="circuit-label">|0⟩</span>
+    <div class="circuit-line"></div>
+    <div class="circuit-gate x">⊕</div>
+    <div class="circuit-line" style="width:3rem;"></div>
+    <div class="circuit-line" style="width:2rem;"></div>
+    <span class="circuit-out">─────</span>
+  </div>
+  <div class="circuit-row" style="margin-top:0.2rem;">
+    <span class="circuit-label">|0⟩</span>
+    <div class="circuit-line" style="width:3.5rem;"></div>
+    <div class="circuit-line" style="width:2rem;"></div>
+    <div class="circuit-gate x">⊕</div>
+    <div class="circuit-line" style="width:1rem;"></div>
+    <span class="circuit-out">─────</span>
+  </div>
+</div>
+
+<div class="math-block">
+  <div class="mstep"><div class="mstep-label">Input:</div><div class="mstep-body">|φ⟩|0⟩|0⟩ = (α|0⟩ + β|1⟩)|0⟩|0⟩</div></div>
+  <div class="mstep"><div class="mstep-label">After CNOT₁:</div><div class="mstep-body">α|000⟩ + β|110⟩</div></div>
+  <div class="mstep"><div class="mstep-label">After CNOT₂:</div><div class="mstep-body"><strong>|Ψ⟩ = α|000⟩ + β|111⟩</strong> &nbsp;&nbsp; <span class="eq-note">(encoded codeword)</span></div></div>
+  <hr class="math-sep">
+  <div class="mstep"><div class="mstep-label">Note:</div><div class="mstep-body">|Ψ⟩ &ne; |φ⟩|φ⟩|φ⟩ — this is NOT copying! It is an entangled state that encodes α and β in a distributed way.</div></div>
+</div>
+
+<h3>Effect of Errors</h3>
+
+<p>Suppose the channel applies a Pauli X gate (bit-flip) to one of the qubits. The state becomes:</p>
+
+<div class="math-block">
+  <div style="display:grid;grid-template-columns:80px 1fr 1fr;gap:0.4rem 1rem;font-size:0.83rem;align-items:center;">
+    <strong>Error</strong><strong>State after error</strong><strong>Ancilla result</strong>
+    <span>I (none)</span><span>α|000⟩ + β|111⟩</span><span>|00⟩ &nbsp; syndrome (0,0)</span>
+    <span>X₀</span><span>α|100⟩ + β|011⟩</span><span>|11⟩ &nbsp; syndrome (1,1)</span>
+    <span>X₁</span><span>α|010⟩ + β|101⟩</span><span>|11⟩ → X₁</span>
+    <span>X₂</span><span>α|001⟩ + β|110⟩</span><span>|10⟩ &nbsp; syndrome (1,0)</span>
+  </div>
+</div>
+
+<h3>Decoding — Without Measuring Data!</h3>
+
+<p>Instead of measuring |Ψ⟩ directly, we introduce two ancilla qubits and measure them. This gives us the <strong>syndrome</strong> — information about which error occurred — without revealing α or β.</p>
+
+<div class="circuit">
+  <div class="circuit-row">
+    <span class="circuit-label" style="min-width:3.5rem;">data</span>
+    <div class="circuit-line"></div>
+    <div style="border:1px dashed var(--line);padding:0.2rem 0.5rem;font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--muted);">Q. Ch.</div>
+    <div class="circuit-line"></div>
+    <div style="width:2px;height:2.5rem;background:var(--ink2);display:inline-block;vertical-align:middle;"></div>
+    <div class="circuit-line" style="width:1.5rem;"></div>
+    <div style="width:2px;height:2.5rem;background:var(--ink2);display:inline-block;vertical-align:middle;"></div>
+    <div class="circuit-line" style="width:1rem;"></div>
+    <span class="circuit-out">→ |Ψ̃⟩</span>
+  </div>
+  <div class="circuit-row" style="margin-top:0.3rem;">
+    <span class="circuit-label" style="min-width:3.5rem;">|0⟩ (anc)</span>
+    <div class="circuit-line" style="width:4rem;"></div>
+    <div class="circuit-gate x">⊕</div>
+    <div class="circuit-line"></div>
+    <div class="circuit-gate x">⊕</div>
+    <div class="circuit-line"></div>
+    <div class="circuit-meas">M</div>
+    <div class="circuit-line"></div>
+    <span class="circuit-out">s₁</span>
+  </div>
+  <div class="circuit-row" style="margin-top:0.2rem;">
+    <span class="circuit-label" style="min-width:3.5rem;">|0⟩ (anc)</span>
+    <div class="circuit-line" style="width:5rem;"></div>
+    <div class="circuit-gate x">⊕</div>
+    <div class="circuit-line"></div>
+    <div class="circuit-gate x">⊕</div>
+    <div class="circuit-line"></div>
+    <div class="circuit-meas">M</div>
+    <span class="circuit-out">s₂</span>
+  </div>
+</div>
+
+<div class="note-box">
+  <strong>Key insight:</strong> measuring the ancilla qubits gives information about the <em>error</em> (which qubit was flipped) but reveals nothing about α and β. The data qubit |Ψ̃⟩ is unchanged by this measurement!
+</div>
+
+<!-- Interactive error correction demo -->
+<canvas id="cvQRC" width="560" height="220"></canvas>
+<div class="canvas-caption">Quantum repetition code — select an error to see the syndrome and correction.</div>
+<div class="controls" style="gap:0.5rem;flex-wrap:wrap;">
+  <span style="font-size:0.8rem;color:var(--muted);">Error:</span>
+  <button class="btn sm active" id="errI" onclick="setError('I')">I (none)</button>
+  <button class="btn sm" id="errX0" onclick="setError('X0')">X₀</button>
+  <button class="btn sm" id="errX1" onclick="setError('X1')">X₁</button>
+  <button class="btn sm" id="errX2" onclick="setError('X2')">X₂</button>
+</div>
+<div id="qrcInfo" style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:var(--ink2);margin-top:0.4rem;line-height:1.8;min-height:2.5rem;"></div>
+
+<!-- Exercise 3.1 -->
+<div class="ex-block">
+  <div class="ex-header"><span class="ex-tag">Ex 3.1</span><span class="ex-title">Codeword verification</span></div>
+  <div class="ex-body">
+    <p>The encoded state is |Ψ⟩ = α|000⟩ + β|111⟩. Apply Z₀Z₁ (Pauli Z on qubits 0 and 1) to |Ψ⟩. What do you get?</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <input class="answer-input wide" id="a31" placeholder="Z₀Z₁|Ψ⟩ = ...">
+      <button class="btn sm" onclick="chkContains('a31',['|Ψ⟩','same','alpha|000','psi','unchanged'],'fb31')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h31')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h31">Z₀|0⟩ = |0⟩, Z₀|1⟩ = &minus;|1⟩. Z₀Z₁(α|000⟩+β|111⟩) = α·(+1)(+1)|000⟩ + β·(&minus;1)(&minus;1)|111⟩ = α|000⟩+β|111⟩ = |Ψ⟩. So Z₀Z₁ is a stabilizer of |Ψ⟩!</div>
+    <div class="feedback" id="fb31"></div>
+  </div>
+</div>
+
+<!-- Exercise 3.2 -->
+<div class="ex-block">
+  <div class="ex-header"><span class="ex-tag">Ex 3.2</span><span class="ex-title">Syndrome after error X₁</span></div>
+  <div class="ex-body">
+    <p>After an X₁ error, the state becomes α|010⟩ + β|101⟩. What is the measurement outcome (s₁, s₂) of the ancilla circuit above? The ancilla measures Z₁Z₀ and Z₂Z₁.</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">s₁ =</span>
+      <input class="answer-input" id="a32a" placeholder="0 or 1" style="width:70px">
+      <span class="ans-label">s₂ =</span>
+      <input class="answer-input" id="a32b" placeholder="0 or 1" style="width:70px">
+      <button class="btn sm" onclick="chk2('a32a','1','a32b','1','fb32')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h32')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h32">g₁ = Z₁Z₀ anticommutes with X₁ (since X and Z anticommute on qubit 1, and I and Z commute on qubit 0). So syndrome s₁ = 1. Similarly g₂ = Z₂Z₁ anticommutes with X₁ (qubit 1 factor). So s₂ = 1. Both ancillas = 1 → error is X₁.</div>
+    <div class="feedback" id="fb32"></div>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 4 — STABILIZER FORMALISM -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section id="s4" class="section">
+<div class="section-num">Section 04</div>
+<h2>Stabilizer Formalism</h2>
+
+<p>The stabilizer formalism provides a powerful, systematic language for quantum error correcting codes. It answers the question: <em>what operators leave the codewords unchanged?</em></p>
+
+<h3>Group Theory Reminder</h3>
+
+<div class="def">
+  <div class="def-title">Group (G, ·)</div>
+  A set G with a binary operation "·" satisfying:
+  <div class="math-block" style="margin-top:0.4rem;">
+    <div class="mstep"><div class="mstep-label">Closure</div><div class="mstep-body">g₁ · g₂ &#8712; G &nbsp; for all g₁, g₂ &#8712; G</div></div>
+    <div class="mstep"><div class="mstep-label">Associativity</div><div class="mstep-body">(g₁ · g₂) · g₃ = g₁ · (g₂ · g₃)</div></div>
+    <div class="mstep"><div class="mstep-label">Identity</div><div class="mstep-body">&#8707; e &#8712; G such that e · g = g · e = g &nbsp; for all g</div></div>
+    <div class="mstep"><div class="mstep-label">Inverse</div><div class="mstep-body">For each g &#8712; G, &#8707; g⁻¹ &#8712; G such that g · g⁻¹ = e</div></div>
+  </div>
+  If also g₁ · g₂ = g₂ · g₁ for all g₁, g₂, the group is <strong>abelian</strong>.
+</div>
+
+<h3>The Pauli Group 𝒢ₙ</h3>
+
+<p>The Pauli group on n qubits consists of all tensor products of Pauli matrices &#123;I, X, Y, Z&#125; across n qubits, with overall phases &plusmn;1 or &plusmn;i.</p>
+
+<div class="math-block">
+  <div class="mstep"><div class="mstep-label">𝒢₁ (1 qubit):</div><div class="mstep-body">&#123;&plusmn;I, &plusmn;iI, &plusmn;X, &plusmn;iX, &plusmn;Y, &plusmn;iY, &plusmn;Z, &plusmn;iZ&#125;</div></div>
+  <div class="mstep"><div class="mstep-label">𝒢₂ (2 qubits):</div><div class="mstep-body">&#123;&plusmn;I₁I₀, &plusmn;iI₁I₀, &plusmn;I₁X₀, ..., &plusmn;iY₁Z₀, ...&#125;</div></div>
+  <div class="mstep"><div class="mstep-label">NOT abelian:</div><div class="mstep-body">XZ = iY &ne; ZX = &minus;iY. The Pauli matrices do not always commute!</div></div>
+</div>
+
+<div class="note-box">
+  <strong>Commutation rule for Paulis:</strong> Two Pauli operators either <em>commute</em> (AB = BA) or <em>anticommute</em> (AB = &minus;BA). On a single qubit: X and Z anticommute (XZ = &minus;ZX), while X and X commute. On multiple qubits, two Pauli strings commute iff they anticommute on an even number of qubit positions.
+</div>
+
+<h3>The Stabilizer Set S(C)</h3>
+
+<div class="def">
+  <div class="def-title">Stabilizer Set</div>
+  Given a quantum error correcting code C (a set of quantum states called <em>codewords</em>), the stabilizer set is:
+  <div class="math-block" style="margin-top:0.4rem;">
+    <div class="eq">S(C) = &#123; M &#8712; 𝒢ₙ : M|ψ⟩ = |ψ⟩ &nbsp; for all |ψ⟩ &#8712; C &#125;</div>
+  </div>
+  S(C) is the set of all Pauli operators that leave every codeword unchanged.
+</div>
+
+<div class="thm">
+  <div class="thm-title">S(C) is an Abelian Group</div>
+  <strong>Proof:</strong>
+  <div class="math-block" style="margin-top:0.4rem;">
+    <div class="mstep"><div class="mstep-label">Closure</div><div class="mstep-body">S₁, S₂ &#8712; S(C) → S₁S₂|ψ⟩ = S₁|ψ⟩ = |ψ⟩ → S₁S₂ &#8712; S(C) ✓</div></div>
+    <div class="mstep"><div class="mstep-label">Identity</div><div class="mstep-body">I|ψ⟩ = |ψ⟩ → I &#8712; S(C) ✓</div></div>
+    <div class="mstep"><div class="mstep-label">Inverse</div><div class="mstep-body">S &#8712; S(C) → S⁻¹|ψ⟩ = S⁻¹(S|ψ⟩) = e|ψ⟩ = |ψ⟩ → S⁻¹ &#8712; S(C) ✓</div></div>
+    <div class="mstep"><div class="mstep-label">Abelian</div><div class="mstep-body">S₁S₂|ψ⟩ = S₁|ψ⟩ = |ψ⟩ and S₂S₁|ψ⟩ = S₂|ψ⟩ = |ψ⟩ → same result → S₁S₂ = S₂S₁ ✓</div></div>
+  </div>
+</div>
+
+<h3>Generator Set G</h3>
+
+<div class="def">
+  <div class="def-title">Generator Set</div>
+  Instead of listing all elements of S(C), we can specify a small set of generators G = &#123;g₁, g₂, ..., gₘ&#125; such that every element of S(C) can be written as a product of generators:
+  <div class="math-block" style="margin-top:0.4rem;">
+    <div class="eq">S(C) = &#123; g₁<sup>α₁</sup> g₂<sup>α₂</sup> ... gₘ<sup>αₘ</sup> | αᵢ &#8712; &#123;0,1&#125; &#125;</div>
+  </div>
+  If |G| = M generators → |S(C)| = 2<sup>M</sup> stabilizers (much more compact!).
+</div>
+
+<h3>Example: Quantum Repetition Code</h3>
+
+<p>The code C = &#123;α|000⟩ + β|111⟩&#125; has the following stabilizer set and generators:</p>
+
+<div class="math-block">
+  <div class="mstep"><div class="mstep-label">S(C) =</div><div class="mstep-body">&#123;I, Z₁Z₀, Z₂Z₀, Z₂Z₁&#125; &nbsp; (4 elements = 2² → need 2 generators)</div></div>
+  <div class="mstep"><div class="mstep-label">Generators:</div><div class="mstep-body">G = &#123;g₁, g₂&#125; = &#123;Z₁Z₀, Z₂Z₁&#125;</div></div>
+  <div class="mstep"><div class="mstep-label">Verify g₁:</div><div class="mstep-body">Z₁Z₀(α|000⟩+β|111⟩) = α(+1)(+1)|000⟩ + β(&minus;1)(&minus;1)|111⟩ = α|000⟩+β|111⟩ ✓</div></div>
+  <hr class="math-sep">
+  <div class="mstep"><div class="mstep-label">Matrix form:</div><div class="mstep-body">
+    The generator matrix G (rows = generators, columns = qubits):<br><br>
+    <span class="mx"><table><tbody>
+      <tr><td>I</td><td>Z</td><td>Z</td></tr>
+      <tr><td>Z</td><td>Z</td><td>I</td></tr>
+    </tbody></table></span>
+    &nbsp; rows: g₁, g₂ &nbsp; columns: q₂, q₁, q₀
+  </div></div>
+</div>
+
+<!-- Interactive stabilizer explorer -->
+<canvas id="cvStab" width="560" height="200"></canvas>
+<div class="canvas-caption">Explore which Pauli operators stabilize the encoded state α|000⟩ + β|111⟩.</div>
+<div class="controls" style="flex-wrap:wrap;gap:0.4rem;">
+  <span style="font-size:0.8rem;color:var(--muted);">Test operator:</span>
+  <button class="btn sm" onclick="testStab('I')">I⊗I⊗I</button>
+  <button class="btn sm" onclick="testStab('ZZI')">Z₁Z₀⊗I</button>
+  <button class="btn sm" onclick="testStab('IZZ')">I⊗Z₂Z₁</button>
+  <button class="btn sm" onclick="testStab('ZZZ')">Z⊗Z⊗Z</button>
+  <button class="btn sm" onclick="testStab('XXX')">X⊗X⊗X</button>
+  <button class="btn sm" onclick="testStab('ZZZ2')">Z₂Z₀</button>
+</div>
+<div id="stabInfo" style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:var(--ink2);margin-top:0.4rem;line-height:1.8;min-height:2rem;"></div>
+
+<!-- Exercise 4.1 -->
+<div class="ex-block">
+  <div class="ex-header"><span class="ex-tag">Ex 4.1</span><span class="ex-title">Is X₀X₁X₂ a stabilizer?</span></div>
+  <div class="ex-body">
+    <p>Apply X₀X₁X₂ to the codeword |Ψ⟩ = α|000⟩ + β|111⟩. Does it stabilize |Ψ⟩? (Recall X|0⟩ = |1⟩ and X|1⟩ = |0⟩.)</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <input class="answer-input wide" id="a41" placeholder="X₀X₁X₂|Ψ⟩ = ...">
+      <button class="btn sm" onclick="chkContains('a41',['no','beta|000','different','not','flips'],'fb41')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h41')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h41">X₀X₁X₂(α|000⟩+β|111⟩) = α|111⟩+β|000⟩ = β|000⟩+α|111⟩. This is NOT the same as |Ψ⟩ = α|000⟩+β|111⟩ (unless α=β). So X₀X₁X₂ is NOT a stabilizer of this code.</div>
+    <div class="feedback" id="fb41"></div>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 5 — SYNDROME EXTRACTION -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section id="s5" class="section">
+<div class="section-num">Section 05</div>
+<h2>Syndrome Extraction</h2>
+
+<p>The generators of the stabilizer code tell us exactly what to measure. The key insight: measuring a generator either confirms the state is in the code space (eigenvalue +1) or reveals that an error occurred (eigenvalue &minus;1), without disturbing the quantum information.</p>
+
+<h3>Commuting vs Anticommuting with Errors</h3>
+
+<p>Suppose the channel introduces a Pauli error E on the codeword |ψ⟩ &#8712; C. The corrupted state is |ψ̃⟩ = E|ψ⟩. Now we apply a generator gᵢ:</p>
+
+<div class="math-block">
+  <div class="mstep"><div class="mstep-label">If gᵢE = Egᵢ (commute):</div><div class="mstep-body">gᵢE|ψ⟩ = Egᵢ|ψ⟩ = E|ψ⟩ = |ψ̃⟩ → eigenvalue +1 → syndrome bit sᵢ = 0</div></div>
+  <div class="mstep"><div class="mstep-label">If gᵢE = &minus;Egᵢ (anticommute):</div><div class="mstep-body">gᵢE|ψ⟩ = &minus;Egᵢ|ψ⟩ = &minus;E|ψ⟩ = &minus;|ψ̃⟩ → eigenvalue &minus;1 → syndrome bit sᵢ = 1</div></div>
+</div>
+
+<div class="insight">
+  <strong>Different errors give different syndromes.</strong> This is how we identify which error occurred: by checking which generators anticommute with it. The syndrome S = (s₁, s₂, ..., sₘ) uniquely identifies the error (for a good code).
+</div>
+
+<h3>The Ancilla Circuit for Syndrome Measurement</h3>
+
+<p>We cannot just apply gᵢ and read the eigenvalue — that would collapse |ψ̃⟩. Instead, we use an ancilla qubit and controlled-gᵢ to extract the eigenvalue into the ancilla:</p>
+
+<div class="circuit">
+  <div class="circuit-row">
+    <span class="circuit-label">|ψ̃⟩</span>
+    <div class="circuit-line" style="width:1rem;"></div>
+    <div style="border:2px solid var(--purple);padding:0.2rem 0.6rem;font-family:'IBM Plex Mono',monospace;font-weight:700;color:var(--purple);border-radius:3px;display:inline-block;">gᵢ</div>
+    <div class="circuit-line" style="width:1rem;"></div>
+    <span class="circuit-out">|ψ̃⟩ (unchanged)</span>
+  </div>
+  <div class="circuit-row" style="margin-top:0.3rem;">
+    <span class="circuit-label">|0⟩</span>
+    <div class="circuit-line"></div>
+    <div class="circuit-gate h">H</div>
+    <div class="circuit-line" style="width:0.5rem;"></div>
+    <div style="width:2px;height:2rem;background:var(--purple);display:inline-block;vertical-align:middle;"></div>
+    <div class="circuit-line" style="width:0.5rem;"></div>
+    <div class="circuit-gate h">H</div>
+    <div class="circuit-line"></div>
+    <div class="circuit-meas">M</div>
+    <div class="circuit-line"></div>
+    <span class="circuit-out">sᵢ &#8712; &#123;0,1&#125;</span>
+  </div>
+</div>
+
+<p>Let's trace the ancilla through this circuit step by step:</p>
+
+<div class="math-block">
+  <div class="mstep"><div class="mstep-label">|ψ₀⟩ =</div><div class="mstep-body">|0⟩ ⊗ |ψ̃⟩</div></div>
+  <div class="mstep"><div class="mstep-label">After H on ancilla:</div><div class="mstep-body">|ψ₁⟩ = |+⟩ ⊗ |ψ̃⟩ = (|0⟩ + |1⟩)/√2 ⊗ |ψ̃⟩</div></div>
+  <div class="mstep"><div class="mstep-label">After controlled-gᵢ:</div><div class="mstep-body">|ψ₂⟩ = (|0⟩|ψ̃⟩ + |1⟩gᵢ|ψ̃⟩)/√2 = (|0⟩|ψ̃⟩ &plusmn; |1⟩|ψ̃⟩)/√2 = |&plusmn;⟩ ⊗ |ψ̃⟩</div></div>
+  <div class="mstep"><div class="mstep-label">After H on ancilla:</div><div class="mstep-body">|ψ₃⟩ = |"0" or "1"⟩ ⊗ |ψ̃⟩ &nbsp;&nbsp; <span class="eq-note">(ancilla tells us eigenvalue of gᵢ)</span></div></div>
+  <div class="mstep"><div class="mstep-label">Measure ancilla:</div><div class="mstep-body">Get sᵢ = 0 if gᵢE commutes (no error signature for gᵢ) &nbsp; or &nbsp; sᵢ = 1 if anticommutes (error detected!)</div></div>
+  <hr class="math-sep">
+  <div class="mstep"><div class="mstep-label" style="color:var(--green);">Key fact:</div><div class="mstep-body">|ψ̃⟩ is UNCHANGED throughout this process. The data qubit is unperturbed.</div></div>
+</div>
+
+<h3>Full Syndrome Table for the Repetition Code</h3>
+
+<div class="math-block">
+  <div style="display:grid;grid-template-columns:80px 100px 1fr;gap:0.4rem 1rem;font-size:0.83rem;align-items:center;">
+    <strong>Error E</strong><strong>Syndrome (s₂,s₁)</strong><strong>Correction</strong>
+    <span>I</span><span class="c-g">(0, 0)</span><span>None needed ✓</span>
+    <span>X₀</span><span class="c-n">(0, 1)</span><span>Apply X₀</span>
+    <span>X₁</span><span class="c-n">(1, 1)</span><span>Apply X₁</span>
+    <span>X₂</span><span class="c-n">(1, 0)</span><span>Apply X₂</span>
+    <span style="color:var(--muted);">Z₀ = Z₁ = Z₂</span><span style="color:var(--muted);">(0, 0)</span><span style="color:var(--muted);">Ambiguous with I — cannot correct Z errors! (need Shor/surface code)</span>
+  </div>
+</div>
+
+<div class="warning">
+  <strong>Limitation:</strong> The quantum repetition code can only correct X (bit-flip) errors, not Z (phase-flip) errors. Z errors produce syndrome (0,0) — indistinguishable from no error! A full code like the <em>Shor [[9,1,3]] code</em> combines bit-flip and phase-flip repetition codes to handle both.
+</div>
+
+<div class="def">
+  <div class="def-title">Syndrome Extraction Map S<sub>E</sub></div>
+  The full syndrome extraction circuit performs the mapping:
+  <div class="math-block" style="margin-top:0.4rem;">
+    <div class="eq">S<sub>E</sub>(|0⟩ ⊗ E|ψ⟩) = |S<sub>E</sub>⟩ ⊗ E|ψ⟩</div>
+    <div class="eq-note">&nbsp;&nbsp;The ancilla contains the syndrome — the data is unchanged</div>
+  </div>
+  <strong>Example:</strong> S<sub>E</sub>(|00⟩ ⊗ X₀|ψ⟩) = |01⟩ ⊗ X₀|ψ⟩ &nbsp; (syndrome 01, apply X₀ to correct)
+</div>
+
+<!-- Interactive syndrome extraction demo -->
+<canvas id="cvSyndrome" width="560" height="220"></canvas>
+<div class="canvas-caption">Syndrome extraction — trace the ancilla state for each possible error.</div>
+<div class="controls" style="gap:0.5rem;flex-wrap:wrap;">
+  <span style="font-size:0.8rem;color:var(--muted);">Error applied:</span>
+  <button class="btn sm active" id="synI"  onclick="setSyndrome('I')">I</button>
+  <button class="btn sm" id="synX0" onclick="setSyndrome('X0')">X₀</button>
+  <button class="btn sm" id="synX1" onclick="setSyndrome('X1')">X₁</button>
+  <button class="btn sm" id="synX2" onclick="setSyndrome('X2')">X₂</button>
+  <button class="btn sm" id="synZ"  onclick="setSyndrome('Z0')">Z₀ (phase)</button>
+</div>
+<div id="synInfo" style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:var(--ink2);margin-top:0.4rem;line-height:1.9;min-height:3rem;background:#f3f0e8;border-radius:4px;padding:0.4rem 0.6rem;"></div>
+
+<!-- Exercise 5.1 -->
+<div class="ex-block">
+  <div class="ex-header"><span class="ex-tag">Ex 5.1</span><span class="ex-title">Syndrome computation</span></div>
+  <div class="ex-body">
+    <p>Using generators g₁ = Z₁Z₀ and g₂ = Z₂Z₁, compute the syndrome (s₂, s₁) for error E = X₀ (bit-flip on qubit 0). Does X₀ commute or anticommute with each generator?</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">s₁ =</span>
+      <input class="answer-input" id="a51a" placeholder="0 or 1" style="width:70px">
+      <span class="ans-label">s₂ =</span>
+      <input class="answer-input" id="a51b" placeholder="0 or 1" style="width:70px">
+      <button class="btn sm" onclick="chk2('a51a','1','a51b','0','fb51')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h51')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h51">g₁ = Z₁Z₀: Z and X anticommute on qubit 0 → g₁E = &minus;Eg₁ → s₁ = 1. &nbsp; g₂ = Z₂Z₁: X₀ only acts on qubit 0; neither Z₂ nor Z₁ overlaps with X₀ → g₂E = Eg₂ → s₂ = 0. &nbsp; Syndrome = (0,1).</div>
+    <div class="feedback" id="fb51"></div>
+  </div>
+</div>
+
+<!-- Exercise 5.2 -->
+<div class="ex-block">
+  <div class="ex-header"><span class="ex-tag">Ex 5.2</span><span class="ex-title">Why measuring ancillas doesn't disturb data?</span></div>
+  <div class="ex-body">
+    <p>After the syndrome circuit, the state is |S_E⟩ ⊗ E|ψ⟩ (product state). When we measure the ancilla and get syndrome s, what happens to the data part E|ψ⟩?</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <input class="answer-input wide" id="a52" placeholder="explain...">
+      <button class="btn sm" onclick="chkContains('a52',['unchanged','unaffected','product','same','not disturb','separable'],'fb52')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h52')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h52">Since the final state is a PRODUCT state |S_E⟩ ⊗ E|ψ⟩, measuring the ancilla (first factor) does not affect the data register (second factor). They are no longer entangled. The data qubit remains exactly E|ψ⟩, which we can then correct by applying E⁻¹.</div>
+    <div class="feedback" id="fb52"></div>
+  </div>
+</div>
+</section>
+
+<script is:inline>
+/* ── Helpers ── */
+function goTo(id){const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});}
+function showHint(id){document.getElementById(id).classList.toggle('show');}
+function setFb(id,ok,msg){const el=document.getElementById(id);if(!el)return;el.className='feedback show '+(ok?'ok':'no');el.textContent=msg;}
+function norm(s){return s.trim().toLowerCase().replace(/\s/g,'').replace('−','-');}
+function chk(iid,exp,fb){const v=norm(document.getElementById(iid).value);const ok=v===norm(String(exp))||(!isNaN(v)&&Math.abs(parseFloat(v)-parseFloat(exp))<0.02);document.getElementById(iid).className='answer-input '+(ok?'ok':'no');setFb(fb,ok,ok?'✓ Correct!':'✗ Not quite.');}
+function chk2(i1,e1,i2,e2,fb){const ok1=norm(document.getElementById(i1).value)===norm(e1);const ok2=norm(document.getElementById(i2).value)===norm(e2);document.getElementById(i1).className='answer-input '+(ok1?'ok':'no');document.getElementById(i2).className='answer-input '+(ok2?'ok':'no');setFb(fb,ok1&&ok2,ok1&&ok2?'✓ Both correct!':'✗ Not quite — check the hint.');}
+function chkContains(iid,kws,fb){const v=document.getElementById(iid).value.toLowerCase();const ok=kws.some(k=>v.includes(k));document.getElementById(iid).className='answer-input '+(ok?'ok':'no');setFb(fb,ok,ok?'✓ Correct!':'✗ Not quite.');}
+function chkApprox(iid,target,fb){const v=parseFloat(document.getElementById(iid).value.replace(',','.'));const ok=!isNaN(v)&&Math.abs(v-target)<0.002;document.getElementById(iid).className='answer-input '+(ok?'ok':'no');setFb(fb,ok,ok?`✓ Correct! ≈ ${target.toFixed(4)}`:`✗ Expected ≈ ${target.toFixed(4)}`);}
+
+/* ── Repetition code canvas ── */
+function updateRepCode(){
+  const p=parseInt(document.getElementById('slP').value)/100;
+  document.getElementById('vP').textContent=p.toFixed(2);
+  const cv=document.getElementById('cvRepCode');if(!cv)return;
+  cv.width=cv.parentElement.clientWidth-2;
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#fafaf8';ctx.fillRect(0,0,W,H);
+  const PL=55,PR=20,PT=20,PB=40,pW=W-PL-PR,pH=H-PT-PB;
+  ctx.strokeStyle='#ede9dd';ctx.lineWidth=1;ctx.setLineDash([2,3]);
+  [0.1,0.2,0.3,0.4,0.5].forEach(v=>{const y=PT+pH*(1-v/0.5);ctx.beginPath();ctx.moveTo(PL,y);ctx.lineTo(W-PR,y);ctx.stroke();ctx.fillStyle='#bbb';ctx.font="9px 'IBM Plex Mono',monospace";ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillText((v*100)+'%',PL-4,y);});
+  ctx.setLineDash([]);
+  // P_err without code (p)
+  ctx.strokeStyle='#c0392b';ctx.lineWidth=2;ctx.beginPath();
+  for(let i=0;i<=50;i++){const pi=i/100;const x=PL+i/50*pW,y=PT+pH*(1-pi/0.5);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+  ctx.stroke();
+  // P_err with code (3p^2(1-p)+p^3)
+  ctx.strokeStyle='#1a6b3a';ctx.lineWidth=2.5;ctx.beginPath();
+  for(let i=0;i<=50;i++){const pi=i/100;const pe=3*pi*pi*(1-pi)+pi*pi*pi;const x=PL+i/50*pW,y=PT+pH*(1-Math.min(pe,0.5)/0.5);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+  ctx.stroke();
+  // Crossover at p=1/3
+  const cx3=PL+(1/3)/0.5*pW;
+  ctx.strokeStyle='#888';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(cx3,PT);ctx.lineTo(cx3,PT+pH);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='#888';ctx.font="9px 'IBM Plex Mono',monospace";ctx.textAlign='center';ctx.fillText('p=1/3',cx3,PT-4);
+  // Current p marker
+  const curX=PL+p/0.5*pW;
+  const pErr=3*p*p*(1-p)+p*p*p;
+  ctx.fillStyle='#1a6b3a';ctx.beginPath();ctx.arc(curX,PT+pH*(1-Math.min(pErr,0.5)/0.5),6,0,2*Math.PI);ctx.fill();
+  ctx.fillStyle='#c0392b';ctx.beginPath();ctx.arc(curX,PT+pH*(1-p/0.5),5,0,2*Math.PI);ctx.fill();
+  // Labels
+  ctx.fillStyle='#c0392b';ctx.font="10px 'IBM Plex Mono',monospace";ctx.textAlign='left';ctx.fillText('No code: Pₑ = p',PL+5,PT+8);
+  ctx.fillStyle='#1a6b3a';ctx.fillText('Rep. code: Pₑ = 3p²(1−p)+p³',PL+5,PT+22);
+  ctx.fillStyle='#888';ctx.textAlign='center';ctx.fillText('Channel error rate p →',PL+pW/2,H-4);
+  const el=document.getElementById('repInfo');
+  if(el)el.textContent=`p = ${p.toFixed(2)} → Without code: ${(p*100).toFixed(1)}% | With code: ${(pErr*100).toFixed(2)}% | ${pErr<p?'✓ Code helps!':'✗ Code hurts (p > 1/3)'}`;
+}
+
+/* ── QRC error demo ── */
+const QRC_ERRORS={
+  I:{state:'α|000⟩ + β|111⟩',syndrome:'(0, 0)',correction:'None needed ✓',color:'#1a6b3a'},
+  X0:{state:'α|100⟩ + β|011⟩',syndrome:'(0, 1)',correction:'Apply X₀ → |Ψ⟩ recovered',color:'#c0392b'},
+  X1:{state:'α|010⟩ + β|101⟩',syndrome:'(1, 1)',correction:'Apply X₁ → |Ψ⟩ recovered',color:'#c0392b'},
+  X2:{state:'α|001⟩ + β|110⟩',syndrome:'(1, 0)',correction:'Apply X₂ → |Ψ⟩ recovered',color:'#c0392b'},
+};
+
+let curError='I';
+function setError(e){
+  curError=e;
+  ['I','X0','X1','X2'].forEach(k=>{const b=document.getElementById('err'+k);if(b)b.classList.toggle('active',k===e);});
+  drawQRC();
+}
+
+function drawQRC(){
+  const cv=document.getElementById('cvQRC');if(!cv)return;
+  cv.width=cv.parentElement.clientWidth-2;
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#fafaf8';ctx.fillRect(0,0,W,H);
+  const d=QRC_ERRORS[curError]||QRC_ERRORS['I'];
+  // Encode box
+  const box=(x,y,w,h,label,col)=>{ctx.fillStyle=col+'22';ctx.fillRect(x,y,w,h);ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.strokeRect(x,y,w,h);ctx.fillStyle=col;ctx.font="bold 11px 'IBM Plex Mono',monospace";ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(label,x+w/2,y+h/2);};
+  const wire=(x1,y,x2)=>{ctx.strokeStyle='#b0aaa0';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x1,y);ctx.lineTo(x2,y);ctx.stroke();};
+  // 3 data wires
+  const wY=[40,90,140];const labels=['q₂','q₁','q₀'];
+  wY.forEach((y,i)=>{
+    ctx.fillStyle='#888';ctx.font="10px 'IBM Plex Mono',monospace";ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillText(labels[i],28,y);
+    wire(30,y,W-30);
+  });
+  // Error marker
+  const errX=W/2;
+  const errCols={'I':'#1a6b3a','X0':'#c0392b','X1':'#c0392b','X2':'#c0392b'};
+  const errQubits={'I':[],'X0':[2],'X1':[1],'X2':[0]};
+  const eQ=errQubits[curError]||[];
+  eQ.forEach(q=>{
+    ctx.fillStyle='#c0392b22';ctx.fillRect(errX-16,wY[q]-16,32,32);
+    ctx.strokeStyle='#c0392b';ctx.lineWidth=2;ctx.strokeRect(errX-16,wY[q]-16,32,32);
+    ctx.fillStyle='#c0392b';ctx.font="bold 14px 'IBM Plex Mono',monospace";ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('X',errX,wY[q]);
+  });
+  if(eQ.length===0){ctx.fillStyle='#1a6b3a';ctx.font="11px 'IBM Plex Mono',monospace";ctx.textAlign='center';ctx.fillText('No error (I)',errX,60);}
+  // Syndrome boxes
+  const sBox=errX+60;
+  ctx.fillStyle='#888';ctx.font="10px 'IBM Plex Mono',monospace";ctx.textAlign='left';ctx.textBaseline='top';ctx.fillText('Syndrome',sBox,20);
+  ctx.fillStyle=d.color+'22';ctx.fillRect(sBox,35,90,35);
+  ctx.strokeStyle=d.color;ctx.lineWidth=2;ctx.strokeRect(sBox,35,90,35);
+  ctx.fillStyle=d.color;ctx.font="bold 14px 'IBM Plex Mono',monospace";ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(d.syndrome,sBox+45,52);
+  // State label
+  ctx.fillStyle='#555';ctx.font="11px 'IBM Plex Mono',monospace";ctx.textAlign='left';ctx.textBaseline='top';
+  ctx.fillText('State: '+d.state,30,165);
+  ctx.fillStyle=d.color;ctx.fillText('Correction: '+d.correction,30,185);
+  // Encode label
+  ctx.fillStyle='#888877';ctx.font="9px 'IBM Plex Mono',monospace";ctx.textAlign='center';
+  ctx.fillText('← Encode →',errX/2,12);ctx.fillText('← Error →',errX,12);
+}
+
+/* ── Stabilizer explorer ── */
+const STAB_INFO={
+  'I':{result:'|Ψ⟩ unchanged',is:true,eigenvalue:'+1'},
+  'ZZI':{result:'α|000⟩+β|111⟩',is:true,eigenvalue:'+1 — g₁ = Z₁Z₀ IS a stabilizer'},
+  'IZZ':{result:'α|000⟩+β|111⟩',is:true,eigenvalue:'+1 — g₂ = Z₂Z₁ IS a stabilizer'},
+  'ZZZ':{result:'(−1)·(−1)|111⟩ = |111⟩... actually +|Ψ⟩',is:true,eigenvalue:'+1 — Z₂Z₁Z₀ = g₁·g₂ IS a stabilizer'},
+  'XXX':{result:'β|000⟩+α|111⟩ ≠ |Ψ⟩ (unless α=β)',is:false,eigenvalue:'not an eigenvalue — NOT a stabilizer'},
+  'ZZZ2':{result:'α|000⟩+β|111⟩',is:true,eigenvalue:'+1 — Z₂Z₀ = g₁g₂ IS a stabilizer'},
+};
+function testStab(op){
+  const info=STAB_INFO[op];if(!info)return;
+  const cv=document.getElementById('cvStab');if(!cv)return;
+  cv.width=cv.parentElement.clientWidth-2;
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#fafaf8';ctx.fillRect(0,0,W,H);
+  const col=info.is?'#1a6b3a':'#c0392b';
+  ctx.fillStyle=col+'22';ctx.fillRect(20,20,W-40,H-40);
+  ctx.strokeStyle=col;ctx.lineWidth=2;ctx.strokeRect(20,20,W-40,H-40);
+  ctx.fillStyle=col;ctx.font="bold 14px 'IBM Plex Mono',monospace";ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(info.is?'✓ IS a Stabilizer':'✗ NOT a Stabilizer',W/2,60);
+  ctx.fillStyle='#555';ctx.font="12px 'IBM Plex Mono',monospace";
+  ctx.fillText('Eigenvalue: '+info.eigenvalue,W/2,95);
+  ctx.fillText('Result: '+info.result,W/2,125);
+  const el=document.getElementById('stabInfo');
+  if(el)el.textContent=`Operator applied to α|000⟩+β|111⟩ → ${info.result} → Eigenvalue: ${info.eigenvalue}`;
+}
+
+/* ── Syndrome extraction demo ── */
+const SYN_INFO={
+  'I':{s:'(0, 0)',state:'α|000⟩ + β|111⟩',g1:'g₁E = Eg₁ (commute) → s₁ = 0',g2:'g₂E = Eg₂ (commute) → s₂ = 0',corr:'No correction needed ✓',col:'#1a6b3a'},
+  'X0':{s:'(0, 1)',state:'α|100⟩ + β|011⟩',g1:'g₁ = Z₁Z₀ anticommutes with X₀ (qubit 0) → s₁ = 1',g2:'g₂ = Z₂Z₁ commutes with X₀ (no overlap) → s₂ = 0',corr:'Apply X₀ to qubit 0 to correct',col:'#c0392b'},
+  'X1':{s:'(1, 1)',state:'α|010⟩ + β|101⟩',g1:'g₁ = Z₁Z₀ anticommutes with X₁ (qubit 1) → s₁ = 1',g2:'g₂ = Z₂Z₁ anticommutes with X₁ (qubit 1) → s₂ = 1',corr:'Apply X₁ to qubit 1 to correct',col:'#c0392b'},
+  'X2':{s:'(1, 0)',state:'α|001⟩ + β|110⟩',g1:'g₁ = Z₁Z₀ commutes with X₂ (no overlap) → s₁ = 0',g2:'g₂ = Z₂Z₁ anticommutes with X₂ (qubit 2) → s₂ = 1',corr:'Apply X₂ to qubit 2 to correct',col:'#c0392b'},
+  'Z0':{s:'(0, 0)',state:'α|000⟩ − β|111⟩',g1:'g₁ = Z₁Z₀ commutes with Z₀ → s₁ = 0',g2:'g₂ = Z₂Z₁ commutes with Z₀ → s₂ = 0',corr:'⚠ Syndrome (0,0) — INDISTINGUISHABLE from I! Cannot correct this code alone.',col:'#b7530a'},
+};
+function setSyndrome(e){
+  Object.keys(SYN_INFO).forEach(k=>{const b=document.getElementById('syn'+k.replace('0',''));if(b)b.classList.remove('active');});
+  const b=document.getElementById('syn'+e.replace('0',''));if(b)b.classList.add('active');
+  const cv=document.getElementById('cvSyndrome');if(!cv)return;
+  cv.width=cv.parentElement.clientWidth-2;
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#fafaf8';ctx.fillRect(0,0,W,H);
+  const d=SYN_INFO[e]||SYN_INFO['I'];
+  // Draw syndrome visual
+  const sx=W/2-50,sy=20,sw=100,sh=50;
+  ctx.fillStyle=d.col+'22';ctx.fillRect(sx,sy,sw,sh);ctx.strokeStyle=d.col;ctx.lineWidth=2;ctx.strokeRect(sx,sy,sw,sh);
+  ctx.fillStyle=d.col;ctx.font="bold 20px 'IBM Plex Mono',monospace";ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(d.s,sx+sw/2,sy+sh/2);
+  ctx.fillStyle='#888';ctx.font="9px 'IBM Plex Mono',monospace";ctx.fillText('Syndrome (s₂, s₁)',sx+sw/2,sy-5);
+  const el=document.getElementById('synInfo');
+  if(el)el.textContent=`State after error: ${d.state}\ng₁ check: ${d.g1}\ng₂ check: ${d.g2}\n→ Correction: ${d.corr}`;
+}
+
+window.addEventListener('load',()=>{
+  setTimeout(()=>{updateRepCode();setError('I');testStab('ZZI');setSyndrome('I');},200);
+});
+</script>

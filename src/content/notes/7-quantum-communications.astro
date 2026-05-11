@@ -1,0 +1,675 @@
+---
+import type { NoteMeta } from '../../lib/notes';
+
+export const meta: NoteMeta = {
+  title: "Quantum Communications",
+  order: 7,
+  slug: "7-quantum-communications",
+  description: "Quantum Key Distribution, the BB84 protocol, eavesdropper detection, post-processing and privacy amplification — how quantum mechanics makes cryptography unconditionally secure.",
+  sections: [
+    { id: "s1", label: "Why QKD?" },
+    { id: "s2", label: "BB84 Protocol" },
+    { id: "s3", label: "Eavesdropper Detection" },
+    { id: "s4", label: "BB84 Analysis" },
+    { id: "s5", label: "Post-Processing" },
+  ]
+}
+---
+
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-label">Interactive Notes · Note 07</div>
+  <h1>Quantum<br><em>Communications</em></h1>
+  <p>How quantum mechanics provides cryptographic security that no computer — not even a quantum one — can break.</p>
+  <div class="cover-meta">
+    <span>Quantum Key Distribution</span>
+    <span>BB84 Protocol</span>
+    <span>Privacy Amplification</span>
+  </div>
+</div>
+
+<!-- TOC -->
+<div class="toc">
+  <div class="toc-title">Contents</div>
+  <ul class="toc-list">
+    <li><a onclick="goTo('s1')" href="javascript:void(0)">1 · Why QKD?</a></li>
+    <li><a onclick="goTo('s2')" href="javascript:void(0)">2 · BB84 Protocol</a></li>
+    <li><a onclick="goTo('s3')" href="javascript:void(0)">3 · Eavesdropper Detection</a></li>
+    <li><a onclick="goTo('s4')" href="javascript:void(0)">4 · BB84 Analysis</a></li>
+    <li><a onclick="goTo('s5')" href="javascript:void(0)">5 · Post-Processing</a></li>
+  </ul>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 1 — WHY QKD? -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section id="s1" class="section">
+<div class="section-num">Section 01</div>
+<h2>Why Quantum Key Distribution?</h2>
+
+<p>Imagine Alice and Bob want to send secret messages to each other. They need to agree on a <strong>secret key</strong> — a shared piece of information used to encrypt and decrypt messages. The problem: how do they agree on this key if their communication channel is public and anyone can listen?</p>
+
+<div class="def">
+  <div class="def-title">Key Distribution</div>
+  A cryptographic protocol where two parties (Alice and Bob) can agree on a secret key by communicating over a <strong>non-secure channel</strong> — a channel that anyone can observe.
+</div>
+
+<h3>The Classical Approach and its Weakness</h3>
+
+<p>Classical cryptography solves this using mathematically hard problems. RSA, for example, relies on the fact that multiplying two large primes is easy, but factoring their product is believed to be hard. Alice and Bob exchange public information derived from these hard problems, and only they can compute the secret key.</p>
+
+<div class="note-box">
+  <strong>The fundamental problem:</strong> classical security assumes that certain computational problems are hard. But this is only a conjecture — we don't have a proof. Worse, Shor's quantum algorithm can factor integers in polynomial time, breaking RSA entirely on a sufficiently powerful quantum computer.
+</div>
+
+<div class="insight">
+  <strong>Quantum cryptography is fundamentally different.</strong> Instead of relying on computational hardness (which could be defeated by better algorithms or faster computers), it relies on the <em>laws of physics</em> — specifically, quantum mechanics. No amount of computation can break it, because the security comes from nature itself.
+</div>
+
+<h3>The Core Idea</h3>
+
+<p>The key quantum mechanical property we will exploit is: <strong>measuring a quantum state disturbs it</strong>. If Eve tries to listen in by measuring the qubits Alice sends to Bob, she inevitably leaves a detectable trace. Alice and Bob can check for this trace and know if their channel is compromised.</p>
+
+<div class="math-block">
+  <div class="mstep"><div class="mstep-label">Classical</div><div class="mstep-body">Copying information leaves no trace. Eve can tap the wire and forward identical copies — Alice and Bob never know.</div></div>
+  <div class="mstep"><div class="mstep-label">Quantum</div><div class="mstep-body">Measuring a qubit in the wrong basis collapses its superposition. The forwarded qubit is now a different state. This error is detectable!</div></div>
+</div>
+
+<!-- Exercise 1.1 -->
+<div class="ex-block">
+  <div class="ex-header"><span class="ex-tag">Ex 1.1</span><span class="ex-title">Why can't Eve just copy the qubit?</span></div>
+  <div class="ex-body">
+    <p>Eve wants to intercept Alice's qubit, make a copy, keep the original, and forward the copy. What fundamental theorem prevents this?</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <input class="answer-input wide" id="a11" placeholder="theorem name...">
+      <button class="btn sm" onclick="chkContains('a11',['no-cloning','nocloning','cloning'],'fb11')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h11')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h11">The No-Cloning Theorem states that it is impossible to create an identical copy of an arbitrary unknown quantum state. Eve cannot clone the qubit — she must measure it, which disturbs it.</div>
+    <div class="feedback" id="fb11"></div>
+  </div>
+</div>
+
+<!-- Exercise 1.2 -->
+<div class="ex-block">
+  <div class="ex-header"><span class="ex-tag">Ex 1.2</span><span class="ex-title">Security basis</span></div>
+  <div class="ex-body">
+    <p>Classical RSA security is "computational" — it assumes factoring is hard. What kind of security does quantum cryptography provide?</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <input class="answer-input wide" id="a12" placeholder="type of security...">
+      <button class="btn sm" onclick="chkContains('a12',['physics','physical','information','unconditional','nature'],'fb12')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h12')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h12">Information-theoretic (or unconditional) security — based on the laws of physics, not computational assumptions. No algorithm, even a quantum one, can break it.</div>
+    <div class="feedback" id="fb12"></div>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 2 — BB84 PROTOCOL -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section id="s2" class="section">
+<div class="section-num">Section 02</div>
+<h2>The BB84 Protocol</h2>
+
+<p>BB84 is the first and most famous quantum key distribution protocol, invented in 1984 by Charles Bennett and Gilles Brassard. It allows Alice and Bob to agree on a secret key using a quantum channel, even if an eavesdropper (Eve) is listening.</p>
+
+<div class="def">
+  <div class="def-title">The Two Bases</div>
+  BB84 uses two measurement bases, each with two orthogonal states:
+  <div class="math-block" style="margin-top:0.5rem;">
+    <div class="mstep"><div class="mstep-label" style="color:var(--accent);">⊕ basis (Z)</div><div class="mstep-body">|0⟩ encodes bit 0 &nbsp;&nbsp; |1⟩ encodes bit 1</div></div>
+    <div class="mstep"><div class="mstep-label" style="color:var(--red);">⊗ basis (X)</div><div class="mstep-body">|+⟩ encodes bit 0 &nbsp;&nbsp; |−⟩ encodes bit 1</div></div>
+  </div>
+  The key property: measuring in the wrong basis gives a <strong>random result</strong> with probability 1/2.
+</div>
+
+<div class="math-block">
+  <div class="mstep"><div class="mstep-label">Why random?</div><div class="mstep-body">
+    |⟨0|+⟩|² = |⟨0|−⟩|² = |⟨1|+⟩|² = |⟨1|−⟩|² = 1/2<br>
+    <span class="eq-note">→ If you measure |+⟩ in the Z basis, you get 0 or 1 each with 50% probability. Completely random!</span>
+  </div></div>
+</div>
+
+<h3>The 6 Steps of BB84</h3>
+
+<div class="steps">
+  <div class="step"><div class="step-num">1</div><div><strong>Generation:</strong> Alice generates a random sequence of bits (0s and 1s) and for each bit, randomly chooses a basis (⊕ or ⊗). She encodes each bit as the corresponding qubit.</div></div>
+  <div class="step"><div class="step-num">2</div><div><strong>Transmission:</strong> Alice sends all qubits to Bob over the public quantum channel.</div></div>
+  <div class="step"><div class="step-num">3</div><div><strong>Reception:</strong> Bob, for each qubit, independently and randomly chooses a measurement basis. He records the result of each measurement.</div></div>
+  <div class="step"><div class="step-num">4</div><div><strong>Basis comparison:</strong> Alice and Bob publicly announce which basis they used for each position (NOT the bits themselves). They keep only the bits where they happened to use the same basis — about 50% of bits on average.</div></div>
+  <div class="step"><div class="step-num">5</div><div><strong>Security check:</strong> Alice and Bob publicly compare a small random subset of their kept bits. If an eavesdropper was present, these bits will contain errors. Too many errors → abort.</div></div>
+  <div class="step"><div class="step-num">6</div><div><strong>Secret key:</strong> If the security check passes, the remaining unpublished kept bits form the shared secret key.</div></div>
+</div>
+
+<h3>A Concrete Example</h3>
+
+<div class="math-block">
+  <style>
+  .bb84-table { border-collapse: collapse; width: 100%; font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; margin: 0.5rem 0; }
+  .bb84-table th { background: var(--ink); color: white; padding: 0.3rem 0.5rem; text-align: center; font-weight: 600; }
+  .bb84-table td { border: 1px solid var(--line); padding: 0.25rem 0.5rem; text-align: center; }
+  .bb84-table .match { background: var(--green-hl); color: var(--green); font-weight: 700; }
+  .bb84-table .mismatch { background: var(--red-hl); color: #999; }
+  .bb84-table .discard { background: #f3f0e8; color: #bbb; }
+  </style>
+  <table class="bb84-table">
+    <tr>
+      <th>Position</th>
+      <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th>
+    </tr>
+    <tr>
+      <td style="font-weight:600;background:#f5f2ea;">Alice bit</td>
+      <td>0</td><td>1</td><td>0</td><td>0</td><td>1</td><td>0</td><td>1</td><td>0</td><td>0</td><td>1</td>
+    </tr>
+    <tr>
+      <td style="font-weight:600;background:#f5f2ea;">Alice basis</td>
+      <td>⊕</td><td>⊗</td><td>⊗</td><td>⊕</td><td>⊕</td><td>⊕</td><td>⊗</td><td>⊗</td><td>⊕</td><td>⊗</td>
+    </tr>
+    <tr>
+      <td style="font-weight:600;background:#f5f2ea;">Tx qubit</td>
+      <td>|0⟩</td><td>|−⟩</td><td>|+⟩</td><td>|0⟩</td><td>|1⟩</td><td>|0⟩</td><td>|−⟩</td><td>|+⟩</td><td>|0⟩</td><td>|−⟩</td>
+    </tr>
+    <tr>
+      <td style="font-weight:600;background:#f5f2ea;">Bob basis</td>
+      <td>⊕</td><td>⊕</td><td>⊗</td><td>⊗</td><td>⊕</td><td>⊗</td><td>⊕</td><td>⊕</td><td>⊕</td><td>⊗</td>
+    </tr>
+    <tr>
+      <td style="font-weight:600;background:#f5f2ea;">Bob bit</td>
+      <td>0</td><td>?</td><td>0</td><td>?</td><td>1</td><td>?</td><td>?</td><td>?</td><td>0</td><td>1</td>
+    </tr>
+    <tr>
+      <td style="font-weight:600;background:#f5f2ea;">Match?</td>
+      <td class="match">✓</td>
+      <td class="mismatch">✗</td>
+      <td class="match">✓</td>
+      <td class="mismatch">✗</td>
+      <td class="match">✓</td>
+      <td class="mismatch">✗</td>
+      <td class="mismatch">✗</td>
+      <td class="mismatch">✗</td>
+      <td class="match">✓</td>
+      <td class="match">✓</td>
+    </tr>
+    <tr>
+      <td style="font-weight:600;background:#f5f2ea;">Kept bit</td>
+      <td class="match">0</td>
+      <td class="discard">—</td>
+      <td class="match">0</td>
+      <td class="discard">—</td>
+      <td class="match">1</td>
+      <td class="discard">—</td>
+      <td class="discard">—</td>
+      <td class="discard">—</td>
+      <td class="match">0</td>
+      <td class="match">1</td>
+    </tr>
+  </table>
+  <div style="margin-top:0.5rem;font-size:0.78rem;color:var(--muted);">? = random measurement (wrong basis) &nbsp;·&nbsp; Green = matched basis, kept &nbsp;·&nbsp; Discarded when bases differ</div>
+</div>
+
+<p>After comparing bases, Alice and Bob share positions 1, 3, 5, 9, 10 — their kept bits form the raw key <strong>00101</strong>.</p>
+
+<!-- Interactive BB84 simulator -->
+<canvas id="cvBB84" width="560" height="240"></canvas>
+<div class="canvas-caption">Click "Run BB84" to simulate one round. Each run generates random bits and bases.</div>
+<div class="controls" style="gap:0.5rem;">
+  <button class="btn" onclick="runBB84()">▶ Run BB84</button>
+  <button class="btn ghost" onclick="runBB84()">↺ New random run</button>
+  <span class="ctrl-val" id="bb84KeyLen" style="color:var(--green);font-size:0.8rem;"></span>
+</div>
+<div id="bb84Info" style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:var(--ink2);margin-top:0.4rem;line-height:1.8;min-height:1.5rem;"></div>
+
+<!-- Exercise 2.1 -->
+<div class="ex-block">
+  <div class="ex-header"><span class="ex-tag">Ex 2.1</span><span class="ex-title">Basis mismatch probability</span></div>
+  <div class="ex-body">
+    <p>Alice chooses each basis randomly (50% ⊕, 50% ⊗). Bob does the same independently. What is the probability that their bases match for any given bit?</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">P(match) =</span>
+      <input class="answer-input" id="a21" placeholder="e.g. 1/2">
+      <button class="btn sm" onclick="chkApprox('a21', 0.5, 'fb21')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h21')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h21">P(both ⊕) + P(both ⊗) = (1/2)(1/2) + (1/2)(1/2) = 1/2.</div>
+    <div class="feedback" id="fb21"></div>
+  </div>
+</div>
+
+<!-- Exercise 2.2 -->
+<div class="ex-block">
+  <div class="ex-header"><span class="ex-tag">Ex 2.2</span><span class="ex-title">Wrong-basis measurement</span></div>
+  <div class="ex-body">
+    <p>Alice sends |+⟩ (bit 0 in ⊗ basis). Bob mistakenly measures in the ⊕ basis. What is P(Bob gets 0) and P(Bob gets 1)?</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">P(0) =</span>
+      <input class="answer-input" id="a22a" placeholder="..." style="width:80px">
+      <span class="ans-label">P(1) =</span>
+      <input class="answer-input" id="a22b" placeholder="..." style="width:80px">
+      <button class="btn sm" onclick="chk2('a22a','1/2','a22b','1/2','fb22')">Check</button>
+    </div>
+    <div class="feedback hint" id="h22">|⟨0|+⟩|² = (1/√2)² = 1/2 and |⟨1|+⟩|² = 1/2. Completely random!</div>
+    <div class="feedback" id="fb22"></div>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 3 — EAVESDROPPER DETECTION -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section id="s3" class="section">
+<div class="section-num">Section 03</div>
+<h2>Eavesdropper Detection</h2>
+
+<p>What happens if Eve intercepts the quantum channel? Let's trace exactly what occurs.</p>
+
+<div class="def">
+  <div class="def-title">Eve's Dilemma</div>
+  Eve sits between Alice and Bob: A → E → B. She must measure each qubit to learn information, then forward something to Bob. But she doesn't know which basis Alice used — she must guess.
+</div>
+
+<h3>Why Eve Gets Caught</h3>
+
+<p>Eve guesses the wrong basis 50% of the time. When she measures in the wrong basis:</p>
+
+<div class="math-block">
+  <div class="mstep"><div class="mstep-label">Example:</div><div class="mstep-body">Alice sends |0⟩ (Z-basis, bit 0). Eve measures in X-basis → gets |+⟩ or |−⟩ randomly, say |+⟩. Eve forwards |+⟩ to Bob.</div></div>
+  <div class="mstep"><div class="mstep-label">Bob measures</div><div class="mstep-body">in Z-basis (matching Alice): P(Bob gets 1) = |⟨1|+⟩|² = 1/2 → <span class="c-n" style="font-weight:700;">error!</span> Bob should have gotten 0.</div></div>
+  <div class="mstep"><div class="mstep-label">Net effect:</div><div class="mstep-body">When Alice and Bob use the same basis, there's a 25% chance of an error (50% Eve uses wrong basis × 50% Bob then gets wrong bit). This error is detectable in the security check!</div></div>
+</div>
+
+<div class="insight">
+  <strong>The probability of Eve NOT being detected</strong> on N<sub>p</sub> published bits, given that she is eavesdropping, is:<br>
+  <div class="math-block" style="margin-top:0.4rem;">
+    <div class="eq">P(no detection) = P(no errors on Nₚ bits) = (1/2)<sup>Nₚ</sup></div>
+    <div class="eq-note">&nbsp;&nbsp;→ as Nₚ increases, P(detection) = 1 − (1/2)<sup>Nₚ</sup> → 1</div>
+  </div>
+  Even with 20 published bits, P(detection) > 99.9999%!
+</div>
+
+<h3>Worked Example with Eve</h3>
+
+<div class="math-block">
+  <table class="bb84-table" style="font-size:0.73rem;">
+    <tr>
+      <th>Position</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
+    </tr>
+    <tr><td style="background:#f5f2ea;font-weight:600;">Alice bit</td><td>0</td><td>1</td><td>0</td><td>0</td><td>1</td></tr>
+    <tr><td style="background:#f5f2ea;font-weight:600;">Alice basis</td><td>⊕</td><td>⊗</td><td>⊕</td><td>⊗</td><td>⊕</td></tr>
+    <tr><td style="background:#f5f2ea;font-weight:600;">Tx qubit</td><td>|0⟩</td><td>|−⟩</td><td>|0⟩</td><td>|+⟩</td><td>|1⟩</td></tr>
+    <tr><td style="background:#f5f2ea;font-weight:600;">Eve basis</td><td>⊕</td><td>⊕</td><td>⊗</td><td>⊗</td><td>⊗</td></tr>
+    <tr><td style="background:#f5f2ea;font-weight:600;">Eve reads</td>
+      <td style="color:var(--green)">0</td>
+      <td style="color:var(--red)">?</td>
+      <td style="color:var(--red)">?</td>
+      <td style="color:var(--green)">0</td>
+      <td style="color:var(--red)">?</td>
+    </tr>
+    <tr><td style="background:#f5f2ea;font-weight:600;">Eve forwards</td><td>|0⟩</td><td>|0⟩ or |1⟩</td><td>|+⟩ or |−⟩</td><td>|+⟩</td><td>|+⟩ or |−⟩</td></tr>
+    <tr><td style="background:#f5f2ea;font-weight:600;">Bob basis</td><td>⊕</td><td>⊗</td><td>⊕</td><td>⊗</td><td>⊕</td></tr>
+    <tr><td style="background:#f5f2ea;font-weight:600;">Bob reads</td>
+      <td class="match">0 ✓</td>
+      <td>? (rnd)</td>
+      <td>? (rnd)</td>
+      <td class="match">0 ✓</td>
+      <td>? (rnd)</td>
+    </tr>
+    <tr><td style="background:#f5f2ea;font-weight:600;">Bases match?</td>
+      <td class="match">✓</td><td class="match">✓</td><td class="match">✓</td><td class="match">✓</td><td class="match">✓</td>
+    </tr>
+    <tr><td style="background:#f5f2ea;font-weight:600;">Error possible?</td>
+      <td>No</td>
+      <td style="color:var(--red);font-weight:700;">Yes 50%</td>
+      <td style="color:var(--red);font-weight:700;">Yes 50%</td>
+      <td>No</td>
+      <td style="color:var(--red);font-weight:700;">Yes 50%</td>
+    </tr>
+  </table>
+  <div style="margin-top:0.5rem;font-size:0.78rem;color:var(--muted);">Green = correct reading (Eve used same basis as Alice) · ? = random result (wrong basis)</div>
+</div>
+
+<p>In the security check (step 5), Alice and Bob compare some of their kept bits. If Eve was eavesdropping, errors appear. With enough published bits, Eve is virtually certain to be detected.</p>
+
+<!-- Interactive Eve simulator -->
+<canvas id="cvEve" width="560" height="200"></canvas>
+<div class="canvas-caption">Detection probability vs. number of published bits. Drag the slider.</div>
+<div class="controls">
+  <label>Published bits N<sub>p</sub>: <input type="range" id="slNp" min="1" max="40" value="10" oninput="updateEveCanvas()"></label>
+  <span class="ctrl-val" id="vNp">10</span>
+</div>
+<div id="eveInfo" style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem;color:var(--accent);margin-top:0.4rem;"></div>
+
+<!-- Exercise 3.1 -->
+<div class="ex-block">
+  <div class="ex-header"><span class="ex-tag">Ex 3.1</span><span class="ex-title">Error rate due to Eve</span></div>
+  <div class="ex-body">
+    <p>When Eve eavesdrops on BB84, what is the expected error rate on bits where Alice and Bob use the same basis? (Hint: think about how often Eve guesses wrong and what happens then.)</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">Error rate =</span>
+      <input class="answer-input" id="a31" placeholder="e.g. 25%">
+      <button class="btn sm" onclick="chkContains('a31',['25','1/4','0.25'],'fb31')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h31')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h31">50% of the time Eve picks the wrong basis. When she does, she forwards the wrong state, and Bob has a 50% chance of getting the wrong bit. So error rate = 0.5 × 0.5 = 0.25 = 25%.</div>
+    <div class="feedback" id="fb31"></div>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 4 — BB84 ANALYSIS -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section id="s4" class="section">
+<div class="section-num">Section 04</div>
+<h2>BB84 Analysis — Key Rate and Detection Probability</h2>
+
+<p>Let's quantify how BB84 works in practice.</p>
+
+<div class="def">
+  <div class="def-title">Key Generation Rate</div>
+  Alice generates N&#8320; bits. After basis comparison, they share roughly N&#8321; &asymp; N&#8320;/2 bits (50% basis match). They publish N&#7465; &asymp; &alpha;N&#8321; bits for the security check, with &alpha; &isin; [0,1]. The secret key has size:
+  <div class="math-block" style="margin-top:0.5rem;">
+    <div class="eq">N &asymp; (1&minus;&alpha;)/2 &middot; N&#8320;</div>
+    <div class="eq-note">&nbsp;&nbsp;Half the bits are lost to basis mismatch, a fraction &alpha; goes to the security check</div>
+  </div>
+</div>
+
+<div class="def">
+  <div class="def-title">Detection Probability</div>
+  Given that Eve is eavesdropping, and Nₚ bits are published for checking:
+  <div class="math-block" style="margin-top:0.5rem;">
+    <div class="mstep"><div class="mstep-label">P(detect)</div><div class="mstep-body">= P(at least one published bit has an error) = 1 − P(no errors)</div></div>
+    <div class="mstep"><div class="mstep-label">Each bit:</div><div class="mstep-body">P(no error on one bit | Eve eavesdropping) = 3/4</div></div>
+    <div class="mstep"><div class="mstep-label">Together:</div><div class="mstep-body">P(detect Eve) = 1 − (3/4)<sup>Nₚ</sup> &nbsp;→&nbsp; 1 as Nₚ → ∞</div></div>
+  </div>
+</div>
+
+<div class="note-box">
+  <strong>Critical limitation:</strong> This analysis assumes a <em>perfect</em> channel. In reality, channels have noise (photon loss, detector errors, etc.) that causes errors even without an eavesdropper. The simple BB84 above does NOT work in the presence of such errors — post-processing is needed (see Section 5).
+</div>
+
+<!-- Interactive key rate calculator -->
+<canvas id="cvKeyRate" width="560" height="200"></canvas>
+<div class="canvas-caption">Secret key size vs. number of bits Alice generates, for different values of α.</div>
+<div class="controls" style="gap:0.5rem;flex-wrap:wrap;">
+  <label style="font-size:0.8rem;color:var(--muted);">α = <input type="range" id="slAlpha" min="0" max="99" value="20" oninput="updateKeyRate()"></label>
+  <span class="ctrl-val" id="vAlpha">0.20</span>
+  <span style="font-size:0.78rem;color:var(--muted);">fraction published for security check</span>
+</div>
+
+<!-- Exercise 4.1 -->
+<div class="ex-block">
+  <div class="ex-header"><span class="ex-tag">Ex 4.1</span><span class="ex-title">Secret key size</span></div>
+  <div class="ex-body">
+    <p>Alice generates N₀ = 10,000 bits. She uses α = 0.5 (half the kept bits for security check). How many bits are in the final secret key?</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">Key size &asymp;</span>
+      <input class="answer-input" id="a41" placeholder="bits" style="width:100px">
+      <button class="btn sm" onclick="chkApprox('a41', 2500, 'fb41')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h41')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h41">N = (1 − α)/2 × N₀ = (1 − 0.5)/2 × 10000 = 0.5/2 × 10000 = 0.25 × 10000 = 2500 bits.</div>
+    <div class="feedback" id="fb41"></div>
+  </div>
+</div>
+
+<!-- Exercise 4.2 -->
+<div class="ex-block">
+  <div class="ex-header"><span class="ex-tag">Ex 4.2</span><span class="ex-title">Eve detection with 30 bits</span></div>
+  <div class="ex-body">
+    <p>If Nₚ = 30 bits are used for the security check, what is the probability that Eve is detected? Use P(detect) = 1 − (3/4)<sup>30</sup>.</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <span class="ans-label">P(detect) &asymp;</span>
+      <input class="answer-input" id="a42" placeholder="e.g. 0.99" style="width:100px">
+      <button class="btn sm" onclick="chkApprox('a42', 1 - Math.pow(0.75,30), 'fb42')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h42')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h42">(3/4)^30 &asymp; 0.00018. So P(detect) = 1 &minus; 0.00018 &asymp; 0.9998 &asymp; 99.98%.</div>
+    <div class="feedback" id="fb42"></div>
+  </div>
+</div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 5 — POST-PROCESSING -->
+<!-- ══════════════════════════════════════════════════════ -->
+<section id="s5" class="section">
+<div class="section-num">Section 05</div>
+<h2>BB84 + Post-Processing</h2>
+
+<p>In the real world, quantum channels are noisy. Even without an eavesdropper, Bob may receive corrupted qubits. For example, a measurement device might flip a bit with probability p. This means that even with matching bases, some bits will be wrong.</p>
+
+<div class="note-box">
+  <strong>Real scenario:</strong> Alice has x<sub>A</sub> = [0,1,1,0,...] after basis matching. Bob has x<sub>B</sub> = x<sub>A</sub> ⊕ n where each noise bit nᵢ = 1 (error) with probability p and nᵢ = 0 (correct) with probability 1−p.
+</div>
+
+<h3>The Three Post-Processing Steps</h3>
+
+<h4 style="color:var(--orange);font-family:'IBM Plex Mono',monospace;font-size:0.82rem;letter-spacing:0.08em;text-transform:uppercase;margin:1.2rem 0 0.5rem;">Step 1 — Adaptive Security Check</h4>
+<p>Instead of a hard threshold, estimate the channel error rate:</p>
+<div class="math-block">
+  <div class="eq">p̂ = N<sub>err</sub> / N<sub>p</sub></div>
+  <div class="eq-note">&nbsp;&nbsp;where N<sub>err</sub> is the number of erroneous bits among the N<sub>p</sub> published bits</div>
+  <div class="mstep" style="margin-top:0.5rem;"><div class="mstep-label">If p̂ > γ</div><div class="mstep-body">→ eavesdropper detected (threshold γ is set in advance). Abort.</div></div>
+  <div class="mstep"><div class="mstep-label">If p&#770; &le; &gamma;</div><div class="mstep-body">&rarr; proceed to error correction. The noise is considered acceptable.</div></div>
+</div>
+
+<h4 style="color:var(--orange);font-family:'IBM Plex Mono',monospace;font-size:0.82rem;letter-spacing:0.08em;text-transform:uppercase;margin:1.2rem 0 0.5rem;">Step 2 — Error Correction</h4>
+<p>Alice and Bob need to reconcile their strings. They use a classical error-correcting code, but it must be done carefully to avoid revealing x<sub>A</sub> to Eve.</p>
+
+<div class="math-block">
+  <div class="mstep"><div class="mstep-label">Alice encodes</div><div class="mstep-body">Using a systematic linear code: c<sub>A</sub> = [x<sub>A</sub> | p<sub>A</sub>] where p<sub>A</sub> is the parity part.</div></div>
+  <div class="mstep"><div class="mstep-label">Alice sends</div><div class="mstep-body">Only p<sub>A</sub> (the parity bits) over the public classical channel. This is secure because many x<sub>A</sub> values produce the same parity.</div></div>
+  <div class="mstep"><div class="mstep-label">Bob constructs</div><div class="mstep-body">c<sub>B</sub> = [x<sub>B</sub> | p<sub>A</sub>] and decodes it to recover x<sub>A</sub> (if there are not too many errors).</div></div>
+</div>
+
+<div class="insight">
+  <strong>Why is sending p<sub>A</sub> secure?</strong> The parity bits do not uniquely determine x<sub>A</sub>. There are many valid codewords with the same parity — Eve cannot recover x<sub>A</sub> from p<sub>A</sub> alone.
+</div>
+
+<h4 style="color:var(--orange);font-family:'IBM Plex Mono',monospace;font-size:0.82rem;letter-spacing:0.08em;text-transform:uppercase;margin:1.2rem 0 0.5rem;">Step 3 — Privacy Amplification</h4>
+<p>Even if error correction succeeds, Eve may have gained some partial information about x<sub>A</sub> by eavesdropping (information leakage). Privacy amplification removes this partial knowledge.</p>
+
+<div class="def">
+  <div class="def-title">Privacy Amplification</div>
+  Alice and Bob apply a shared <strong>hash function</strong> to their (now identical) string x<sub>A</sub>:
+  <div class="math-block" style="margin-top:0.4rem;">
+    <div class="eq">x = hash(x<sub>A</sub>)</div>
+  </div>
+  The output x is the final secret key. The hash compresses x<sub>A</sub> into a shorter string. The key insight: even if Eve knows a few bits of x<sub>A</sub>, she knows essentially nothing about hash(x<sub>A</sub>) if the hash is well-chosen. The information leakage can be estimated from p̂.
+</div>
+
+<div class="math-block">
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.8rem;font-size:0.82rem;">
+    <div style="background:var(--blue-hl);border-radius:6px;padding:0.6rem;border-left:3px solid var(--accent);">
+      <strong style="color:var(--accent);">Security Check</strong><br>
+      Estimate p̂ from Nₚ published bits.<br>If p̂ > γ → abort.
+    </div>
+    <div style="background:var(--green-hl);border-radius:6px;padding:0.6rem;border-left:3px solid var(--green);">
+      <strong style="color:var(--green);">Error Correction</strong><br>
+      Exchange parity bits publicly.<br>Bob recovers x<sub>A</sub>.
+    </div>
+    <div style="background:var(--purple-hl);border-radius:6px;padding:0.6rem;border-left:3px solid var(--purple);">
+      <strong style="color:var(--purple);">Privacy Amplification</strong><br>
+      Apply hash function.<br>x = hash(x<sub>A</sub>) → secret key.
+    </div>
+  </div>
+</div>
+
+<!-- Exercise 5.1 -->
+<div class="ex-block">
+  <div class="ex-header"><span class="ex-tag">Ex 5.1</span><span class="ex-title">Purpose of privacy amplification</span></div>
+  <div class="ex-body">
+    <p>After error correction, Alice and Bob share the same string x<sub>A</sub>. But Eve may know some bits of x<sub>A</sub>. Why does applying hash(x<sub>A</sub>) help?</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <input class="answer-input wide" id="a51" placeholder="explain...">
+      <button class="btn sm" onclick="chkContains('a51',['hash','partial','information','knowledge','leakage','shorter'],'fb51')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h51')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h51">A good hash is a many-to-one function: many inputs map to the same output. Even if Eve knows some bits of x_A, she cannot determine hash(x_A). The hash "amplifies" Eve's partial ignorance into complete ignorance of the final key.</div>
+    <div class="feedback" id="fb51"></div>
+  </div>
+</div>
+
+<!-- Exercise 5.2 -->
+<div class="ex-block">
+  <div class="ex-header"><span class="ex-tag">Ex 5.2</span><span class="ex-title">Why is error correction needed?</span></div>
+  <div class="ex-body">
+    <p>If Alice and Bob share raw strings that differ in a few bits, can they just skip error correction and use privacy amplification directly?</p>
+  </div>
+  <div class="answer-area">
+    <div class="answer-row">
+      <input class="answer-input wide" id="a52" placeholder="yes / no, because...">
+      <button class="btn sm" onclick="chkContains('a52',['no','different','same','identical','mismatch'],'fb52')">Check</button>
+      <button class="hint-toggle" onclick="showHint('h52')">show hint</button>
+    </div>
+    <div class="feedback hint" id="h52">No. Privacy amplification requires Alice and Bob to apply the SAME hash to the SAME input. If their strings differ, they will compute different hashes and end up with different keys — the whole point of the protocol fails.</div>
+    <div class="feedback" id="fb52"></div>
+  </div>
+</div>
+</section>
+
+<script is:inline>
+/* ── Helpers ── */
+function goTo(id){const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});}
+function showHint(id){document.getElementById(id).classList.toggle('show');}
+function setFb(id,ok,msg){const el=document.getElementById(id);if(!el)return;el.className='feedback show '+(ok?'ok':'no');el.textContent=msg;}
+function norm(s){return s.trim().toLowerCase().replace(/\s/g,'').replace('−','-');}
+function chk(iid,exp,fb){const v=norm(document.getElementById(iid).value);const ok=v===norm(exp)||(!isNaN(v)&&!isNaN(exp)&&Math.abs(parseFloat(v)-parseFloat(exp))<0.02);document.getElementById(iid).className='answer-input '+(ok?'ok':'no');setFb(fb,ok,ok?'✓ Correct!':'✗ Not quite — try again or show hint.');}
+function chk2(i1,e1,i2,e2,fb){const ok1=norm(document.getElementById(i1).value)===norm(e1)||(!isNaN(document.getElementById(i1).value)&&Math.abs(parseFloat(document.getElementById(i1).value)-parseFloat(e1))<0.02);const ok2=norm(document.getElementById(i2).value)===norm(e2)||(!isNaN(document.getElementById(i2).value)&&Math.abs(parseFloat(document.getElementById(i2).value)-parseFloat(e2))<0.02);document.getElementById(i1).className='answer-input '+(ok1?'ok':'no');document.getElementById(i2).className='answer-input '+(ok2?'ok':'no');setFb(fb,ok1&&ok2,ok1&&ok2?'✓ Both correct!':'✗ Not quite.');}
+function chkContains(iid,kws,fb){const v=document.getElementById(iid).value.toLowerCase().replace(/\s/g,'');const ok=kws.some(k=>v.includes(k));document.getElementById(iid).className='answer-input '+(ok?'ok':'no');setFb(fb,ok,ok?'✓ Correct!':'✗ Not quite — check the hint.');}
+function chkApprox(iid,target,fb){const v=parseFloat(document.getElementById(iid).value.replace('%','').replace(',','.'));const t=typeof target==='number'?target:eval(target);const ok=!isNaN(v)&&Math.abs(v-(t>1?t:t*100>10?t:t))<0.06;const ok2=!isNaN(v)&&Math.abs(v-t*100)<2;document.getElementById(iid).className='answer-input '+((ok||ok2)?'ok':'no');setFb(fb,(ok||ok2),(ok||ok2)?`✓ Correct! ≈ ${(t*100).toFixed(1)}%`:`✗ Not quite — expected ≈ ${t<1?t.toFixed(4):t}`);}
+
+/* ── BB84 Simulator ── */
+const BASES=['+','x'],BITS=[0,1];
+const STATE={'+0':'|0⟩','+1':'|1⟩','x0':'|+⟩','x1':'|−⟩'};
+
+function runBB84(){
+  const n=10;
+  const alice={bits:[],bases:[],qubits:[]};
+  const bob={bases:[],bits:[]};
+  for(let i=0;i<n;i++){
+    alice.bits.push(BITS[Math.floor(Math.random()*2)]);
+    alice.bases.push(BASES[Math.floor(Math.random()*2)]);
+    alice.qubits.push(STATE[alice.bases[i]+alice.bits[i]]);
+    bob.bases.push(BASES[Math.floor(Math.random()*2)]);
+  }
+  // Bob measures
+  for(let i=0;i<n;i++){
+    if(alice.bases[i]===bob.bases[i]) bob.bits.push(alice.bits[i]);
+    else bob.bits.push(Math.floor(Math.random()*2));
+  }
+  const matches=[];
+  for(let i=0;i<n;i++) if(alice.bases[i]===bob.bases[i]) matches.push(i);
+  const key=matches.map(i=>alice.bits[i]);
+
+  const cv=document.getElementById('cvBB84'); if(!cv)return;
+  cv.width=cv.parentElement.clientWidth-2;
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#fafaf8';ctx.fillRect(0,0,W,H);
+  const cols=['#2c5282','#c0392b','#1a6b3a','#b7530a'];
+  const rowLabels=['Alice bit','Alice basis','Tx qubit','Bob basis','Bob bit','Match?'];
+  const rowData=[
+    alice.bits.map(String),
+    alice.bases,
+    alice.qubits,
+    bob.bases,
+    bob.bits.map(String),
+    alice.bases.map((b,i)=>alice.bases[i]===bob.bases[i]?'✓':'✗')
+  ];
+  const cellW=(W-90)/n, cellH=28, startX=90, startY=18;
+  ctx.font="10px 'IBM Plex Mono',monospace";
+  rowLabels.forEach((l,r)=>{
+    ctx.fillStyle='#888877';ctx.textAlign='right';ctx.textBaseline='middle';
+    ctx.fillText(l,startX-6,startY+r*cellH+cellH/2);
+    rowData[r].forEach((v,i)=>{
+      const matched=alice.bases[i]===bob.bases[i];
+      let bg='#fafaf8',fc='#1a1a14';
+      if(r===5){bg=matched?'#d1fae5':'#fee2e2';fc=matched?'#1a6b3a':'#c0392b';}
+      else if(matched&&r>=3){bg='#ebf0f8';}
+      ctx.fillStyle=bg;ctx.fillRect(startX+i*cellW+1,startY+r*cellH+1,cellW-2,cellH-2);
+      ctx.strokeStyle='#e8e4d8';ctx.lineWidth=0.5;ctx.strokeRect(startX+i*cellW,startY+r*cellH,cellW,cellH);
+      ctx.fillStyle=fc;ctx.textAlign='center';
+      ctx.fillText(v,startX+i*cellW+cellW/2,startY+r*cellH+cellH/2);
+    });
+  });
+  // Column headers
+  for(let i=0;i<n;i++){ctx.fillStyle='#aaa';ctx.textAlign='center';ctx.fillText(i+1,startX+i*cellW+cellW/2,10);}
+  const el=document.getElementById('bb84Info');
+  if(el)el.textContent=`Matched positions: ${matches.map(i=>i+1).join(', ')}  →  Raw key: [${key.join('')}]  (${key.length} bits)`;
+  const kl=document.getElementById('bb84KeyLen');
+  if(kl)kl.textContent=`Key: ${key.length} bits`;
+}
+
+/* ── Eve canvas ── */
+function updateEveCanvas(){
+  const Np=parseInt(document.getElementById('slNp').value);
+  document.getElementById('vNp').textContent=Np;
+  const cv=document.getElementById('cvEve');if(!cv)return;
+  cv.width=cv.parentElement.clientWidth-2;
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#fafaf8';ctx.fillRect(0,0,W,H);
+  const PL=50,PR=20,PT=20,PB=40;
+  const pW=W-PL-PR,pH=H-PT-PB;
+  // Grid
+  ctx.strokeStyle='#ede9dd';ctx.lineWidth=1;ctx.setLineDash([2,3]);
+  [0.25,0.5,0.75,1].forEach(f=>{const y=PT+pH*(1-f);ctx.beginPath();ctx.moveTo(PL,y);ctx.lineTo(W-PR,y);ctx.stroke();ctx.fillStyle='#bbb';ctx.font="9px 'IBM Plex Mono',monospace";ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillText(Math.round(f*100)+'%',PL-4,y);});
+  ctx.setLineDash([]);
+  // Curve P(detect) = 1 - (3/4)^Np
+  ctx.strokeStyle='#c0392b';ctx.lineWidth=2;ctx.beginPath();
+  for(let n=1;n<=40;n++){const p=1-Math.pow(0.75,n);const x=PL+(n-1)/(39)*pW,y=PT+pH*(1-p);n===1?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+  ctx.stroke();
+  // Current point
+  const curP=1-Math.pow(0.75,Np);
+  const cx2=PL+(Np-1)/39*pW,cy2=PT+pH*(1-curP);
+  ctx.fillStyle='#c0392b';ctx.beginPath();ctx.arc(cx2,cy2,6,0,2*Math.PI);ctx.fill();
+  ctx.fillStyle='white';ctx.beginPath();ctx.arc(cx2,cy2,2.5,0,2*Math.PI);ctx.fill();
+  // Axes labels
+  ctx.fillStyle='#888';ctx.font="10px 'IBM Plex Mono',monospace";ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText('Published bits Nₚ',PL+pW/2,H-10);
+  ctx.fillStyle='#555';ctx.font="bold 10px 'IBM Plex Mono',monospace";ctx.textAlign='left';ctx.fillText('P(detect Eve)',PL+5,PT+3);
+  const el=document.getElementById('eveInfo');
+  if(el)el.textContent=`Nₚ = ${Np} → P(detect) = 1 − (3/4)^${Np} = ${(curP*100).toFixed(3)}%`;
+}
+
+/* ── Key rate canvas ── */
+function updateKeyRate(){
+  const alpha=parseInt(document.getElementById('slAlpha').value)/100;
+  document.getElementById('vAlpha').textContent=alpha.toFixed(2);
+  const cv=document.getElementById('cvKeyRate');if(!cv)return;
+  cv.width=cv.parentElement.clientWidth-2;
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  ctx.clearRect(0,0,W,H);ctx.fillStyle='#fafaf8';ctx.fillRect(0,0,W,H);
+  const PL=55,PR=20,PT=20,PB=40,pW=W-PL-PR,pH=H-PT-PB;
+  const maxN0=10000;
+  ctx.strokeStyle='#ede9dd';ctx.lineWidth=1;ctx.setLineDash([2,3]);
+  [2500,5000,7500,10000].forEach(v=>{const y=PT+pH*(1-v/((1-alpha)/2*maxN0+1));if(y<PT||y>PT+pH)return;ctx.beginPath();ctx.moveTo(PL,y);ctx.lineTo(W-PR,y);ctx.stroke();ctx.fillStyle='#bbb';ctx.font="9px 'IBM Plex Mono',monospace";ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillText(v,PL-4,y);});
+  ctx.setLineDash([]);
+  const maxKey=(1-0)/2*maxN0;
+  ctx.strokeStyle='#2c5282';ctx.lineWidth=2;ctx.beginPath();
+  for(let n=0;n<=maxN0;n+=100){const key=(1-alpha)/2*n;const x=PL+n/maxN0*pW,y=PT+pH*(1-key/maxKey);n===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+  ctx.stroke();
+  ctx.fillStyle='#888';ctx.font="10px 'IBM Plex Mono',monospace";ctx.textAlign='center';ctx.fillText('N₀ (bits Alice generates)',PL+pW/2,H-6);
+  ctx.fillText(`Key size = (1−${alpha.toFixed(2)})/2 · N₀ = ${((1-alpha)/2).toFixed(2)} · N₀`,PL+pW*0.5,PT+3);
+}
+
+window.addEventListener('load',()=>{
+  setTimeout(()=>{runBB84();updateEveCanvas();updateKeyRate();},200);
+});
+</script>
